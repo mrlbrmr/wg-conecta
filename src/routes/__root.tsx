@@ -7,10 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -38,9 +37,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -83,8 +79,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Portal do Colaborador WG" },
       { name: "twitter:description", content: "Portal interno do Grupo WG / WG Baterias — benefícios, comunicados, documentos e mais em um só lugar." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dc25757c-30ff-4d36-a3d3-d741a95fd25e/id-preview-0ae14a4f--16ffc76b-f5e3-4216-99b3-c0b9cffe8072.lovable.app-1784114846782.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dc25757c-30ff-4d36-a3d3-d741a95fd25e/id-preview-0ae14a4f--16ffc76b-f5e3-4216-99b3-c0b9cffe8072.lovable.app-1784114846782.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
