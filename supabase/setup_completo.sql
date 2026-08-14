@@ -33,25 +33,11 @@ CREATE TRIGGER trg_admin_users_updated
   BEFORE UPDATE ON public.admin_users
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
-CREATE OR REPLACE FUNCTION public.handle_new_admin_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  INSERT INTO public.admin_users (id, name, email, active)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    NEW.email,
-    true
-  )
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END; $$;
-REVOKE ALL ON FUNCTION public.handle_new_admin_user() FROM PUBLIC, anon, authenticated;
-
+-- Trigger on_auth_user_created_admin removido: createAdminUser já faz
+-- upsert explícito em admin_users. O trigger inseriria colaboradores
+-- convidados como admins, o que é um problema de segurança.
 DROP TRIGGER IF EXISTS on_auth_user_created_admin ON auth.users;
-CREATE TRIGGER on_auth_user_created_admin
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_admin_user();
+DROP FUNCTION IF EXISTS public.handle_new_admin_user();
 
 
 -- ===================== SCHEMA PRIVADO + is_admin =====================
