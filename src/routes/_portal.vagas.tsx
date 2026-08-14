@@ -5,7 +5,7 @@ import { PortalLayout } from "@/components/portal-layout";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { jobsQuery } from "@/lib/portal-queries";
 
-export const Route = createFileRoute("/vagas")({
+export const Route = createFileRoute("/_portal/vagas")({
   head: () => ({ meta: [{ title: "Vagas internas — Portal WG" }] }),
   component: () => {
     const q = useQuery(jobsQuery);

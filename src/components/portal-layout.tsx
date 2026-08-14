@@ -1,7 +1,6 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import { Home, LayoutGrid, Megaphone, Briefcase, Search, PartyPopper, ArrowUpRight } from "lucide-react";
-import { isAccessGranted } from "@/lib/access";
 import { WGLogo } from "./wg-logo";
 
 const NAV = [
@@ -24,21 +23,6 @@ const DESKTOP_NAV = [
 
 export function PortalLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    if (!isAccessGranted() && pathname !== "/gate") {
-      navigate({ to: "/gate", search: { next: pathname } });
-    } else {
-      setChecked(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  if (!checked && pathname !== "/gate") {
-    return <div className="min-h-screen bg-background" />;
-  }
 
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",

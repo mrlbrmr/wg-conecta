@@ -5,7 +5,7 @@ import { faqQuery } from "@/lib/portal-queries";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/gente-gestao/faq")({
+export const Route = createFileRoute("/_portal/gente-gestao/faq")({
   head: () => ({ meta: [{ title: "Dúvidas Frequentes — Portal WG" }] }),
   component: () => {
     const q = useQuery(faqQuery);

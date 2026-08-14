@@ -6,7 +6,7 @@ import { PageHeader, EmptyState } from "@/components/page-header";
 import { onboardingQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 
-export const Route = createFileRoute("/integracao")({
+export const Route = createFileRoute("/_portal/integracao")({
   head: () => ({ meta: [{ title: "Integração — Portal WG" }] }),
   component: () => {
     const q = useQuery(onboardingQuery);

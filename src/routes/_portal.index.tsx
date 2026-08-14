@@ -14,7 +14,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Gift, FolderOpen, HelpCircle, Briefcase, ClipboardList, Sparkles, PartyPopper, Users, Megaphone,
 };
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_portal/")({
   component: HomePage,
 });
 

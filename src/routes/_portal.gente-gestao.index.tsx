@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
-import { GG_LINKS } from "./gente-gestao";
+import { GG_LINKS } from "./_portal.gente-gestao";
 import { Gift, FolderOpen, HelpCircle, CalendarDays, FileWarning, UserCog, Wallet, ScrollText, Users } from "lucide-react";
 
 const ICONS = [Gift, FolderOpen, HelpCircle, CalendarDays, FileWarning, UserCog, Wallet, ScrollText, Users];
 
-export const Route = createFileRoute("/gente-gestao/")({
+export const Route = createFileRoute("/_portal/gente-gestao/")({
   head: () => ({ meta: [{ title: "Gente & Gestão — Portal do Colaborador WG" }] }),
   component: () => (
     <>

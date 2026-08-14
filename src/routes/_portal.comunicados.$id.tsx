@@ -5,7 +5,7 @@ import { PortalLayout } from "@/components/portal-layout";
 import { announcementByIdQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 
-export const Route = createFileRoute("/comunicados/$id")({
+export const Route = createFileRoute("/_portal/comunicados/$id")({
   head: () => ({ meta: [{ title: "Comunicado — Portal WG" }] }),
   component: AnnouncementDetail,
 });

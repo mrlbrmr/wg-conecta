@@ -5,7 +5,7 @@ import { PageHeader, EmptyState } from "@/components/page-header";
 import { contactsQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 
-export const Route = createFileRoute("/gente-gestao/contatos")({
+export const Route = createFileRoute("/_portal/gente-gestao/contatos")({
   head: () => ({ meta: [{ title: "Contatos G&G — Portal WG" }] }),
   component: () => {
     const q = useQuery(contactsQuery);

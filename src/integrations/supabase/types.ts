@@ -41,6 +41,42 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          department: string | null
+          job_title: string | null
+          active: boolean
+          invited_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          email: string
+          department?: string | null
+          job_title?: string | null
+          active?: boolean
+          invited_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          department?: string | null
+          job_title?: string | null
+          active?: boolean
+          invited_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           attachment_url: string | null

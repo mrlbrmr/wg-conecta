@@ -14,7 +14,7 @@ const search = z.object({ q: z.string().optional() });
 
 interface Result { kind: string; title: string; description?: string; to?: string; href?: string; }
 
-export const Route = createFileRoute("/busca")({
+export const Route = createFileRoute("/_portal/busca")({
   validateSearch: (s) => search.parse(s),
   head: () => ({ meta: [{ title: "Buscar — Portal WG" }] }),
   component: () => {

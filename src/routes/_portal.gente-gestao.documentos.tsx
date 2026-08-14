@@ -6,7 +6,7 @@ import { documentsQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/gente-gestao/documentos")({
+export const Route = createFileRoute("/_portal/gente-gestao/documentos")({
   head: () => ({ meta: [{ title: "Documentos — Portal WG" }] }),
   component: () => {
     const q = useQuery(documentsQuery);

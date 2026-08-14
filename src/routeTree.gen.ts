@@ -9,75 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VagasRouteImport } from './routes/vagas'
-import { Route as IntegracaoRouteImport } from './routes/integracao'
-import { Route as GenteGestaoRouteImport } from './routes/gente-gestao'
 import { Route as GateRouteImport } from './routes/gate'
-import { Route as FormulariosRouteImport } from './routes/formularios'
-import { Route as CulturaRouteImport } from './routes/cultura'
-import { Route as ComunicadosRouteImport } from './routes/comunicados'
-import { Route as BuscaRouteImport } from './routes/busca'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PortalRouteImport } from './routes/_portal'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as GenteGestaoIndexRouteImport } from './routes/gente-gestao.index'
 import { Route as ComunicadosIndexRouteImport } from './routes/comunicados.index'
-import { Route as GenteGestaoPoliticasRouteImport } from './routes/gente-gestao.politicas'
-import { Route as GenteGestaoHoleriteRouteImport } from './routes/gente-gestao.holerite'
-import { Route as GenteGestaoFeriasRouteImport } from './routes/gente-gestao.ferias'
-import { Route as GenteGestaoFaqRouteImport } from './routes/gente-gestao.faq'
-import { Route as GenteGestaoDocumentosRouteImport } from './routes/gente-gestao.documentos'
-import { Route as GenteGestaoContatosRouteImport } from './routes/gente-gestao.contatos'
-import { Route as GenteGestaoCadastroRouteImport } from './routes/gente-gestao.cadastro'
-import { Route as GenteGestaoBeneficiosRouteImport } from './routes/gente-gestao.beneficios'
-import { Route as GenteGestaoAtestadosRouteImport } from './routes/gente-gestao.atestados'
-import { Route as ComunicadosArquivoRouteImport } from './routes/comunicados.arquivo'
-import { Route as ComunicadosIdRouteImport } from './routes/comunicados.$id'
+import { Route as PortalIndexRouteImport } from './routes/_portal.index'
+import { Route as ColaboradorRecuperarSenhaRouteImport } from './routes/colaborador/recuperar-senha'
+import { Route as ColaboradorConfirmarRouteImport } from './routes/colaborador/confirmar'
+import { Route as PortalVagasRouteImport } from './routes/_portal.vagas'
+import { Route as PortalIntegracaoRouteImport } from './routes/_portal.integracao'
+import { Route as PortalGenteGestaoRouteImport } from './routes/_portal.gente-gestao'
+import { Route as PortalFormulariosRouteImport } from './routes/_portal.formularios'
+import { Route as PortalCulturaRouteImport } from './routes/_portal.cultura'
+import { Route as PortalComunicadosRouteImport } from './routes/_portal.comunicados'
+import { Route as PortalBuscaRouteImport } from './routes/_portal.busca'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as PortalGenteGestaoIndexRouteImport } from './routes/_portal.gente-gestao.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as PortalGenteGestaoPoliticasRouteImport } from './routes/_portal.gente-gestao.politicas'
+import { Route as PortalGenteGestaoHoleriteRouteImport } from './routes/_portal.gente-gestao.holerite'
+import { Route as PortalGenteGestaoFeriasRouteImport } from './routes/_portal.gente-gestao.ferias'
+import { Route as PortalGenteGestaoFaqRouteImport } from './routes/_portal.gente-gestao.faq'
+import { Route as PortalGenteGestaoDocumentosRouteImport } from './routes/_portal.gente-gestao.documentos'
+import { Route as PortalGenteGestaoContatosRouteImport } from './routes/_portal.gente-gestao.contatos'
+import { Route as PortalGenteGestaoCadastroRouteImport } from './routes/_portal.gente-gestao.cadastro'
+import { Route as PortalGenteGestaoBeneficiosRouteImport } from './routes/_portal.gente-gestao.beneficios'
+import { Route as PortalGenteGestaoAtestadosRouteImport } from './routes/_portal.gente-gestao.atestados'
+import { Route as PortalComunicadosArquivoRouteImport } from './routes/_portal.comunicados.arquivo'
+import { Route as PortalComunicadosIdRouteImport } from './routes/_portal.comunicados.$id'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
+import { Route as AuthenticatedAdminColaboradoresRouteImport } from './routes/_authenticated/admin.colaboradores'
 import { Route as ApiPublicFilesSplatRouteImport } from './routes/api/public/files/$'
 import { Route as AuthenticatedAdminRecursoKeyRouteImport } from './routes/_authenticated/admin.recurso.$key'
 
-const VagasRoute = VagasRouteImport.update({
-  id: '/vagas',
-  path: '/vagas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntegracaoRoute = IntegracaoRouteImport.update({
-  id: '/integracao',
-  path: '/integracao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GenteGestaoRoute = GenteGestaoRouteImport.update({
-  id: '/gente-gestao',
-  path: '/gente-gestao',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GateRoute = GateRouteImport.update({
   id: '/gate',
   path: '/gate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FormulariosRoute = FormulariosRouteImport.update({
-  id: '/formularios',
-  path: '/formularios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CulturaRoute = CulturaRouteImport.update({
-  id: '/cultura',
-  path: '/cultura',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComunicadosRoute = ComunicadosRouteImport.update({
-  id: '/comunicados',
-  path: '/comunicados',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuscaRoute = BuscaRouteImport.update({
-  id: '/busca',
-  path: '/busca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -85,89 +54,147 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/_portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ComunicadosIndexRoute = ComunicadosIndexRouteImport.update({
+  id: '/comunicados/',
+  path: '/comunicados/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GenteGestaoIndexRoute = GenteGestaoIndexRouteImport.update({
+const PortalIndexRoute = PortalIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => GenteGestaoRoute,
+  getParentRoute: () => PortalRoute,
 } as any)
-const ComunicadosIndexRoute = ComunicadosIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ComunicadosRoute,
+const ColaboradorRecuperarSenhaRoute =
+  ColaboradorRecuperarSenhaRouteImport.update({
+    id: '/colaborador/recuperar-senha',
+    path: '/colaborador/recuperar-senha',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ColaboradorConfirmarRoute = ColaboradorConfirmarRouteImport.update({
+  id: '/colaborador/confirmar',
+  path: '/colaborador/confirmar',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const GenteGestaoPoliticasRoute = GenteGestaoPoliticasRouteImport.update({
-  id: '/politicas',
-  path: '/politicas',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalVagasRoute = PortalVagasRouteImport.update({
+  id: '/vagas',
+  path: '/vagas',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoHoleriteRoute = GenteGestaoHoleriteRouteImport.update({
-  id: '/holerite',
-  path: '/holerite',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalIntegracaoRoute = PortalIntegracaoRouteImport.update({
+  id: '/integracao',
+  path: '/integracao',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoFeriasRoute = GenteGestaoFeriasRouteImport.update({
-  id: '/ferias',
-  path: '/ferias',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalGenteGestaoRoute = PortalGenteGestaoRouteImport.update({
+  id: '/gente-gestao',
+  path: '/gente-gestao',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoFaqRoute = GenteGestaoFaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalFormulariosRoute = PortalFormulariosRouteImport.update({
+  id: '/formularios',
+  path: '/formularios',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoDocumentosRoute = GenteGestaoDocumentosRouteImport.update({
-  id: '/documentos',
-  path: '/documentos',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalCulturaRoute = PortalCulturaRouteImport.update({
+  id: '/cultura',
+  path: '/cultura',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoContatosRoute = GenteGestaoContatosRouteImport.update({
-  id: '/contatos',
-  path: '/contatos',
-  getParentRoute: () => GenteGestaoRoute,
+const PortalComunicadosRoute = PortalComunicadosRouteImport.update({
+  id: '/comunicados',
+  path: '/comunicados',
+  getParentRoute: () => PortalRoute,
 } as any)
-const GenteGestaoCadastroRoute = GenteGestaoCadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => GenteGestaoRoute,
-} as any)
-const GenteGestaoBeneficiosRoute = GenteGestaoBeneficiosRouteImport.update({
-  id: '/beneficios',
-  path: '/beneficios',
-  getParentRoute: () => GenteGestaoRoute,
-} as any)
-const GenteGestaoAtestadosRoute = GenteGestaoAtestadosRouteImport.update({
-  id: '/atestados',
-  path: '/atestados',
-  getParentRoute: () => GenteGestaoRoute,
-} as any)
-const ComunicadosArquivoRoute = ComunicadosArquivoRouteImport.update({
-  id: '/arquivo',
-  path: '/arquivo',
-  getParentRoute: () => ComunicadosRoute,
-} as any)
-const ComunicadosIdRoute = ComunicadosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ComunicadosRoute,
+const PortalBuscaRoute = PortalBuscaRouteImport.update({
+  id: '/busca',
+  path: '/busca',
+  getParentRoute: () => PortalRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PortalGenteGestaoIndexRoute = PortalGenteGestaoIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalGenteGestaoRoute,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const PortalGenteGestaoPoliticasRoute =
+  PortalGenteGestaoPoliticasRouteImport.update({
+    id: '/politicas',
+    path: '/politicas',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoHoleriteRoute =
+  PortalGenteGestaoHoleriteRouteImport.update({
+    id: '/holerite',
+    path: '/holerite',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoFeriasRoute = PortalGenteGestaoFeriasRouteImport.update({
+  id: '/ferias',
+  path: '/ferias',
+  getParentRoute: () => PortalGenteGestaoRoute,
+} as any)
+const PortalGenteGestaoFaqRoute = PortalGenteGestaoFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => PortalGenteGestaoRoute,
+} as any)
+const PortalGenteGestaoDocumentosRoute =
+  PortalGenteGestaoDocumentosRouteImport.update({
+    id: '/documentos',
+    path: '/documentos',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoContatosRoute =
+  PortalGenteGestaoContatosRouteImport.update({
+    id: '/contatos',
+    path: '/contatos',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoCadastroRoute =
+  PortalGenteGestaoCadastroRouteImport.update({
+    id: '/cadastro',
+    path: '/cadastro',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoBeneficiosRoute =
+  PortalGenteGestaoBeneficiosRouteImport.update({
+    id: '/beneficios',
+    path: '/beneficios',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalGenteGestaoAtestadosRoute =
+  PortalGenteGestaoAtestadosRouteImport.update({
+    id: '/atestados',
+    path: '/atestados',
+    getParentRoute: () => PortalGenteGestaoRoute,
+  } as any)
+const PortalComunicadosArquivoRoute =
+  PortalComunicadosArquivoRouteImport.update({
+    id: '/arquivo',
+    path: '/arquivo',
+    getParentRoute: () => PortalComunicadosRoute,
+  } as any)
+const PortalComunicadosIdRoute = PortalComunicadosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PortalComunicadosRoute,
 } as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
@@ -179,6 +206,12 @@ const AuthenticatedAdminConfiguracoesRoute =
   AuthenticatedAdminConfiguracoesRouteImport.update({
     id: '/configuracoes',
     path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminColaboradoresRoute =
+  AuthenticatedAdminColaboradoresRouteImport.update({
+    id: '/colaboradores',
+    path: '/colaboradores',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const ApiPublicFilesSplatRoute = ApiPublicFilesSplatRouteImport.update({
@@ -194,94 +227,104 @@ const AuthenticatedAdminRecursoKeyRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof PortalIndexRoute
   '/auth': typeof AuthRoute
-  '/busca': typeof BuscaRoute
-  '/comunicados': typeof ComunicadosRouteWithChildren
-  '/cultura': typeof CulturaRoute
-  '/formularios': typeof FormulariosRoute
   '/gate': typeof GateRoute
-  '/gente-gestao': typeof GenteGestaoRouteWithChildren
-  '/integracao': typeof IntegracaoRoute
-  '/vagas': typeof VagasRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/comunicados/$id': typeof ComunicadosIdRoute
-  '/comunicados/arquivo': typeof ComunicadosArquivoRoute
-  '/gente-gestao/atestados': typeof GenteGestaoAtestadosRoute
-  '/gente-gestao/beneficios': typeof GenteGestaoBeneficiosRoute
-  '/gente-gestao/cadastro': typeof GenteGestaoCadastroRoute
-  '/gente-gestao/contatos': typeof GenteGestaoContatosRoute
-  '/gente-gestao/documentos': typeof GenteGestaoDocumentosRoute
-  '/gente-gestao/faq': typeof GenteGestaoFaqRoute
-  '/gente-gestao/ferias': typeof GenteGestaoFeriasRoute
-  '/gente-gestao/holerite': typeof GenteGestaoHoleriteRoute
-  '/gente-gestao/politicas': typeof GenteGestaoPoliticasRoute
+  '/busca': typeof PortalBuscaRoute
+  '/comunicados': typeof PortalComunicadosRouteWithChildren
+  '/cultura': typeof PortalCulturaRoute
+  '/formularios': typeof PortalFormulariosRoute
+  '/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
+  '/integracao': typeof PortalIntegracaoRoute
+  '/vagas': typeof PortalVagasRoute
+  '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/comunicados/': typeof ComunicadosIndexRoute
-  '/gente-gestao/': typeof GenteGestaoIndexRoute
+  '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/comunicados/$id': typeof PortalComunicadosIdRoute
+  '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
+  '/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
+  '/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
+  '/gente-gestao/contatos': typeof PortalGenteGestaoContatosRoute
+  '/gente-gestao/documentos': typeof PortalGenteGestaoDocumentosRoute
+  '/gente-gestao/faq': typeof PortalGenteGestaoFaqRoute
+  '/gente-gestao/ferias': typeof PortalGenteGestaoFeriasRoute
+  '/gente-gestao/holerite': typeof PortalGenteGestaoHoleriteRoute
+  '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof PortalIndexRoute
   '/auth': typeof AuthRoute
-  '/busca': typeof BuscaRoute
-  '/cultura': typeof CulturaRoute
-  '/formularios': typeof FormulariosRoute
   '/gate': typeof GateRoute
-  '/integracao': typeof IntegracaoRoute
-  '/vagas': typeof VagasRoute
-  '/comunicados/$id': typeof ComunicadosIdRoute
-  '/comunicados/arquivo': typeof ComunicadosArquivoRoute
-  '/gente-gestao/atestados': typeof GenteGestaoAtestadosRoute
-  '/gente-gestao/beneficios': typeof GenteGestaoBeneficiosRoute
-  '/gente-gestao/cadastro': typeof GenteGestaoCadastroRoute
-  '/gente-gestao/contatos': typeof GenteGestaoContatosRoute
-  '/gente-gestao/documentos': typeof GenteGestaoDocumentosRoute
-  '/gente-gestao/faq': typeof GenteGestaoFaqRoute
-  '/gente-gestao/ferias': typeof GenteGestaoFeriasRoute
-  '/gente-gestao/holerite': typeof GenteGestaoHoleriteRoute
-  '/gente-gestao/politicas': typeof GenteGestaoPoliticasRoute
+  '/busca': typeof PortalBuscaRoute
   '/comunicados': typeof ComunicadosIndexRoute
-  '/gente-gestao': typeof GenteGestaoIndexRoute
+  '/cultura': typeof PortalCulturaRoute
+  '/formularios': typeof PortalFormulariosRoute
+  '/integracao': typeof PortalIntegracaoRoute
+  '/vagas': typeof PortalVagasRoute
+  '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
+  '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/comunicados/$id': typeof PortalComunicadosIdRoute
+  '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
+  '/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
+  '/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
+  '/gente-gestao/contatos': typeof PortalGenteGestaoContatosRoute
+  '/gente-gestao/documentos': typeof PortalGenteGestaoDocumentosRoute
+  '/gente-gestao/faq': typeof PortalGenteGestaoFaqRoute
+  '/gente-gestao/ferias': typeof PortalGenteGestaoFeriasRoute
+  '/gente-gestao/holerite': typeof PortalGenteGestaoHoleriteRoute
+  '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/gente-gestao': typeof PortalGenteGestaoIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_portal': typeof PortalRouteWithChildren
   '/auth': typeof AuthRoute
-  '/busca': typeof BuscaRoute
-  '/comunicados': typeof ComunicadosRouteWithChildren
-  '/cultura': typeof CulturaRoute
-  '/formularios': typeof FormulariosRoute
   '/gate': typeof GateRoute
-  '/gente-gestao': typeof GenteGestaoRouteWithChildren
-  '/integracao': typeof IntegracaoRoute
-  '/vagas': typeof VagasRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/comunicados/$id': typeof ComunicadosIdRoute
-  '/comunicados/arquivo': typeof ComunicadosArquivoRoute
-  '/gente-gestao/atestados': typeof GenteGestaoAtestadosRoute
-  '/gente-gestao/beneficios': typeof GenteGestaoBeneficiosRoute
-  '/gente-gestao/cadastro': typeof GenteGestaoCadastroRoute
-  '/gente-gestao/contatos': typeof GenteGestaoContatosRoute
-  '/gente-gestao/documentos': typeof GenteGestaoDocumentosRoute
-  '/gente-gestao/faq': typeof GenteGestaoFaqRoute
-  '/gente-gestao/ferias': typeof GenteGestaoFeriasRoute
-  '/gente-gestao/holerite': typeof GenteGestaoHoleriteRoute
-  '/gente-gestao/politicas': typeof GenteGestaoPoliticasRoute
+  '/_portal/busca': typeof PortalBuscaRoute
+  '/_portal/comunicados': typeof PortalComunicadosRouteWithChildren
+  '/_portal/cultura': typeof PortalCulturaRoute
+  '/_portal/formularios': typeof PortalFormulariosRoute
+  '/_portal/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
+  '/_portal/integracao': typeof PortalIntegracaoRoute
+  '/_portal/vagas': typeof PortalVagasRoute
+  '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
+  '/_portal/': typeof PortalIndexRoute
   '/comunicados/': typeof ComunicadosIndexRoute
-  '/gente-gestao/': typeof GenteGestaoIndexRoute
+  '/_authenticated/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_portal/comunicados/$id': typeof PortalComunicadosIdRoute
+  '/_portal/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/_portal/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
+  '/_portal/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
+  '/_portal/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
+  '/_portal/gente-gestao/contatos': typeof PortalGenteGestaoContatosRoute
+  '/_portal/gente-gestao/documentos': typeof PortalGenteGestaoDocumentosRoute
+  '/_portal/gente-gestao/faq': typeof PortalGenteGestaoFaqRoute
+  '/_portal/gente-gestao/ferias': typeof PortalGenteGestaoFeriasRoute
+  '/_portal/gente-gestao/holerite': typeof PortalGenteGestaoHoleriteRoute
+  '/_portal/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_portal/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/_authenticated/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
@@ -290,15 +333,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/gate'
+    | '/admin'
     | '/busca'
     | '/comunicados'
     | '/cultura'
     | '/formularios'
-    | '/gate'
     | '/gente-gestao'
     | '/integracao'
     | '/vagas'
-    | '/admin'
+    | '/colaborador/confirmar'
+    | '/colaborador/recuperar-senha'
+    | '/comunicados/'
+    | '/admin/colaboradores'
+    | '/admin/configuracoes'
+    | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
     | '/gente-gestao/atestados'
@@ -310,23 +359,26 @@ export interface FileRouteTypes {
     | '/gente-gestao/ferias'
     | '/gente-gestao/holerite'
     | '/gente-gestao/politicas'
-    | '/comunicados/'
-    | '/gente-gestao/'
-    | '/admin/configuracoes'
-    | '/admin/usuarios'
     | '/admin/'
+    | '/gente-gestao/'
     | '/admin/recurso/$key'
     | '/api/public/files/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/gate'
     | '/busca'
+    | '/comunicados'
     | '/cultura'
     | '/formularios'
-    | '/gate'
     | '/integracao'
     | '/vagas'
+    | '/colaborador/confirmar'
+    | '/colaborador/recuperar-senha'
+    | '/admin/colaboradores'
+    | '/admin/configuracoes'
+    | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
     | '/gente-gestao/atestados'
@@ -338,118 +390,66 @@ export interface FileRouteTypes {
     | '/gente-gestao/ferias'
     | '/gente-gestao/holerite'
     | '/gente-gestao/politicas'
-    | '/comunicados'
-    | '/gente-gestao'
-    | '/admin/configuracoes'
-    | '/admin/usuarios'
     | '/admin'
+    | '/gente-gestao'
     | '/admin/recurso/$key'
     | '/api/public/files/$'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
+    | '/_portal'
     | '/auth'
-    | '/busca'
-    | '/comunicados'
-    | '/cultura'
-    | '/formularios'
     | '/gate'
-    | '/gente-gestao'
-    | '/integracao'
-    | '/vagas'
     | '/_authenticated/admin'
-    | '/comunicados/$id'
-    | '/comunicados/arquivo'
-    | '/gente-gestao/atestados'
-    | '/gente-gestao/beneficios'
-    | '/gente-gestao/cadastro'
-    | '/gente-gestao/contatos'
-    | '/gente-gestao/documentos'
-    | '/gente-gestao/faq'
-    | '/gente-gestao/ferias'
-    | '/gente-gestao/holerite'
-    | '/gente-gestao/politicas'
+    | '/_portal/busca'
+    | '/_portal/comunicados'
+    | '/_portal/cultura'
+    | '/_portal/formularios'
+    | '/_portal/gente-gestao'
+    | '/_portal/integracao'
+    | '/_portal/vagas'
+    | '/colaborador/confirmar'
+    | '/colaborador/recuperar-senha'
+    | '/_portal/'
     | '/comunicados/'
-    | '/gente-gestao/'
+    | '/_authenticated/admin/colaboradores'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/usuarios'
+    | '/_portal/comunicados/$id'
+    | '/_portal/comunicados/arquivo'
+    | '/_portal/gente-gestao/atestados'
+    | '/_portal/gente-gestao/beneficios'
+    | '/_portal/gente-gestao/cadastro'
+    | '/_portal/gente-gestao/contatos'
+    | '/_portal/gente-gestao/documentos'
+    | '/_portal/gente-gestao/faq'
+    | '/_portal/gente-gestao/ferias'
+    | '/_portal/gente-gestao/holerite'
+    | '/_portal/gente-gestao/politicas'
     | '/_authenticated/admin/'
+    | '/_portal/gente-gestao/'
     | '/_authenticated/admin/recurso/$key'
     | '/api/public/files/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  PortalRoute: typeof PortalRouteWithChildren
   AuthRoute: typeof AuthRoute
-  BuscaRoute: typeof BuscaRoute
-  ComunicadosRoute: typeof ComunicadosRouteWithChildren
-  CulturaRoute: typeof CulturaRoute
-  FormulariosRoute: typeof FormulariosRoute
   GateRoute: typeof GateRoute
-  GenteGestaoRoute: typeof GenteGestaoRouteWithChildren
-  IntegracaoRoute: typeof IntegracaoRoute
-  VagasRoute: typeof VagasRoute
+  ColaboradorConfirmarRoute: typeof ColaboradorConfirmarRoute
+  ColaboradorRecuperarSenhaRoute: typeof ColaboradorRecuperarSenhaRoute
+  ComunicadosIndexRoute: typeof ComunicadosIndexRoute
   ApiPublicFilesSplatRoute: typeof ApiPublicFilesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vagas': {
-      id: '/vagas'
-      path: '/vagas'
-      fullPath: '/vagas'
-      preLoaderRoute: typeof VagasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/integracao': {
-      id: '/integracao'
-      path: '/integracao'
-      fullPath: '/integracao'
-      preLoaderRoute: typeof IntegracaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gente-gestao': {
-      id: '/gente-gestao'
-      path: '/gente-gestao'
-      fullPath: '/gente-gestao'
-      preLoaderRoute: typeof GenteGestaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/gate': {
       id: '/gate'
       path: '/gate'
       fullPath: '/gate'
       preLoaderRoute: typeof GateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/formularios': {
-      id: '/formularios'
-      path: '/formularios'
-      fullPath: '/formularios'
-      preLoaderRoute: typeof FormulariosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cultura': {
-      id: '/cultura'
-      path: '/cultura'
-      fullPath: '/cultura'
-      preLoaderRoute: typeof CulturaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comunicados': {
-      id: '/comunicados'
-      path: '/comunicados'
-      fullPath: '/comunicados'
-      preLoaderRoute: typeof ComunicadosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/busca': {
-      id: '/busca'
-      path: '/busca'
-      fullPath: '/busca'
-      preLoaderRoute: typeof BuscaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -459,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_portal': {
+      id: '/_portal'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -466,103 +473,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gente-gestao/': {
-      id: '/gente-gestao/'
-      path: '/'
-      fullPath: '/gente-gestao/'
-      preLoaderRoute: typeof GenteGestaoIndexRouteImport
-      parentRoute: typeof GenteGestaoRoute
-    }
     '/comunicados/': {
       id: '/comunicados/'
-      path: '/'
+      path: '/comunicados'
       fullPath: '/comunicados/'
       preLoaderRoute: typeof ComunicadosIndexRouteImport
-      parentRoute: typeof ComunicadosRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/gente-gestao/politicas': {
-      id: '/gente-gestao/politicas'
-      path: '/politicas'
-      fullPath: '/gente-gestao/politicas'
-      preLoaderRoute: typeof GenteGestaoPoliticasRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/': {
+      id: '/_portal/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/holerite': {
-      id: '/gente-gestao/holerite'
-      path: '/holerite'
-      fullPath: '/gente-gestao/holerite'
-      preLoaderRoute: typeof GenteGestaoHoleriteRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/colaborador/recuperar-senha': {
+      id: '/colaborador/recuperar-senha'
+      path: '/colaborador/recuperar-senha'
+      fullPath: '/colaborador/recuperar-senha'
+      preLoaderRoute: typeof ColaboradorRecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/gente-gestao/ferias': {
-      id: '/gente-gestao/ferias'
-      path: '/ferias'
-      fullPath: '/gente-gestao/ferias'
-      preLoaderRoute: typeof GenteGestaoFeriasRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/colaborador/confirmar': {
+      id: '/colaborador/confirmar'
+      path: '/colaborador/confirmar'
+      fullPath: '/colaborador/confirmar'
+      preLoaderRoute: typeof ColaboradorConfirmarRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/gente-gestao/faq': {
-      id: '/gente-gestao/faq'
-      path: '/faq'
-      fullPath: '/gente-gestao/faq'
-      preLoaderRoute: typeof GenteGestaoFaqRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/vagas': {
+      id: '/_portal/vagas'
+      path: '/vagas'
+      fullPath: '/vagas'
+      preLoaderRoute: typeof PortalVagasRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/documentos': {
-      id: '/gente-gestao/documentos'
-      path: '/documentos'
-      fullPath: '/gente-gestao/documentos'
-      preLoaderRoute: typeof GenteGestaoDocumentosRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/integracao': {
+      id: '/_portal/integracao'
+      path: '/integracao'
+      fullPath: '/integracao'
+      preLoaderRoute: typeof PortalIntegracaoRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/contatos': {
-      id: '/gente-gestao/contatos'
-      path: '/contatos'
-      fullPath: '/gente-gestao/contatos'
-      preLoaderRoute: typeof GenteGestaoContatosRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/gente-gestao': {
+      id: '/_portal/gente-gestao'
+      path: '/gente-gestao'
+      fullPath: '/gente-gestao'
+      preLoaderRoute: typeof PortalGenteGestaoRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/cadastro': {
-      id: '/gente-gestao/cadastro'
-      path: '/cadastro'
-      fullPath: '/gente-gestao/cadastro'
-      preLoaderRoute: typeof GenteGestaoCadastroRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/formularios': {
+      id: '/_portal/formularios'
+      path: '/formularios'
+      fullPath: '/formularios'
+      preLoaderRoute: typeof PortalFormulariosRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/beneficios': {
-      id: '/gente-gestao/beneficios'
-      path: '/beneficios'
-      fullPath: '/gente-gestao/beneficios'
-      preLoaderRoute: typeof GenteGestaoBeneficiosRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/cultura': {
+      id: '/_portal/cultura'
+      path: '/cultura'
+      fullPath: '/cultura'
+      preLoaderRoute: typeof PortalCulturaRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/gente-gestao/atestados': {
-      id: '/gente-gestao/atestados'
-      path: '/atestados'
-      fullPath: '/gente-gestao/atestados'
-      preLoaderRoute: typeof GenteGestaoAtestadosRouteImport
-      parentRoute: typeof GenteGestaoRoute
+    '/_portal/comunicados': {
+      id: '/_portal/comunicados'
+      path: '/comunicados'
+      fullPath: '/comunicados'
+      preLoaderRoute: typeof PortalComunicadosRouteImport
+      parentRoute: typeof PortalRoute
     }
-    '/comunicados/arquivo': {
-      id: '/comunicados/arquivo'
-      path: '/arquivo'
-      fullPath: '/comunicados/arquivo'
-      preLoaderRoute: typeof ComunicadosArquivoRouteImport
-      parentRoute: typeof ComunicadosRoute
-    }
-    '/comunicados/$id': {
-      id: '/comunicados/$id'
-      path: '/$id'
-      fullPath: '/comunicados/$id'
-      preLoaderRoute: typeof ComunicadosIdRouteImport
-      parentRoute: typeof ComunicadosRoute
+    '/_portal/busca': {
+      id: '/_portal/busca'
+      path: '/busca'
+      fullPath: '/busca'
+      preLoaderRoute: typeof PortalBuscaRouteImport
+      parentRoute: typeof PortalRoute
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
@@ -571,12 +557,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_portal/gente-gestao/': {
+      id: '/_portal/gente-gestao/'
+      path: '/'
+      fullPath: '/gente-gestao/'
+      preLoaderRoute: typeof PortalGenteGestaoIndexRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_portal/gente-gestao/politicas': {
+      id: '/_portal/gente-gestao/politicas'
+      path: '/politicas'
+      fullPath: '/gente-gestao/politicas'
+      preLoaderRoute: typeof PortalGenteGestaoPoliticasRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/holerite': {
+      id: '/_portal/gente-gestao/holerite'
+      path: '/holerite'
+      fullPath: '/gente-gestao/holerite'
+      preLoaderRoute: typeof PortalGenteGestaoHoleriteRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/ferias': {
+      id: '/_portal/gente-gestao/ferias'
+      path: '/ferias'
+      fullPath: '/gente-gestao/ferias'
+      preLoaderRoute: typeof PortalGenteGestaoFeriasRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/faq': {
+      id: '/_portal/gente-gestao/faq'
+      path: '/faq'
+      fullPath: '/gente-gestao/faq'
+      preLoaderRoute: typeof PortalGenteGestaoFaqRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/documentos': {
+      id: '/_portal/gente-gestao/documentos'
+      path: '/documentos'
+      fullPath: '/gente-gestao/documentos'
+      preLoaderRoute: typeof PortalGenteGestaoDocumentosRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/contatos': {
+      id: '/_portal/gente-gestao/contatos'
+      path: '/contatos'
+      fullPath: '/gente-gestao/contatos'
+      preLoaderRoute: typeof PortalGenteGestaoContatosRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/cadastro': {
+      id: '/_portal/gente-gestao/cadastro'
+      path: '/cadastro'
+      fullPath: '/gente-gestao/cadastro'
+      preLoaderRoute: typeof PortalGenteGestaoCadastroRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/beneficios': {
+      id: '/_portal/gente-gestao/beneficios'
+      path: '/beneficios'
+      fullPath: '/gente-gestao/beneficios'
+      preLoaderRoute: typeof PortalGenteGestaoBeneficiosRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/gente-gestao/atestados': {
+      id: '/_portal/gente-gestao/atestados'
+      path: '/atestados'
+      fullPath: '/gente-gestao/atestados'
+      preLoaderRoute: typeof PortalGenteGestaoAtestadosRouteImport
+      parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/comunicados/arquivo': {
+      id: '/_portal/comunicados/arquivo'
+      path: '/arquivo'
+      fullPath: '/comunicados/arquivo'
+      preLoaderRoute: typeof PortalComunicadosArquivoRouteImport
+      parentRoute: typeof PortalComunicadosRoute
+    }
+    '/_portal/comunicados/$id': {
+      id: '/_portal/comunicados/$id'
+      path: '/$id'
+      fullPath: '/comunicados/$id'
+      preLoaderRoute: typeof PortalComunicadosIdRouteImport
+      parentRoute: typeof PortalComunicadosRoute
     }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
@@ -590,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/admin/configuracoes'
       preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/colaboradores': {
+      id: '/_authenticated/admin/colaboradores'
+      path: '/colaboradores'
+      fullPath: '/admin/colaboradores'
+      preLoaderRoute: typeof AuthenticatedAdminColaboradoresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/api/public/files/$': {
@@ -610,6 +687,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminColaboradoresRoute: typeof AuthenticatedAdminColaboradoresRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -617,6 +695,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminColaboradoresRoute: AuthenticatedAdminColaboradoresRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -637,66 +716,93 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface ComunicadosRouteChildren {
-  ComunicadosIdRoute: typeof ComunicadosIdRoute
-  ComunicadosArquivoRoute: typeof ComunicadosArquivoRoute
-  ComunicadosIndexRoute: typeof ComunicadosIndexRoute
+interface PortalComunicadosRouteChildren {
+  PortalComunicadosIdRoute: typeof PortalComunicadosIdRoute
+  PortalComunicadosArquivoRoute: typeof PortalComunicadosArquivoRoute
 }
 
-const ComunicadosRouteChildren: ComunicadosRouteChildren = {
-  ComunicadosIdRoute: ComunicadosIdRoute,
-  ComunicadosArquivoRoute: ComunicadosArquivoRoute,
-  ComunicadosIndexRoute: ComunicadosIndexRoute,
+const PortalComunicadosRouteChildren: PortalComunicadosRouteChildren = {
+  PortalComunicadosIdRoute: PortalComunicadosIdRoute,
+  PortalComunicadosArquivoRoute: PortalComunicadosArquivoRoute,
 }
 
-const ComunicadosRouteWithChildren = ComunicadosRoute._addFileChildren(
-  ComunicadosRouteChildren,
-)
+const PortalComunicadosRouteWithChildren =
+  PortalComunicadosRoute._addFileChildren(PortalComunicadosRouteChildren)
 
-interface GenteGestaoRouteChildren {
-  GenteGestaoAtestadosRoute: typeof GenteGestaoAtestadosRoute
-  GenteGestaoBeneficiosRoute: typeof GenteGestaoBeneficiosRoute
-  GenteGestaoCadastroRoute: typeof GenteGestaoCadastroRoute
-  GenteGestaoContatosRoute: typeof GenteGestaoContatosRoute
-  GenteGestaoDocumentosRoute: typeof GenteGestaoDocumentosRoute
-  GenteGestaoFaqRoute: typeof GenteGestaoFaqRoute
-  GenteGestaoFeriasRoute: typeof GenteGestaoFeriasRoute
-  GenteGestaoHoleriteRoute: typeof GenteGestaoHoleriteRoute
-  GenteGestaoPoliticasRoute: typeof GenteGestaoPoliticasRoute
-  GenteGestaoIndexRoute: typeof GenteGestaoIndexRoute
+interface PortalGenteGestaoRouteChildren {
+  PortalGenteGestaoAtestadosRoute: typeof PortalGenteGestaoAtestadosRoute
+  PortalGenteGestaoBeneficiosRoute: typeof PortalGenteGestaoBeneficiosRoute
+  PortalGenteGestaoCadastroRoute: typeof PortalGenteGestaoCadastroRoute
+  PortalGenteGestaoContatosRoute: typeof PortalGenteGestaoContatosRoute
+  PortalGenteGestaoDocumentosRoute: typeof PortalGenteGestaoDocumentosRoute
+  PortalGenteGestaoFaqRoute: typeof PortalGenteGestaoFaqRoute
+  PortalGenteGestaoFeriasRoute: typeof PortalGenteGestaoFeriasRoute
+  PortalGenteGestaoHoleriteRoute: typeof PortalGenteGestaoHoleriteRoute
+  PortalGenteGestaoPoliticasRoute: typeof PortalGenteGestaoPoliticasRoute
+  PortalGenteGestaoIndexRoute: typeof PortalGenteGestaoIndexRoute
 }
 
-const GenteGestaoRouteChildren: GenteGestaoRouteChildren = {
-  GenteGestaoAtestadosRoute: GenteGestaoAtestadosRoute,
-  GenteGestaoBeneficiosRoute: GenteGestaoBeneficiosRoute,
-  GenteGestaoCadastroRoute: GenteGestaoCadastroRoute,
-  GenteGestaoContatosRoute: GenteGestaoContatosRoute,
-  GenteGestaoDocumentosRoute: GenteGestaoDocumentosRoute,
-  GenteGestaoFaqRoute: GenteGestaoFaqRoute,
-  GenteGestaoFeriasRoute: GenteGestaoFeriasRoute,
-  GenteGestaoHoleriteRoute: GenteGestaoHoleriteRoute,
-  GenteGestaoPoliticasRoute: GenteGestaoPoliticasRoute,
-  GenteGestaoIndexRoute: GenteGestaoIndexRoute,
+const PortalGenteGestaoRouteChildren: PortalGenteGestaoRouteChildren = {
+  PortalGenteGestaoAtestadosRoute: PortalGenteGestaoAtestadosRoute,
+  PortalGenteGestaoBeneficiosRoute: PortalGenteGestaoBeneficiosRoute,
+  PortalGenteGestaoCadastroRoute: PortalGenteGestaoCadastroRoute,
+  PortalGenteGestaoContatosRoute: PortalGenteGestaoContatosRoute,
+  PortalGenteGestaoDocumentosRoute: PortalGenteGestaoDocumentosRoute,
+  PortalGenteGestaoFaqRoute: PortalGenteGestaoFaqRoute,
+  PortalGenteGestaoFeriasRoute: PortalGenteGestaoFeriasRoute,
+  PortalGenteGestaoHoleriteRoute: PortalGenteGestaoHoleriteRoute,
+  PortalGenteGestaoPoliticasRoute: PortalGenteGestaoPoliticasRoute,
+  PortalGenteGestaoIndexRoute: PortalGenteGestaoIndexRoute,
 }
 
-const GenteGestaoRouteWithChildren = GenteGestaoRoute._addFileChildren(
-  GenteGestaoRouteChildren,
-)
+const PortalGenteGestaoRouteWithChildren =
+  PortalGenteGestaoRoute._addFileChildren(PortalGenteGestaoRouteChildren)
+
+interface PortalRouteChildren {
+  PortalBuscaRoute: typeof PortalBuscaRoute
+  PortalComunicadosRoute: typeof PortalComunicadosRouteWithChildren
+  PortalCulturaRoute: typeof PortalCulturaRoute
+  PortalFormulariosRoute: typeof PortalFormulariosRoute
+  PortalGenteGestaoRoute: typeof PortalGenteGestaoRouteWithChildren
+  PortalIntegracaoRoute: typeof PortalIntegracaoRoute
+  PortalVagasRoute: typeof PortalVagasRoute
+  PortalIndexRoute: typeof PortalIndexRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalBuscaRoute: PortalBuscaRoute,
+  PortalComunicadosRoute: PortalComunicadosRouteWithChildren,
+  PortalCulturaRoute: PortalCulturaRoute,
+  PortalFormulariosRoute: PortalFormulariosRoute,
+  PortalGenteGestaoRoute: PortalGenteGestaoRouteWithChildren,
+  PortalIntegracaoRoute: PortalIntegracaoRoute,
+  PortalVagasRoute: PortalVagasRoute,
+  PortalIndexRoute: PortalIndexRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  PortalRoute: PortalRouteWithChildren,
   AuthRoute: AuthRoute,
-  BuscaRoute: BuscaRoute,
-  ComunicadosRoute: ComunicadosRouteWithChildren,
-  CulturaRoute: CulturaRoute,
-  FormulariosRoute: FormulariosRoute,
   GateRoute: GateRoute,
-  GenteGestaoRoute: GenteGestaoRouteWithChildren,
-  IntegracaoRoute: IntegracaoRoute,
-  VagasRoute: VagasRoute,
+  ColaboradorConfirmarRoute: ColaboradorConfirmarRoute,
+  ColaboradorRecuperarSenhaRoute: ColaboradorRecuperarSenhaRoute,
+  ComunicadosIndexRoute: ComunicadosIndexRoute,
   ApiPublicFilesSplatRoute: ApiPublicFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

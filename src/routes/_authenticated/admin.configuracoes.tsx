@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { Loader2, Save, KeyRound, Upload } from "lucide-react";
+import { Loader2, Save, Upload } from "lucide-react";
 import { portalSettingsQuery, type PortalSettings } from "@/lib/portal-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, fileUrl } from "@/lib/storage";
-import { setAccessCode } from "@/lib/access.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
@@ -19,8 +17,6 @@ function ConfigPage() {
   const q = useQuery(portalSettingsQuery);
   const [form, setForm] = useState<Partial<PortalSettings>>({});
   const [uploading, setUploading] = useState(false);
-  const [newCode, setNewCode] = useState("");
-  const setCode = useServerFn(setAccessCode);
 
   useEffect(() => { if (q.data) setForm(q.data); }, [q.data]);
 
@@ -35,12 +31,6 @@ function ConfigPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => { toast.success("Configurações salvas."); qc.invalidateQueries({ queryKey: ["portal_settings"] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const mCode = useMutation({
-    mutationFn: () => setCode({ data: { code: newCode } }),
-    onSuccess: () => { toast.success("Código de acesso atualizado."); setNewCode(""); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -94,21 +84,6 @@ function ConfigPage() {
         </button>
       </div>
 
-      <section className="card-soft p-6 space-y-4 border-accent/50">
-        <div className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-accent-soft text-accent-foreground"><KeyRound className="h-4 w-4" /></div>
-          <div>
-            <h2 className="font-bold">Código de acesso dos colaboradores</h2>
-            <p className="text-xs text-muted-foreground">Compartilhe este código com a equipe. Ele libera o acesso ao portal.</p>
-          </div>
-        </div>
-        <Field label="Novo código">
-          <input value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="Digite o novo código (mínimo 4 caracteres)" className={inp} />
-        </Field>
-        <button onClick={() => mCode.mutate()} disabled={mCode.isPending || newCode.length < 4} className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground disabled:opacity-50">
-          {mCode.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Atualizar código
-        </button>
-      </section>
     </div>
   );
 }

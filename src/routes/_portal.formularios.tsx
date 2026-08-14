@@ -6,7 +6,7 @@ import { PortalLayout } from "@/components/portal-layout";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { formsQuery } from "@/lib/portal-queries";
 
-export const Route = createFileRoute("/formularios")({
+export const Route = createFileRoute("/_portal/formularios")({
   head: () => ({ meta: [{ title: "Formulários — Portal WG" }] }),
   component: () => {
     const q = useQuery(formsQuery);

@@ -5,7 +5,7 @@ import { PageHeader, EmptyState } from "@/components/page-header";
 import { benefitsQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 
-export const Route = createFileRoute("/gente-gestao/beneficios")({
+export const Route = createFileRoute("/_portal/gente-gestao/beneficios")({
   head: () => ({ meta: [{ title: "Benefícios — Portal WG" }] }),
   component: () => {
     const q = useQuery(benefitsQuery);

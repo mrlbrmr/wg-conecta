@@ -19,7 +19,7 @@ function yearsFrom(date: string) {
   return y;
 }
 
-export const Route = createFileRoute("/cultura")({
+export const Route = createFileRoute("/_portal/cultura")({
   head: () => ({ meta: [{ title: "Cultura — Portal WG" }] }),
   component: () => {
     const bd = useQuery(birthdaysQuery);

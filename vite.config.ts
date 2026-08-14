@@ -1,11 +1,11 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv, type PluginOption, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
-export default defineConfig(async ({ command, mode }) => {
-  const plugins: Plugin[] = [
+export default defineConfig(async ({ command, mode }): Promise<UserConfig> => {
+  const plugins: PluginOption[] = [
     tailwindcss(),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tanstackStart({

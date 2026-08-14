@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Megaphone, Gift, FileText, HelpCircle, Briefcase, Sparkles,
-  ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2,
+  ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2, UserCheck,
 } from "lucide-react";
 
 export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "date" | "url" | "email" | "file" | "image" | "tags" | "richtext";
@@ -242,6 +242,7 @@ export const RESOURCES: ResourceDef[] = [
 
 export function findResource(key: string) { return RESOURCES.find(r => r.key === key); }
 export const SIDEBAR_EXTRA = [
+  { key: "colaboradores", label: "Colaboradores", icon: UserCheck, section: "Configurações" },
   { key: "usuarios", label: "Usuários admin", icon: Users, section: "Configurações" },
   { key: "configuracoes", label: "Configurações gerais", icon: Building2, section: "Configurações" },
 ];

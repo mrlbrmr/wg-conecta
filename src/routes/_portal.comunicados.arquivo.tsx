@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { archivedAnnouncementsQuery } from "@/lib/portal-queries";
 
-export const Route = createFileRoute("/comunicados/arquivo")({
+export const Route = createFileRoute("/_portal/comunicados/arquivo")({
   head: () => ({ meta: [{ title: "Arquivo de comunicados — Portal WG" }] }),
   component: () => {
     const q = useQuery(archivedAnnouncementsQuery);
