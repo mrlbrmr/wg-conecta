@@ -1,7 +1,18 @@
--- Garante que a função de trigger existe (idempotente)
+-- Pré-requisitos (idempotentes — não falham se já existirem)
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
+CREATE SCHEMA IF NOT EXISTS app_private;
+REVOKE ALL ON SCHEMA app_private FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA app_private TO postgres, service_role;
+
+CREATE OR REPLACE FUNCTION app_private.is_admin(uid uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.admin_users WHERE id = uid AND active = true);
+$$;
+REVOKE ALL ON FUNCTION app_private.is_admin(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_private.is_admin(uuid) TO authenticated, service_role;
 
 -- Tabela de colaboradores vinculada ao Supabase Auth
 CREATE TABLE public.employees (
