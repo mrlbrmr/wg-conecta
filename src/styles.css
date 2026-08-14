@@ -1,0 +1,281 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Portal do Colaborador — Grupo WG / WG Baterias
+ * Comunicação interna: humano, quente, editorial.
+ * Papel creme, tinta preta WG, verde folha e verde elétrico como destaques.
+ * "Stack Sans" — pilha de fontes do site institucional WG (sans humanista de sistema).
+ */
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Roboto, Arial, sans-serif;
+  --font-display: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Roboto, Arial, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 18px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-softer: var(--primary-softer);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  /* Sombras editoriais — offsets curtos, sem blur exagerado */
+  --shadow-paper: 2px 3px 0 var(--ink);
+  --shadow-paper-sm: 1px 2px 0 var(--ink);
+  --shadow-card: 0 1px 0 oklch(0.18 0 0 / 0.08), 0 4px 14px -6px oklch(0.18 0 0 / 0.08);
+  --shadow-elevated: 4px 5px 0 var(--ink);
+}
+
+:root {
+  --radius: 0.5rem; /* menos SaaS: cantos mais firmes */
+
+  /* Papel + tinta */
+  --background: oklch(0.955 0.014 85);          /* #F4EFE4 papel creme */
+  --foreground: oklch(0.18 0 0);                /* #141414 tinta preta WG */
+  --paper: oklch(0.955 0.014 85);
+  --ink: oklch(0.18 0 0);
+
+  --surface: oklch(0.985 0.008 85);             /* papel claro para cards */
+  --surface-muted: oklch(0.925 0.018 85);       /* papel mais quente/rebaixado */
+
+  --card: oklch(0.985 0.008 85);
+  --card-foreground: oklch(0.18 0 0);
+  --popover: oklch(0.985 0.008 85);
+  --popover-foreground: oklch(0.18 0 0);
+
+  /* Verde WG institucional */
+  --primary: oklch(0.58 0.15 148);              /* #2F8F4A */
+  --primary-foreground: oklch(0.98 0.008 85);
+  --primary-soft: oklch(0.86 0.11 140);
+  --primary-softer: oklch(0.94 0.05 138);
+
+  --secondary: oklch(0.93 0.015 85);
+  --secondary-foreground: oklch(0.18 0 0);
+
+  --muted: oklch(0.92 0.015 85);
+  --muted-foreground: oklch(0.42 0.02 90);
+
+  /* Verde elétrico WG — destaque, chips, botões de ação */
+  --accent: oklch(0.82 0.19 135);               /* #8FD152 */
+  --accent-foreground: oklch(0.18 0 0);
+  --accent-soft: oklch(0.93 0.09 135);
+
+  --destructive: oklch(0.56 0.2 27);
+  --destructive-foreground: oklch(0.98 0.008 85);
+
+  --success: oklch(0.58 0.15 148);
+  --success-foreground: oklch(0.98 0.008 85);
+
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.2 0.05 80);
+
+  --border: oklch(0.86 0.015 85);
+  --border-strong: oklch(0.18 0 0);
+  --input: oklch(0.9 0.015 85);
+  --ring: oklch(0.58 0.15 148);
+
+  /* Sidebar admin */
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.94 0.014 85);
+  --sidebar-primary: oklch(0.82 0.19 135);
+  --sidebar-primary-foreground: oklch(0.18 0 0);
+  --sidebar-accent: oklch(0.24 0 0);
+  --sidebar-accent-foreground: oklch(0.94 0.014 85);
+  --sidebar-border: oklch(0.28 0 0);
+  --sidebar-ring: oklch(0.82 0.19 135);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--primary);
+  --color-chart-2: var(--accent);
+  --color-chart-3: oklch(0.65 0.14 60);
+  --color-chart-4: oklch(0.5 0.05 150);
+  --color-chart-5: oklch(0.3 0.02 90);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(oklch(0.18 0 0 / 0.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: 0 0;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+  a { text-underline-offset: 3px; }
+}
+
+/* Cartões estilo mural: fundo papel, borda preta firme, sombra offset */
+@utility card-paper {
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-paper);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+@utility card-paper-hover {
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
+/* Card leve (usado internamente, sem borda preta forte) */
+@utility card-soft {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Chip institucional */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-ink);
+  color: var(--color-accent);
+  border: 1.5px solid var(--color-ink);
+}
+@utility chip-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-primary-softer);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-soft);
+}
+@utility chip-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-accent);
+  color: var(--color-ink);
+  border: 1.5px solid var(--color-ink);
+}
+
+/* "Kicker" — pequeno rótulo editorial acima de títulos */
+@utility kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  &::before {
+    content: "";
+    width: 1.75rem;
+    height: 2px;
+    background: var(--color-primary);
+  }
+}
+
+/* Botão principal — preto tinta, sem gradiente SaaS */
+@utility btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 9999px;
+  background: var(--color-ink);
+  color: var(--color-accent);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  border: 1.5px solid var(--color-ink);
+  transition: transform 120ms ease;
+  &:hover { transform: translateY(-1px); }
+}
+@utility btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1.5px solid var(--color-ink);
+  transition: background 120ms ease;
+  &:hover { background: var(--color-accent); }
+}
+
+/* Divisor tipo jornal */
+@utility rule-ink {
+  border: 0;
+  border-top: 1.5px solid var(--color-ink);
+}

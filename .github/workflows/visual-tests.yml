@@ -1,0 +1,79 @@
+name: Testes Visuais
+
+on:
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  visual:
+    name: Layout checks (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Cache do Chromium (Playwright)
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFile('bun.lock', 'bun.lockb', 'package.json') }}
+
+      - name: Instalar Chromium + libs de sistema
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: bunx playwright install --with-deps chromium
+
+      - name: Instalar apenas libs de sistema (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: bunx playwright install-deps chromium
+
+      - name: Subir dev server
+        run: |
+          bun run dev &
+          echo $! > .devserver.pid
+          # espera até o Vite responder (máx. 60s)
+          for i in {1..60}; do
+            if curl -sf http://localhost:8080 > /dev/null; then
+              echo "dev server pronto"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "dev server não subiu a tempo" >&2
+          exit 1
+
+      - name: Rodar testes visuais
+        run: bun run test:visual
+        env:
+          CI: "true"
+
+      - name: Parar dev server
+        if: always()
+        run: |
+          if [ -f .devserver.pid ]; then
+            kill "$(cat .devserver.pid)" || true
+          fi
+
+      - name: Upload do relatório do Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore
