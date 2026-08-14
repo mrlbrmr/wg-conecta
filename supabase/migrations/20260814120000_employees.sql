@@ -1,3 +1,8 @@
+-- Garante que a função de trigger existe (idempotente)
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
 -- Tabela de colaboradores vinculada ao Supabase Auth
 CREATE TABLE public.employees (
   id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
