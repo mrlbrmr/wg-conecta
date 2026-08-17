@@ -221,7 +221,7 @@ function HomePage() {
             </div>
 
             <h3 className="mt-4 text-xl sm:text-2xl font-black leading-[1.1] tracking-tight">
-              A gente responde no mesmo dia.
+              A gente responde o mais rápido possível.
             </h3>
 
             <p className="mt-3 text-sm text-primary-foreground/80 leading-relaxed flex-1">
