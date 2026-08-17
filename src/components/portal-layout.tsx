@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { Home, LayoutGrid, Megaphone, Briefcase, Search, PartyPopper, ArrowUpRight } from "lucide-react";
 import { WGLogo } from "./wg-logo";
 
@@ -23,6 +23,15 @@ const DESKTOP_NAV = [
 
 export function PortalLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    el.classList.remove("animate-slide-up");
+    void el.offsetHeight; // força reflow para reiniciar a animação
+    el.classList.add("animate-slide-up");
+  }, [pathname]);
 
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -79,7 +88,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main key={pathname} className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10 animate-slide-up">{children}</main>
+      <main ref={mainRef} className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10 animate-slide-up">{children}</main>
 
       <PortalFooter />
       <MobileNav pathname={pathname} />
