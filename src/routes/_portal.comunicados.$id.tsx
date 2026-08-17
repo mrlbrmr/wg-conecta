@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, ArrowUpRight, Calendar, Paperclip, Pin } from "lucide-react";
 import { PortalLayout } from "@/components/portal-layout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { announcementByIdQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 
@@ -18,7 +19,23 @@ function AnnouncementDetail() {
   if (q.isLoading) {
     return (
       <PortalLayout>
-        <div className="card-paper p-8 text-sm">Carregando…</div>
+        <Skeleton className="h-4 w-28 mb-6" />
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 lg:col-span-8 card-paper overflow-hidden">
+            <Skeleton className="h-52 w-full rounded-none rounded-t-lg" />
+            <div className="p-6 md:p-10 space-y-4">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-10 w-4/5" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-11 w-40 rounded-full mt-2" />
+            </div>
+          </div>
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
+            <Skeleton className="h-44 w-full rounded-lg" />
+            <Skeleton className="h-52 w-full rounded-lg" />
+          </div>
+        </div>
       </PortalLayout>
     );
   }

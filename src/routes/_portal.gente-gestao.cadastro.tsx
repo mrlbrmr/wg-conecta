@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { KeyRound, Loader2, Save } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { updateOwnProfile } from "@/lib/employee.functions";
 import { PortalLayout } from "@/components/portal-layout";
@@ -59,8 +60,11 @@ function CadastroPage() {
   if (profileQuery.isLoading) {
     return (
       <PortalLayout>
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <PageHeader title="Meu Perfil" backTo="/gente-gestao" />
+        <div className="max-w-lg space-y-6">
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-52 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       </PortalLayout>
     );

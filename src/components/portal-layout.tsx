@@ -79,7 +79,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">{children}</main>
+      <main key={pathname} className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10 animate-slide-up">{children}</main>
 
       <PortalFooter />
       <MobileNav pathname={pathname} />

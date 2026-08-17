@@ -5,6 +5,7 @@ import {
   Megaphone, Pin, Search, ArrowUpRight, AlertCircle, Cake, Award, Coffee,
 } from "lucide-react";
 import { PortalLayout } from "@/components/portal-layout";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   activeAnnouncementsQuery, portalSettingsQuery, quickLinksQuery,
   birthdaysQuery,
@@ -80,7 +81,17 @@ function HomePage() {
 
         <div className="grid grid-cols-12 gap-4">
           {/* MANCHETE — comunicado em destaque */}
-          {featured ? (
+          {announcements.isLoading ? (
+            <div className="col-span-12 lg:col-span-8 card-paper overflow-hidden">
+              <div className="p-6 md:p-8 space-y-4">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-10 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-11 w-40 rounded-full mt-2" />
+              </div>
+            </div>
+          ) : featured ? (
             <article className="col-span-12 lg:col-span-8 card-paper card-paper-hover bg-ink text-paper overflow-hidden flex flex-col">
               <div className="p-6 md:p-8 flex-1 flex flex-col">
                 {/* Kicker */}
@@ -172,7 +183,17 @@ function HomePage() {
           </article>
 
           {/* Comunicados secundários — cartões editoriais */}
-          {rest.slice(0, 2).map(a => (
+          {announcements.isLoading
+            ? [0, 1].map(i => (
+                <div key={i} className="col-span-12 sm:col-span-6 lg:col-span-4 card-paper p-6 space-y-4">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-11 w-full rounded-full mt-2" />
+                </div>
+              ))
+            : rest.slice(0, 2).map(a => (
             <article
               key={a.id}
               className="col-span-12 sm:col-span-6 lg:col-span-4 card-paper card-paper-hover p-6 flex flex-col"
