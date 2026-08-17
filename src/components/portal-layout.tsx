@@ -45,7 +45,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b-[1.5px] border-ink bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <WGLogo className="h-11 w-11" />
+            <WGLogo className="h-11 w-11" variant="black" />
             <div className="hidden sm:block">
               <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Portal do Colaborador</div>
               <div className="text-lg font-black leading-none tracking-tight">Aqui é WG.</div>
@@ -94,9 +94,7 @@ function PortalFooter() {
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-md">
             <div className="flex items-center gap-3">
-              <div className="bg-paper p-1.5 rounded-md">
-                <WGLogo className="h-9 w-9" />
-              </div>
+              <WGLogo className="h-9 w-9" />
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">Portal do Colaborador</div>
                 <div className="text-lg font-black leading-tight">Grupo WG · WG Baterias</div>
