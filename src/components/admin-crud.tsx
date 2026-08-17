@@ -3,49 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ResourceDef, FieldDef } from "@/lib/admin-resources";
 import { uploadFile, fileUrl } from "@/lib/storage";
-import {
-  Plus, Pencil, Trash2, Upload, Loader2, X, Search,
-  Gift, FolderOpen, HelpCircle, FileText, File, Folder, Download, ExternalLink,
-  Mail, Phone, MessageCircle, Bell, Megaphone, Send,
-  User, Users, UserCheck, UserPlus, UserCog,
-  Home, Link, Globe, Map,
-  Paperclip, FilePlus, FileCheck, BookOpen, Book, Bookmark, Clipboard, ClipboardList, ScrollText,
-  Briefcase, Building, Calendar, Clock, Award, PartyPopper, Star, Heart, ThumbsUp, Zap,
-  CreditCard, DollarSign, Wallet, TrendingUp, BarChart2, PieChart,
-  Settings, Code, Monitor, Smartphone, Wifi,
-  Sparkles, Coffee, AlertCircle, Info, Shield, ShieldCheck, CheckCircle, Tag, Key,
-  Wrench, Image, Camera, Video, Music, Scissors, Share2, Copy, RefreshCw,
-} from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Loader2, X, Search } from "lucide-react";
 import { toast } from "sonner";
+import { ICON_MAP } from "@/lib/icon-map";
 
-const ICON_OPTIONS = [
-  { name: "Gift", Icon: Gift }, { name: "FolderOpen", Icon: FolderOpen }, { name: "HelpCircle", Icon: HelpCircle },
-  { name: "FileText", Icon: FileText }, { name: "File", Icon: File }, { name: "Folder", Icon: Folder },
-  { name: "FilePlus", Icon: FilePlus }, { name: "FileCheck", Icon: FileCheck }, { name: "Download", Icon: Download },
-  { name: "ExternalLink", Icon: ExternalLink }, { name: "Share2", Icon: Share2 }, { name: "Copy", Icon: Copy },
-  { name: "Mail", Icon: Mail }, { name: "Phone", Icon: Phone }, { name: "MessageCircle", Icon: MessageCircle },
-  { name: "Bell", Icon: Bell }, { name: "Megaphone", Icon: Megaphone }, { name: "Send", Icon: Send },
-  { name: "User", Icon: User }, { name: "Users", Icon: Users }, { name: "UserCheck", Icon: UserCheck },
-  { name: "UserPlus", Icon: UserPlus }, { name: "UserCog", Icon: UserCog },
-  { name: "Home", Icon: Home }, { name: "Link", Icon: Link }, { name: "Globe", Icon: Globe }, { name: "Map", Icon: Map },
-  { name: "Paperclip", Icon: Paperclip }, { name: "BookOpen", Icon: BookOpen }, { name: "Book", Icon: Book },
-  { name: "Bookmark", Icon: Bookmark }, { name: "Clipboard", Icon: Clipboard }, { name: "ClipboardList", Icon: ClipboardList },
-  { name: "ScrollText", Icon: ScrollText }, { name: "Briefcase", Icon: Briefcase }, { name: "Building", Icon: Building },
-  { name: "Calendar", Icon: Calendar }, { name: "Clock", Icon: Clock }, { name: "Award", Icon: Award },
-  { name: "PartyPopper", Icon: PartyPopper }, { name: "Star", Icon: Star }, { name: "Heart", Icon: Heart },
-  { name: "ThumbsUp", Icon: ThumbsUp }, { name: "Zap", Icon: Zap }, { name: "Sparkles", Icon: Sparkles },
-  { name: "CreditCard", Icon: CreditCard }, { name: "DollarSign", Icon: DollarSign }, { name: "Wallet", Icon: Wallet },
-  { name: "TrendingUp", Icon: TrendingUp }, { name: "BarChart2", Icon: BarChart2 }, { name: "PieChart", Icon: PieChart },
-  { name: "Settings", Icon: Settings }, { name: "Code", Icon: Code }, { name: "Monitor", Icon: Monitor },
-  { name: "Smartphone", Icon: Smartphone }, { name: "Wifi", Icon: Wifi }, { name: "Key", Icon: Key },
-  { name: "Coffee", Icon: Coffee }, { name: "AlertCircle", Icon: AlertCircle }, { name: "Info", Icon: Info },
-  { name: "Shield", Icon: Shield }, { name: "ShieldCheck", Icon: ShieldCheck }, { name: "CheckCircle", Icon: CheckCircle },
-  { name: "Tag", Icon: Tag }, { name: "Wrench", Icon: Wrench }, { name: "Image", Icon: Image },
-  { name: "Camera", Icon: Camera }, { name: "Video", Icon: Video }, { name: "Music", Icon: Music },
-  { name: "Scissors", Icon: Scissors }, { name: "RefreshCw", Icon: RefreshCw },
-];
-
-const ICON_MAP = Object.fromEntries(ICON_OPTIONS.map(i => [i.name, i.Icon]));
+const ICON_OPTIONS = Object.entries(ICON_MAP).map(([name, Icon]) => ({ name, Icon }));
 
 type Row = Record<string, unknown>;
 

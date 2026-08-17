@@ -24,8 +24,7 @@ export const Route = createFileRoute("/_portal/gente-gestao/contatos")({
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="font-bold truncate">{c.name}</div>
-                  {c.area && <div className="text-xs text-muted-foreground">{c.area}</div>}
-                  {c.description && <div className="text-xs text-muted-foreground mt-1">{c.description}</div>}
+{c.description && <div className="text-xs text-muted-foreground mt-1">{c.description}</div>}
                   <div className="mt-2 flex flex-wrap gap-2">
                     {c.email && <a href={`mailto:${c.email}`} className="chip inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.email}</a>}
                     {c.phone && <a href={`tel:${c.phone}`} className="chip inline-flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</a>}

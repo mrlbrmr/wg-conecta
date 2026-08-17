@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Paperclip, Gift } from "lucide-react";
+import { ICON_MAP } from "@/lib/icon-map";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { benefitsQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/_portal/gente-gestao/beneficios")({
               <article key={b.id} className="card-soft p-6 flex flex-col">
                 <div className="flex items-start gap-3">
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary-softer text-primary">
-                    <Gift className="h-6 w-6" />
+                    {(() => { const I = ICON_MAP[b.icon ?? ""] ?? Gift; return <I className="h-6 w-6" />; })()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-bold">{b.title}</h2>

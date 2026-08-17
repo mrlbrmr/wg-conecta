@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ClipboardList, ExternalLink } from "lucide-react";
+import { ICON_MAP } from "@/lib/icon-map";
 import { PortalLayout } from "@/components/portal-layout";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { formsQuery } from "@/lib/portal-queries";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_portal/formularios")({
               <a key={f.id} href={f.external_url} target="_blank" rel="noreferrer"
                 className="card-soft p-5 flex flex-col gap-3 hover:shadow-elevated hover:border-primary/40 transition group">
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary-softer text-primary group-hover:bg-primary group-hover:text-primary-foreground transition">
-                  <ClipboardList className="h-5 w-5" />
+                  {(() => { const I = ICON_MAP[f.icon ?? ""] ?? ClipboardList; return <I className="h-5 w-5" />; })()}
                 </div>
                 <div>
                   {f.category && <span className="text-[11px] font-semibold text-muted-foreground">{f.category}</span>}

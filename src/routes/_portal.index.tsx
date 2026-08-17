@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Gift, FolderOpen, HelpCircle, Briefcase, ClipboardList, Sparkles, PartyPopper, Users,
-  Megaphone, Pin, Search, ArrowUpRight, AlertCircle, Cake, Award, Coffee,
+  Pin, Search, ArrowUpRight, AlertCircle, Cake, Award, Sparkles, Coffee,
 } from "lucide-react";
+import { ICON_MAP } from "@/lib/icon-map";
 import { PortalLayout } from "@/components/portal-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,9 +11,6 @@ import {
   birthdaysQuery,
 } from "@/lib/portal-queries";
 
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Gift, FolderOpen, HelpCircle, Briefcase, ClipboardList, Sparkles, PartyPopper, Users, Megaphone,
-};
 
 export const Route = createFileRoute("/_portal/")({
   component: HomePage,
@@ -273,7 +270,7 @@ function HomePage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {(links.data ?? []).map(link => {
-            const Icon = ICONS[link.icon ?? ""] ?? Sparkles;
+            const Icon = ICON_MAP[link.icon ?? ""] ?? Sparkles;
             const isInternal = link.url.startsWith("/");
             const content = (
               <div className="card-paper card-paper-hover p-5 h-full flex flex-col group">

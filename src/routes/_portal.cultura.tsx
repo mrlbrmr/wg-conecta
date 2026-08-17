@@ -110,7 +110,10 @@ export const Route = createFileRoute("/_portal/cultura")({
             <details className="mt-4 card-soft p-4">
               <summary className="cursor-pointer text-sm font-bold">Ver todos os aniversários de casa ({(wa.data ?? []).length})</summary>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {(wa.data ?? []).filter(w => new Date(w.admission_date).getMonth() + 1 !== currentMonth).map(w => {
+                {(wa.data ?? []).filter(w => new Date(w.admission_date).getMonth() + 1 !== currentMonth).sort((a, b) => {
+                    const da = new Date(a.admission_date), db = new Date(b.admission_date);
+                    return da.getMonth() - db.getMonth() || da.getDate() - db.getDate();
+                  }).map(w => {
                   const d = new Date(w.admission_date);
                   return (
                     <div key={w.id} className="flex items-center gap-3">

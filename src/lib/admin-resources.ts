@@ -213,10 +213,9 @@ export const RESOURCES: ResourceDef[] = [
   {
     key: "contatos", label: "Contatos G&G", labelSingular: "Contato", icon: Users, table: "contacts",
     orderBy: { column: "order_index" }, section: "Gente & Gestão",
-    displayColumns: [{ key: "name", label: "Nome" }, { key: "area", label: "Área" }, { key: "email", label: "E-mail" }],
+    displayColumns: [{ key: "name", label: "Nome" }, { key: "email", label: "E-mail" }],
     fields: [
       { key: "name", label: "Nome", type: "text", required: true },
-      { key: "area", label: "Área", type: "text" },
       { key: "description", label: "Descrição", type: "text" },
       { key: "email", label: "E-mail", type: "email" },
       { key: "phone", label: "Telefone", type: "text" },
