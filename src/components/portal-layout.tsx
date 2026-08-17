@@ -107,9 +107,17 @@ function PortalFooter() {
           </div>
           <div className="text-sm leading-relaxed">
             <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">Fale com a gente</div>
-            <a href="mailto:gestaodepessoas@wgbaterias.com.br" className="mt-2 inline-flex items-center gap-1 font-bold text-paper hover:text-accent">
-              gestaodepessoas@wgbaterias.com.br <ArrowUpRight className="h-4 w-4" />
-            </a>
+            <div className="mt-2 flex flex-col gap-1.5">
+              {[
+                "julliana.rocha@wgbaterias.com.br",
+                "murilo.bremer@wgbaterias.com.br",
+                "yasmin@wgbaterias.com.br",
+              ].map(email => (
+                <a key={email} href={`mailto:${email}`} className="inline-flex items-center gap-1 font-bold text-paper hover:text-accent transition text-sm">
+                  {email} <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                </a>
+              ))}
+            </div>
             <p className="mt-3 text-xs text-paper/60 max-w-xs">
               Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.
             </p>
