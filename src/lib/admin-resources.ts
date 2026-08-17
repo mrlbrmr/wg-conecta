@@ -4,7 +4,7 @@ import {
   ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2, UserCheck,
 } from "lucide-react";
 
-export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "date" | "url" | "email" | "file" | "image" | "tags" | "richtext";
+export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "date" | "url" | "email" | "file" | "image" | "tags" | "richtext" | "icon";
 
 export interface FieldDef {
   key: string;
@@ -56,7 +56,7 @@ export const RESOURCES: ResourceDef[] = [
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "text" },
-      { key: "icon", label: "Ícone (lucide)", type: "text", help: "Ex: Gift, FolderOpen, HelpCircle" },
+      { key: "icon", label: "Ícone", type: "icon" },
       { key: "url", label: "URL", type: "text", required: true },
       { key: "category", label: "Categoria", type: "text" },
       { key: "order_index", label: "Ordem", type: "number" },
@@ -75,7 +75,7 @@ export const RESOURCES: ResourceDef[] = [
       { key: "external_url", label: "Link externo", type: "url" },
       { key: "attachment_url", label: "Anexo", type: "file" },
       { key: "image_url", label: "Imagem", type: "image" },
-      { key: "icon", label: "Ícone (lucide)", type: "text" },
+      { key: "icon", label: "Ícone", type: "icon" },
       { key: "order_index", label: "Ordem", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],
@@ -150,7 +150,7 @@ export const RESOURCES: ResourceDef[] = [
       { key: "description", label: "Descrição", type: "text" },
       { key: "category", label: "Categoria", type: "text" },
       { key: "external_url", label: "Link externo", type: "url", required: true },
-      { key: "icon", label: "Ícone (lucide)", type: "text" },
+      { key: "icon", label: "Ícone", type: "icon" },
       { key: "order_index", label: "Ordem", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],

@@ -160,8 +160,9 @@ function HomePage() {
               <ul className="mt-4 space-y-2 text-sm border-t-[1.5px] border-ink/20 pt-4">
                 {monthBirthdays.slice(0, 3).map(b => (
                   <li key={b.id} className="flex items-center gap-3">
-                    <span className="inline-grid place-items-center h-8 w-8 rounded-full bg-ink text-accent text-xs font-black tabular-nums shrink-0">
-                      {String(b.birthday_day).padStart(2, "0")}
+                    <span className="inline-flex flex-col items-center justify-center h-10 w-10 rounded-full bg-ink text-accent shrink-0 leading-none">
+                      <span className="text-[8px] font-bold uppercase opacity-70 tracking-wide">dia</span>
+                      <span className="text-sm font-black tabular-nums">{String(b.birthday_day).padStart(2, "0")}</span>
                     </span>
                     <span className="truncate font-bold min-w-0">{b.name}</span>
                   </li>

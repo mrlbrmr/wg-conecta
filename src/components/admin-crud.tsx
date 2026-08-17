@@ -1,10 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ResourceDef, FieldDef } from "@/lib/admin-resources";
 import { uploadFile, fileUrl } from "@/lib/storage";
-import { Plus, Pencil, Trash2, Upload, Loader2, X } from "lucide-react";
+import {
+  Plus, Pencil, Trash2, Upload, Loader2, X, Search,
+  Gift, FolderOpen, HelpCircle, FileText, File, Folder, Download, ExternalLink,
+  Mail, Phone, MessageCircle, Bell, Megaphone, Send,
+  User, Users, UserCheck, UserPlus, UserCog,
+  Home, Link, Globe, Map,
+  Paperclip, FilePlus, FileCheck, BookOpen, Book, Bookmark, Clipboard, ClipboardList, ScrollText,
+  Briefcase, Building, Calendar, Clock, Award, PartyPopper, Star, Heart, ThumbsUp, Zap,
+  CreditCard, DollarSign, Wallet, TrendingUp, BarChart2, PieChart,
+  Settings, Code, Monitor, Smartphone, Wifi,
+  Sparkles, Coffee, AlertCircle, Info, Shield, ShieldCheck, CheckCircle, Tag, Key,
+  Wrench, Image, Camera, Video, Music, Scissors, Share2, Copy, RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
+
+const ICON_OPTIONS = [
+  { name: "Gift", Icon: Gift }, { name: "FolderOpen", Icon: FolderOpen }, { name: "HelpCircle", Icon: HelpCircle },
+  { name: "FileText", Icon: FileText }, { name: "File", Icon: File }, { name: "Folder", Icon: Folder },
+  { name: "FilePlus", Icon: FilePlus }, { name: "FileCheck", Icon: FileCheck }, { name: "Download", Icon: Download },
+  { name: "ExternalLink", Icon: ExternalLink }, { name: "Share2", Icon: Share2 }, { name: "Copy", Icon: Copy },
+  { name: "Mail", Icon: Mail }, { name: "Phone", Icon: Phone }, { name: "MessageCircle", Icon: MessageCircle },
+  { name: "Bell", Icon: Bell }, { name: "Megaphone", Icon: Megaphone }, { name: "Send", Icon: Send },
+  { name: "User", Icon: User }, { name: "Users", Icon: Users }, { name: "UserCheck", Icon: UserCheck },
+  { name: "UserPlus", Icon: UserPlus }, { name: "UserCog", Icon: UserCog },
+  { name: "Home", Icon: Home }, { name: "Link", Icon: Link }, { name: "Globe", Icon: Globe }, { name: "Map", Icon: Map },
+  { name: "Paperclip", Icon: Paperclip }, { name: "BookOpen", Icon: BookOpen }, { name: "Book", Icon: Book },
+  { name: "Bookmark", Icon: Bookmark }, { name: "Clipboard", Icon: Clipboard }, { name: "ClipboardList", Icon: ClipboardList },
+  { name: "ScrollText", Icon: ScrollText }, { name: "Briefcase", Icon: Briefcase }, { name: "Building", Icon: Building },
+  { name: "Calendar", Icon: Calendar }, { name: "Clock", Icon: Clock }, { name: "Award", Icon: Award },
+  { name: "PartyPopper", Icon: PartyPopper }, { name: "Star", Icon: Star }, { name: "Heart", Icon: Heart },
+  { name: "ThumbsUp", Icon: ThumbsUp }, { name: "Zap", Icon: Zap }, { name: "Sparkles", Icon: Sparkles },
+  { name: "CreditCard", Icon: CreditCard }, { name: "DollarSign", Icon: DollarSign }, { name: "Wallet", Icon: Wallet },
+  { name: "TrendingUp", Icon: TrendingUp }, { name: "BarChart2", Icon: BarChart2 }, { name: "PieChart", Icon: PieChart },
+  { name: "Settings", Icon: Settings }, { name: "Code", Icon: Code }, { name: "Monitor", Icon: Monitor },
+  { name: "Smartphone", Icon: Smartphone }, { name: "Wifi", Icon: Wifi }, { name: "Key", Icon: Key },
+  { name: "Coffee", Icon: Coffee }, { name: "AlertCircle", Icon: AlertCircle }, { name: "Info", Icon: Info },
+  { name: "Shield", Icon: Shield }, { name: "ShieldCheck", Icon: ShieldCheck }, { name: "CheckCircle", Icon: CheckCircle },
+  { name: "Tag", Icon: Tag }, { name: "Wrench", Icon: Wrench }, { name: "Image", Icon: Image },
+  { name: "Camera", Icon: Camera }, { name: "Video", Icon: Video }, { name: "Music", Icon: Music },
+  { name: "Scissors", Icon: Scissors }, { name: "RefreshCw", Icon: RefreshCw },
+];
+
+const ICON_MAP = Object.fromEntries(ICON_OPTIONS.map(i => [i.name, i.Icon]));
 
 type Row = Record<string, unknown>;
 
@@ -156,6 +197,58 @@ function FormDrawer({ resource, initial, onClose }: { resource: ResourceDef; ini
   );
 }
 
+function IconPicker({ value, onChange }: { value: string; onChange: (v: unknown) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const CurrentIcon = value ? ICON_MAP[value] : null;
+  const filtered = ICON_OPTIONS.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-3 w-full rounded-xl border border-input bg-surface px-4 py-2.5 hover:border-primary focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-left">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-softer text-primary">
+          {CurrentIcon ? <CurrentIcon className="h-4 w-4" /> : <span className="text-muted-foreground text-xs">—</span>}
+        </span>
+        <span className="flex-1 text-sm">{value || <span className="text-muted-foreground">Selecionar ícone…</span>}</span>
+        {value && (
+          <span onClick={(e) => { e.stopPropagation(); onChange(""); }} className="text-muted-foreground hover:text-destructive p-1 rounded">
+            <X className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-2xl border border-border bg-background shadow-elevated p-3 space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar ícone…"
+              className="w-full rounded-lg border border-input bg-surface pl-8 pr-3 py-1.5 text-sm outline-none focus:border-primary" />
+          </div>
+          <div className="grid grid-cols-8 gap-1 max-h-52 overflow-y-auto">
+            {filtered.map(({ name, Icon }) => (
+              <button key={name} type="button" title={name}
+                onClick={() => { onChange(name); setOpen(false); setSearch(""); }}
+                className={`grid place-items-center h-9 w-full rounded-lg transition-colors ${value === name ? "bg-primary text-primary-foreground" : "hover:bg-primary-softer text-foreground"}`}>
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+            {filtered.length === 0 && <p className="col-span-8 py-4 text-center text-xs text-muted-foreground">Nenhum ícone encontrado.</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FieldInput({ field, value, onChange, folder }: { field: FieldDef; value: unknown; onChange: (v: unknown) => void; folder: string }) {
   const [uploading, setUploading] = useState(false);
   const commonInput = "w-full rounded-xl border border-input bg-surface px-4 py-2.5 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10";
@@ -182,6 +275,8 @@ function FieldInput({ field, value, onChange, folder }: { field: FieldDef; value
             <option value="">—</option>
             {field.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+        ) : field.type === "icon" ? (
+          <IconPicker value={String(value ?? "")} onChange={onChange} />
         ) : field.type === "tags" ? (
           <input type="text" value={Array.isArray(value) ? (value as string[]).join(", ") : ""} onChange={(e) => onChange(e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
             placeholder="tag1, tag2, tag3" className={commonInput} />

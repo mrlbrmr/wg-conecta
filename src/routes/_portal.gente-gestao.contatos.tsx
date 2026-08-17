@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_portal/gente-gestao/contatos")({
     const items = q.data ?? [];
     return (
       <>
-        <PageHeader eyebrow="Gente & Gestão" title="Fale com Gente & Gestão" description="Encontre a pessoa certa para cada assunto." backTo="/gente-gestao" />
+        <PageHeader eyebrow="Gente & Gestão" title="Fale com Gente & Gestão" description="Fale conosco para dúvidas sobre benefícios, férias, atestados e demais assuntos de Gente & Gestão." backTo="/gente-gestao" />
         {items.length === 0 ? <EmptyState title="Nenhum contato cadastrado." /> : (
           <div className="grid gap-3 sm:grid-cols-2">
             {items.map(c => (
