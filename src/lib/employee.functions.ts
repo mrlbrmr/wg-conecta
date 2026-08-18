@@ -228,6 +228,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
       employees: z.array(
         z.object({
           name: z.string().min(2).max(120),
+          email: z.string().email().optional(),
           department: z.string().max(120).optional(),
           job_title: z.string().max(120).optional(),
           admission_date: z.string().optional(),
@@ -238,20 +239,28 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Carrega nomes existentes para evitar duplicatas
+    // Carrega nomes e e-mails existentes para evitar duplicatas
     const { data: existing } = await supabaseAdmin
       .from("employees")
-      .select("name");
+      .select("name, email");
     const existingNames = new Set(
       (existing ?? []).map((e) => (e.name as string).toLowerCase().trim()),
+    );
+    const existingEmails = new Set(
+      (existing ?? []).filter((e) => e.email).map((e) => (e.email as string).toLowerCase().trim()),
     );
 
     const { randomUUID } = await import("crypto");
     const toInsert = data.employees
-      .filter((e) => !existingNames.has(e.name.toLowerCase().trim()))
+      .filter((e) => {
+        if (existingNames.has(e.name.toLowerCase().trim())) return false;
+        if (e.email && existingEmails.has(e.email.toLowerCase().trim())) return false;
+        return true;
+      })
       .map((e) => ({
         id: randomUUID(),
         name: e.name,
+        email: e.email ?? null,
         department: e.department ?? null,
         job_title: e.job_title ?? null,
         admission_date: e.admission_date ?? null,

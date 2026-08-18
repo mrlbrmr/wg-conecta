@@ -35,6 +35,7 @@ type Employee = {
 
 type ImportRow = {
   name: string;
+  email?: string;
   department?: string;
   job_title?: string;
   admission_date?: string;
@@ -588,8 +589,11 @@ function ImportModal({
         }
 
         const nome =
-          norm["nome"] || norm["name"] || norm["colaborador"];
+          norm["nome"] || norm["name"] || norm["colaborador"] || norm["quem_usa"];
         if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
+
+        const emailRaw =
+          norm["e-mail"] || norm["email"] || norm["e_mail"];
 
         const cargo =
           norm["cargo"] || norm["job_title"] || norm["função"] || norm["funcao"];
@@ -600,8 +604,11 @@ function ImportModal({
         const admissao =
           norm["admissão"] || norm["admissao"] || norm["admission_date"] || norm["data_admissão"] || norm["data_admissao"];
 
+        const emailStr = emailRaw ? String(emailRaw).trim().toLowerCase() : undefined;
+
         parsed.push({
           name: toTitleCase(String(nome).trim()),
+          email: emailStr && emailStr.includes("@") ? emailStr : undefined,
           department: filial ? String(filial).trim() : undefined,
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
           admission_date: xlDateToISO(admissao),
@@ -648,11 +655,10 @@ function ImportModal({
           <div className="rounded-xl bg-surface-muted p-4 text-sm space-y-1">
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
-              Nome, Cargo, Filial / Filiais / Unidade, Admissão / Data_admissão
+              Nome / Quem usa, E-mail, Cargo, Filial / Filiais / Unidade, Admissão / Data_admissão
             </p>
             <p className="text-muted-foreground text-xs mt-2">
-              Colaboradores já existentes no sistema (pelo nome) serão ignorados.
-              E-mail e acesso ao portal podem ser configurados depois.
+              Colaboradores já existentes (pelo nome ou e-mail) serão ignorados.
             </p>
           </div>
 
@@ -691,6 +697,7 @@ function ImportModal({
                     <thead className="bg-surface-muted text-left font-bold uppercase text-muted-foreground sticky top-0">
                       <tr>
                         <th className="px-3 py-2">Nome</th>
+                        <th className="px-3 py-2">E-mail</th>
                         <th className="px-3 py-2">Filial</th>
                         <th className="px-3 py-2">Cargo</th>
                         <th className="px-3 py-2">Admissão</th>
@@ -700,6 +707,7 @@ function ImportModal({
                       {rows.slice(0, 100).map((r, i) => (
                         <tr key={i} className="border-t border-border">
                           <td className="px-3 py-1.5 font-semibold">{r.name}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{r.email ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.department ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">
