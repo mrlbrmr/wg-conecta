@@ -138,8 +138,12 @@ function ColaboradoresPage() {
   const mBulk = useMutation({
     mutationFn: (rows: ImportRow[]) => doBulk({ data: { employees: rows } }),
     onSuccess: (res) => {
-      const r = res as { inserted: number; skipped: number };
-      toast.success(`${r.inserted} colaboradores importados${r.skipped > 0 ? ` · ${r.skipped} ignorados (já existiam)` : ""}.`);
+      const r = res as { updated: number; skipped: number };
+      toast.success(
+        r.updated > 0
+          ? `${r.updated} e-mail${r.updated > 1 ? "s" : ""} atualizado${r.updated > 1 ? "s" : ""}${r.skipped > 0 ? ` · ${r.skipped} sem correspondência` : ""}.`
+          : `Nenhum e-mail atualizado — nenhum nome da planilha bateu com o diretório.`,
+      );
       invalidate();
       setImporting(false);
     },
@@ -658,7 +662,7 @@ function ImportModal({
               Nome / Quem usa, E-mail, Cargo, Filial / Filiais / Unidade, Admissão / Data_admissão
             </p>
             <p className="text-muted-foreground text-xs mt-2">
-              Colaboradores já existentes (pelo nome ou e-mail) serão ignorados.
+              Atualiza o e-mail de colaboradores já cadastrados pelo nome. Nomes sem correspondência no diretório são ignorados.
             </p>
           </div>
 

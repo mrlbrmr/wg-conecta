@@ -239,46 +239,29 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Carrega nomes e e-mails existentes para evitar duplicatas
+    // Carrega colaboradores existentes indexados por nome
     const { data: existing } = await supabaseAdmin
       .from("employees")
-      .select("name, email");
-    const existingNames = new Set(
-      (existing ?? []).map((e) => (e.name as string).toLowerCase().trim()),
-    );
-    const existingEmails = new Set(
-      (existing ?? []).filter((e) => e.email).map((e) => (e.email as string).toLowerCase().trim()),
+      .select("id, name, email");
+
+    const existingByName = new Map(
+      (existing ?? []).map((e) => [(e.name as string).toLowerCase().trim(), e as { id: string; name: string; email: string | null }]),
     );
 
-    const { randomUUID } = await import("crypto");
-    const toInsert = data.employees
-      .filter((e) => {
-        if (existingNames.has(e.name.toLowerCase().trim())) return false;
-        if (e.email && existingEmails.has(e.email.toLowerCase().trim())) return false;
-        return true;
-      })
-      .map((e) => ({
-        id: randomUUID(),
-        name: e.name,
-        email: e.email ?? null,
-        department: e.department ?? null,
-        job_title: e.job_title ?? null,
-        admission_date: e.admission_date ?? null,
-        active: true,
-      }));
-
-    if (toInsert.length === 0) {
-      return { ok: true, inserted: 0, skipped: data.employees.length };
+    // Atualiza e-mail apenas de quem já existe pelo nome e ainda não tem e-mail
+    let updated = 0;
+    for (const emp of data.employees) {
+      if (!emp.email) continue;
+      const match = existingByName.get(emp.name.toLowerCase().trim());
+      if (!match || match.email) continue; // não existe ou já tem e-mail
+      const { error } = await supabaseAdmin
+        .from("employees")
+        .update({ email: emp.email, updated_at: new Date().toISOString() })
+        .eq("id", match.id);
+      if (!error) updated++;
     }
 
-    const { error } = await supabaseAdmin.from("employees").insert(toInsert);
-    if (error) throw new Error(error.message);
-
-    return {
-      ok: true,
-      inserted: toInsert.length,
-      skipped: data.employees.length - toInsert.length,
-    };
+    return { ok: true, updated, skipped: data.employees.length - updated };
   });
 
 export const updateOwnProfile = createServerFn({ method: "POST" })
