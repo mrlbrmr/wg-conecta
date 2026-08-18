@@ -608,7 +608,9 @@ function ImportModal({
         const admissao =
           norm["admissão"] || norm["admissao"] || norm["admission_date"] || norm["data_admissão"] || norm["data_admissao"];
 
-        const emailStr = emailRaw ? String(emailRaw).trim().toLowerCase() : undefined;
+        const emailStr = emailRaw
+          ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+          : undefined;
 
         parsed.push({
           name: toTitleCase(String(nome).trim()),
