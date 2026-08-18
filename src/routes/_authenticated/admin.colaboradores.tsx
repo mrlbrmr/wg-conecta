@@ -8,8 +8,8 @@ import {
   ShieldOff, Upload, UserPlus, X,
 } from "lucide-react";
 import {
+  addEmployee,
   bulkImportEmployees,
-  inviteEmployee,
   inviteExistingEmployee,
   listEmployees,
   resendEmployeeInvite,
@@ -77,7 +77,7 @@ function ColaboradoresPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["employees"] });
 
   const doList = useServerFn(listEmployees);
-  const doInvite = useServerFn(inviteEmployee);
+  const doAdd = useServerFn(addEmployee);
   const doInviteExisting = useServerFn(inviteExistingEmployee);
   const doResend = useServerFn(resendEmployeeInvite);
   const doReset = useServerFn(triggerEmployeePasswordReset);
@@ -86,22 +86,27 @@ function ColaboradoresPage() {
 
   const q = useQuery({ queryKey: ["employees"], queryFn: () => doList() });
 
-  const [inviting, setInviting] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [invitingExisting, setInvitingExisting] = useState<Employee | null>(null);
   const [importing, setImporting] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
 
-  const mInvite = useMutation({
-    mutationFn: (p: Parameters<typeof doInvite>[0]["data"]) => doInvite({ data: p }),
-    onSuccess: () => { toast.success("Convite enviado."); invalidate(); setInviting(false); },
+  const mAdd = useMutation({
+    mutationFn: (p: Parameters<typeof doAdd>[0]["data"]) => doAdd({ data: p }),
+    onSuccess: () => { toast.success("Colaborador cadastrado."); invalidate(); setAdding(false); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const mInviteExisting = useMutation({
     mutationFn: (p: { employeeId: string; email: string }) => doInviteExisting({ data: p }),
-    onSuccess: () => { toast.success("Convite enviado."); invalidate(); setInvitingExisting(null); },
+    onSuccess: (res) => {
+      const r = res as { linked?: boolean };
+      toast.success(r?.linked ? "Conta vinculada ao portal." : "Convite enviado.");
+      invalidate();
+      setInvitingExisting(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -177,10 +182,10 @@ function ColaboradoresPage() {
             <Upload className="h-4 w-4" /> Importar XLSX
           </button>
           <button
-            onClick={() => setInviting(true)}
+            onClick={() => setAdding(true)}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-95"
           >
-            <UserPlus className="h-4 w-4" /> Convidar colaborador
+            <UserPlus className="h-4 w-4" /> Cadastrar colaborador
           </button>
         </div>
       </div>
@@ -319,10 +324,13 @@ function ColaboradoresPage() {
         </p>
       )}
 
-      {/* Modal: novo colaborador com convite */}
-      {inviting && (
-        <Modal title="Convidar colaborador" onClose={() => setInviting(false)}>
-          <EmployeeForm onSubmit={(v) => mInvite.mutate(v)} loading={mInvite.isPending} />
+      {/* Modal: cadastrar colaborador no diretório (sem convite) */}
+      {adding && (
+        <Modal title="Cadastrar colaborador" onClose={() => setAdding(false)}>
+          <p className="text-xs text-muted-foreground mb-4">
+            O colaborador é adicionado ao diretório. Para dar acesso ao portal, use "Dar acesso" depois.
+          </p>
+          <EmployeeForm onSubmit={(v) => mAdd.mutate(v)} loading={mAdd.isPending} />
         </Modal>
       )}
 
@@ -401,7 +409,7 @@ function Modal({
 
 type EmployeeFormValues = {
   name: string;
-  email: string;
+  email?: string;
   department?: string;
   job_title?: string;
   phone?: string;
@@ -432,7 +440,7 @@ function EmployeeForm({
         e.preventDefault();
         onSubmit({
           name,
-          email,
+          email: email || undefined,
           department: department || undefined,
           job_title: jobTitle || undefined,
           phone: phone || undefined,
@@ -445,12 +453,12 @@ function EmployeeForm({
       <Field label="Nome completo">
         <input required value={name} onChange={(e) => setName(e.target.value)} className={inp} />
       </Field>
-      <Field label="E-mail">
+      <Field label="E-mail (opcional)">
         <input
           type="email"
-          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="nome@wgbaterias.com.br"
           className={inp}
         />
       </Field>
@@ -502,7 +510,7 @@ function EmployeeForm({
 
       <button
         type="submit"
-        disabled={loading || !name.trim() || !email.trim()}
+        disabled={loading || !name.trim()}
         className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 mt-2"
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />} Salvar

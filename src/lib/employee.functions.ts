@@ -44,16 +44,69 @@ export const inviteEmployee = createServerFn({ method: "POST" })
     return { ok: true, id: invited.user.id };
   });
 
-// Convida colaborador já existente no diretório (sem conta no portal)
+// Cadastra colaborador no diretório sem enviar convite (email opcional)
+export const addEmployee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    z.object({
+      name: z.string().min(2).max(120),
+      email: emailSchema.optional(),
+      department: z.string().max(120).optional(),
+      job_title: z.string().max(120).optional(),
+      phone: z.string().max(30).optional(),
+      birth_date: z.string().optional(),
+      admission_date: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { randomUUID } = await import("crypto");
+    const { error } = await supabaseAdmin.from("employees").insert({
+      id: randomUUID(),
+      name: data.name,
+      email: data.email ?? null,
+      department: data.department ?? null,
+      job_title: data.job_title ?? null,
+      phone: data.phone ?? null,
+      birth_date: data.birth_date ?? null,
+      admission_date: data.admission_date ?? null,
+      active: true,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Dá acesso ao portal para colaborador do diretório.
+// Se o e-mail já tiver conta no Auth, vincula direto (sem novo convite).
 export const inviteExistingEmployee = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({ employeeId: z.string().uuid(), email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
       redirectTo: CONFIRM_URL,
     });
-    if (error) throw new Error(error.message);
+
+    if (error) {
+      // Usuário já registrado — vincula a conta existente sem reenviar convite
+      if (error.message.toLowerCase().includes("already")) {
+        const { data: existing } = await supabaseAdmin
+          .from("admin_users")
+          .select("id")
+          .eq("email", data.email)
+          .single();
+        if (!existing) throw new Error(error.message);
+        const { error: dbErr } = await supabaseAdmin
+          .from("employees")
+          .update({ auth_user_id: existing.id, email: data.email, updated_at: new Date().toISOString() })
+          .eq("id", data.employeeId);
+        if (dbErr) throw new Error(dbErr.message);
+        return { ok: true, linked: true };
+      }
+      throw new Error(error.message);
+    }
+
     const { error: dbError } = await supabaseAdmin
       .from("employees")
       .update({
