@@ -193,9 +193,11 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
       (existing ?? []).map((e) => (e.name as string).toLowerCase().trim()),
     );
 
+    const { randomUUID } = await import("crypto");
     const toInsert = data.employees
       .filter((e) => !existingNames.has(e.name.toLowerCase().trim()))
       .map((e) => ({
+        id: randomUUID(),
         name: e.name,
         department: e.department ?? null,
         job_title: e.job_title ?? null,
