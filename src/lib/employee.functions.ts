@@ -7,6 +7,7 @@ const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
 
 const emailSchema = z.string().email();
 
+// Cria convite + insere novo colaborador (sem registro prévio no diretório)
 export const inviteEmployee = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
@@ -29,6 +30,7 @@ export const inviteEmployee = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const { error: dbError } = await supabaseAdmin.from("employees").insert({
       id: invited.user.id,
+      auth_user_id: invited.user.id,
       name: data.name,
       email: data.email,
       department: data.department ?? null,
@@ -42,6 +44,29 @@ export const inviteEmployee = createServerFn({ method: "POST" })
     return { ok: true, id: invited.user.id };
   });
 
+// Convida colaborador já existente no diretório (sem conta no portal)
+export const inviteExistingEmployee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ employeeId: z.string().uuid(), email: emailSchema }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
+      redirectTo: CONFIRM_URL,
+    });
+    if (error) throw new Error(error.message);
+    const { error: dbError } = await supabaseAdmin
+      .from("employees")
+      .update({
+        auth_user_id: invited.user.id,
+        email: data.email,
+        invited_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.employeeId);
+    if (dbError) throw new Error(dbError.message);
+    return { ok: true };
+  });
+
 export const resendEmployeeInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({ employeeId: z.string().uuid() }))
@@ -53,7 +78,7 @@ export const resendEmployeeInvite = createServerFn({ method: "POST" })
       .eq("id", data.employeeId)
       .single();
     if (fetchErr || !emp) throw new Error("Colaborador não encontrado.");
-    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emp.email, {
+    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(emp.email!, {
       redirectTo: CONFIRM_URL,
     });
     if (error) throw new Error(error.message);
@@ -95,14 +120,26 @@ export const updateEmployee = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const authPatch: { email?: string; ban_duration?: string } = {};
-    if (data.email) authPatch.email = data.email;
-    if (data.active === false) authPatch.ban_duration = "876600h";
-    if (data.active === true) authPatch.ban_duration = "none";
-    if (Object.keys(authPatch).length > 0) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, authPatch);
-      if (error) throw new Error(error.message);
+
+    // Busca auth_user_id antes de qualquer operação no Auth
+    const { data: existing } = await supabaseAdmin
+      .from("employees")
+      .select("auth_user_id")
+      .eq("id", data.id)
+      .single();
+    const authUserId = existing?.auth_user_id as string | null | undefined;
+
+    if (authUserId) {
+      const authPatch: { email?: string; ban_duration?: string } = {};
+      if (data.email) authPatch.email = data.email;
+      if (data.active === false) authPatch.ban_duration = "876600h";
+      if (data.active === true) authPatch.ban_duration = "none";
+      if (Object.keys(authPatch).length > 0) {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(authUserId, authPatch);
+        if (error) throw new Error(error.message);
+      }
     }
+
     const patch = {
       updated_at: new Date().toISOString(),
       ...(data.name !== undefined && { name: data.name }),
@@ -125,10 +162,59 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select("id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at")
+      .select("id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at")
       .order("name");
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+export const bulkImportEmployees = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    z.object({
+      employees: z.array(
+        z.object({
+          name: z.string().min(2).max(120),
+          department: z.string().max(120).optional(),
+          job_title: z.string().max(120).optional(),
+          admission_date: z.string().optional(),
+        }),
+      ),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Carrega nomes existentes para evitar duplicatas
+    const { data: existing } = await supabaseAdmin
+      .from("employees")
+      .select("name");
+    const existingNames = new Set(
+      (existing ?? []).map((e) => (e.name as string).toLowerCase().trim()),
+    );
+
+    const toInsert = data.employees
+      .filter((e) => !existingNames.has(e.name.toLowerCase().trim()))
+      .map((e) => ({
+        name: e.name,
+        department: e.department ?? null,
+        job_title: e.job_title ?? null,
+        admission_date: e.admission_date ?? null,
+        active: true,
+      }));
+
+    if (toInsert.length === 0) {
+      return { ok: true, inserted: 0, skipped: data.employees.length };
+    }
+
+    const { error } = await supabaseAdmin.from("employees").insert(toInsert);
+    if (error) throw new Error(error.message);
+
+    return {
+      ok: true,
+      inserted: toInsert.length,
+      skipped: data.employees.length - toInsert.length,
+    };
   });
 
 export const updateOwnProfile = createServerFn({ method: "POST" })
@@ -149,7 +235,7 @@ export const updateOwnProfile = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("employees")
       .update({ name: data.name, email: data.email, updated_at: new Date().toISOString() })
-      .eq("id", userId);
+      .eq("auth_user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
