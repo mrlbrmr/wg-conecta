@@ -15,6 +15,9 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       email: emailSchema,
       department: z.string().max(120).optional(),
       job_title: z.string().max(120).optional(),
+      phone: z.string().max(30).optional(),
+      birth_date: z.string().optional(),
+      admission_date: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -30,6 +33,9 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       email: data.email,
       department: data.department ?? null,
       job_title: data.job_title ?? null,
+      phone: data.phone ?? null,
+      birth_date: data.birth_date ?? null,
+      admission_date: data.admission_date ?? null,
       invited_at: new Date().toISOString(),
     });
     if (dbError) throw new Error(dbError.message);
@@ -81,6 +87,9 @@ export const updateEmployee = createServerFn({ method: "POST" })
       email: emailSchema.optional(),
       department: z.string().max(120).nullish(),
       job_title: z.string().max(120).nullish(),
+      phone: z.string().max(30).nullish(),
+      birth_date: z.string().nullish(),
+      admission_date: z.string().nullish(),
       active: z.boolean().optional(),
     }),
   )
@@ -100,6 +109,9 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.email !== undefined && { email: data.email }),
       ...(data.department !== undefined && { department: data.department }),
       ...(data.job_title !== undefined && { job_title: data.job_title }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.birth_date !== undefined && { birth_date: data.birth_date }),
+      ...(data.admission_date !== undefined && { admission_date: data.admission_date }),
       ...(data.active !== undefined && { active: data.active }),
     };
     const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", data.id);
@@ -113,7 +125,7 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select("id, name, email, department, job_title, active, invited_at, created_at")
+      .select("id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at")
       .order("name");
     if (error) throw new Error(error.message);
     return data ?? [];
