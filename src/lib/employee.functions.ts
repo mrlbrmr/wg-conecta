@@ -239,21 +239,42 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Carrega colaboradores existentes indexados por nome
+    // Carrega colaboradores existentes
     const { data: existing } = await supabaseAdmin
       .from("employees")
       .select("id, name, email");
 
-    const existingByName = new Map(
-      (existing ?? []).map((e) => [(e.name as string).toLowerCase().trim(), e as { id: string; name: string; email: string | null }]),
+    type Emp = { id: string; name: string; email: string | null };
+    const employees = (existing ?? []) as Emp[];
+
+    // Índice por nome completo (exato)
+    const byFullName = new Map(
+      employees.map((e) => [e.name.toLowerCase().trim(), e]),
     );
 
-    // Atualiza e-mail apenas de quem já existe pelo nome e ainda não tem e-mail
+    // Índice por primeiro nome → null se ambíguo (mais de um colaborador)
+    const byFirstName = new Map<string, Emp | null>();
+    for (const e of employees) {
+      const first = e.name.toLowerCase().trim().split(" ")[0];
+      byFirstName.set(first, byFirstName.has(first) ? null : e);
+    }
+
+    const findMatch = (name: string): Emp | null => {
+      const key = name.toLowerCase().trim();
+      // 1. Nome exato
+      const exact = byFullName.get(key);
+      if (exact) return exact;
+      // 2. Primeiro nome (só se não ambíguo)
+      const first = key.split(" ")[0];
+      return byFirstName.get(first) ?? null;
+    };
+
+    // Atualiza e-mail apenas de quem já existe e ainda não tem e-mail
     let updated = 0;
     for (const emp of data.employees) {
       if (!emp.email) continue;
-      const match = existingByName.get(emp.name.toLowerCase().trim());
-      if (!match || match.email) continue; // não existe ou já tem e-mail
+      const match = findMatch(emp.name);
+      if (!match || match.email) continue;
       const { error } = await supabaseAdmin
         .from("employees")
         .update({ email: emp.email, updated_at: new Date().toISOString() })
