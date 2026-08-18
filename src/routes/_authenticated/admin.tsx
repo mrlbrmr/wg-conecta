@@ -69,7 +69,8 @@ function AdminLayout() {
                 <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{sec}</div>
                 <div className="space-y-0.5">
                   {items.map(it => {
-                    const isResource = it.key !== "" && it.key !== "usuarios" && it.key !== "configuracoes";
+                    const EXTRA_KEYS = new Set(["usuarios", "configuracoes", "colaboradores"]);
+                    const isResource = it.key !== "" && !EXTRA_KEYS.has(it.key);
                     const active = it.key === "" ? pathname === "/admin"
                       : isResource ? pathname.endsWith(`/recurso/${it.key}`)
                       : pathname.endsWith(`/${it.key}`);
@@ -83,6 +84,7 @@ function AdminLayout() {
                     }
                     const to = it.key === "" ? "/admin"
                       : it.key === "usuarios" ? "/admin/usuarios"
+                      : it.key === "colaboradores" ? "/admin/colaboradores"
                       : "/admin/configuracoes";
                     return (
                       <Link key={it.key || "root"} to={to} className={className}>
