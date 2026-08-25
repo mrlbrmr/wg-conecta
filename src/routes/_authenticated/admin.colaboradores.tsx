@@ -393,10 +393,14 @@ function ColaboradoresPage() {
       {/* Modal: cadastrar colaborador no diretório (sem convite) */}
       {adding && (
         <Modal title="Cadastrar colaborador" onClose={() => setAdding(false)}>
-          <p className="text-xs text-muted-foreground mb-4">
+          <p className="px-6 pt-4 text-xs text-slate-500">
             O colaborador é adicionado ao diretório. Para dar acesso ao portal, use "Dar acesso" depois.
           </p>
-          <EmployeeForm onSubmit={(v) => mAdd.mutate(v)} loading={mAdd.isPending} />
+          <EmployeeForm
+            onSubmit={(v) => mAdd.mutate(v)}
+            onCancel={() => setAdding(false)}
+            loading={mAdd.isPending}
+          />
         </Modal>
       )}
 
@@ -406,6 +410,7 @@ function ColaboradoresPage() {
           <EmployeeForm
             initial={editing}
             onSubmit={(v) => mUpdate.mutate({ id: editing.id, ...v })}
+            onCancel={() => setEditing(null)}
             loading={mUpdate.isPending}
           />
         </Modal>
@@ -417,15 +422,17 @@ function ColaboradoresPage() {
           title={`Dar acesso — ${invitingExisting.name}`}
           onClose={() => setInvitingExisting(null)}
         >
-          <p className="text-sm text-muted-foreground mb-4">
-            Informe o e-mail deste colaborador para enviar o convite de acesso ao Portal.
-          </p>
-          <InviteExistingForm
-            onSubmit={(email) =>
-              mInviteExisting.mutate({ employeeId: invitingExisting.id, email })
-            }
-            loading={mInviteExisting.isPending}
-          />
+          <div className="px-6 py-5">
+            <p className="text-sm text-slate-500 mb-4">
+              Informe o e-mail deste colaborador para enviar o convite de acesso ao Portal.
+            </p>
+            <InviteExistingForm
+              onSubmit={(email) =>
+                mInviteExisting.mutate({ employeeId: invitingExisting.id, email })
+              }
+              loading={mInviteExisting.isPending}
+            />
+          </div>
         </Modal>
       )}
 
@@ -454,20 +461,23 @@ function Modal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-background rounded-t-3xl md:rounded-3xl shadow-elevated max-h-[95vh] overflow-y-auto"
+        className="w-full max-w-lg bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[95vh] flex flex-col"
       >
-        <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-          <h2 className="font-bold">{title}</h2>
-          <button onClick={onClose}>
+        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
@@ -486,10 +496,12 @@ type EmployeeFormValues = {
 function EmployeeForm({
   initial,
   onSubmit,
+  onCancel,
   loading,
 }: {
   initial?: Partial<Employee>;
   onSubmit: (v: EmployeeFormValues) => void;
+  onCancel: () => void;
   loading: boolean;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
@@ -502,6 +514,7 @@ function EmployeeForm({
 
   return (
     <form
+      id="employee-form"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit({
@@ -514,73 +527,92 @@ function EmployeeForm({
           admission_date: admissionDate || undefined,
         });
       }}
-      className="space-y-3"
     >
-      <Field label="Nome completo">
-        <input required value={name} onChange={(e) => setName(e.target.value)} className={inp} />
-      </Field>
-      <Field label="E-mail (opcional)">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="nome@wgbaterias.com.br"
-          className={inp}
-        />
-      </Field>
+      {/* Corpo do formulário */}
+      <div className="px-6 pt-5 pb-2">
+        {/* Identificação */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <Field label="Nome completo">
+              <input required value={name} onChange={(e) => setName(e.target.value)} className={inp} />
+            </Field>
+          </div>
+          <div className="md:col-span-2">
+            <Field label="E-mail">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome@wgbaterias.com.br"
+                className={inp}
+              />
+            </Field>
+          </div>
+        </div>
 
-      <div className="pt-1 pb-0.5">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Dados profissionais
-        </span>
+        {/* Dados profissionais */}
+        <div className="mt-6 mb-4 border-b border-slate-100 pb-2">
+          <h3 className="text-base font-semibold text-slate-800">Dados profissionais</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Filial / Departamento">
+            <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inp} />
+          </Field>
+          <Field label="Cargo">
+            <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
+          </Field>
+          <Field label="Data de admissão">
+            <input
+              type="date"
+              value={admissionDate}
+              onChange={(e) => setAdmissionDate(e.target.value)}
+              className={inp}
+            />
+          </Field>
+        </div>
+
+        {/* Dados pessoais */}
+        <div className="mt-6 mb-4 border-b border-slate-100 pb-2">
+          <h3 className="text-base font-semibold text-slate-800">Dados pessoais</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+          <Field label="Telefone / WhatsApp">
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="(00) 00000-0000"
+              className={inp}
+            />
+          </Field>
+          <Field label="Data de nascimento">
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className={inp}
+            />
+          </Field>
+        </div>
       </div>
 
-      <Field label="Filial / Departamento">
-        <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inp} />
-      </Field>
-      <Field label="Cargo">
-        <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
-      </Field>
-      <Field label="Data de admissão">
-        <input
-          type="date"
-          value={admissionDate}
-          onChange={(e) => setAdmissionDate(e.target.value)}
-          className={inp}
-        />
-      </Field>
-
-      <div className="pt-1 pb-0.5">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Dados pessoais
-        </span>
+      {/* Rodapé fixo */}
+      <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex justify-end gap-2 rounded-b-2xl">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={loading || !name.trim()}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+        >
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
+        </button>
       </div>
-
-      <Field label="Telefone / WhatsApp">
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="(00) 00000-0000"
-          className={inp}
-        />
-      </Field>
-      <Field label="Data de nascimento">
-        <input
-          type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          className={inp}
-        />
-      </Field>
-
-      <button
-        type="submit"
-        disabled={loading || !name.trim()}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 mt-2"
-      >
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
-      </button>
     </form>
   );
 }
@@ -832,14 +864,12 @@ function ImportModal({
 /* ─── Utilitários de UI ────────────────────────────────────────────────────── */
 
 const inp =
-  "w-full rounded-xl border border-input bg-surface px-4 py-2.5 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10";
+  "w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-1 focus:ring-green-500";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
+      <span className="text-sm font-medium text-slate-700">{label}</span>
       <div className="mt-1.5">{children}</div>
     </label>
   );
