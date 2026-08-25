@@ -904,14 +904,59 @@ function normalizeForMatch(s: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function nameFromFilename(filename: string): string {
-  // "Alessandra Escudero - SP.jpg" → "Alessandra Escudero"
   const noExt = filename.replace(/\.[^.]+$/, "");
-  const dashIdx = noExt.lastIndexOf(" - ");
-  return dashIdx !== -1 ? noExt.slice(0, dashIdx).trim() : noExt.trim();
+  // Aceita " - SP", " -SP", " - SJP", " -SJP" etc. (espaço + traço + letras maiúsculas no final)
+  const m = noExt.match(/^(.*?)\s+-\s*[A-Z]{2,}[A-Z0-9]*\s*$/);
+  return m ? m[1].trim() : noExt.trim();
+}
+
+// Palavras funcionais que não devem ser usadas como tokens de match
+const STOP_WORDS = new Set(["da", "de", "do", "das", "dos", "e", "a", "o", "em", "di"]);
+
+function findEmployee(name: string, employees: Employee[]): Employee | null {
+  const norm = normalizeForMatch(name);
+  const normWords = norm.split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+
+  // 1) Exato
+  for (const e of employees) {
+    if (normalizeForMatch(e.name) === norm) return e;
+  }
+
+  if (normWords.length === 0) return null;
+
+  // 2) Todas as palavras do arquivo estão no nome do colaborador
+  //    (ex: "Jose Mendes" ⊆ "Jose Luiz Mendes")
+  for (const e of employees) {
+    const empWords = normalizeForMatch(e.name).split(" ");
+    if (normWords.every((w) => empWords.includes(w))) return e;
+  }
+
+  // 3) Primeiro + último token coincidem
+  //    (ex: "Jose Benvindo" vs "Jose Willian da Silva Benvindo")
+  if (normWords.length >= 2) {
+    const first = normWords[0];
+    const last = normWords[normWords.length - 1];
+    for (const e of employees) {
+      const empWords = normalizeForMatch(e.name).split(" ");
+      if (empWords[0] === first && empWords[empWords.length - 1] === last) return e;
+    }
+  }
+
+  // 4) Nome único no arquivo → único colaborador com esse primeiro nome
+  if (normWords.length === 1) {
+    const candidates = employees.filter(
+      (e) => normalizeForMatch(e.name).split(" ")[0] === normWords[0],
+    );
+    if (candidates.length === 1) return candidates[0];
+  }
+
+  return null;
 }
 
 function PhotoImportModal({
@@ -927,17 +972,13 @@ function PhotoImportModal({
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
 
-  const employeeMap = new Map(
-    employees.map((e) => [normalizeForMatch(e.name), e]),
-  );
-
   function handleFiles(files: FileList | null) {
     if (!files) return;
     const list: PhotoMatch[] = [];
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) continue;
       const name = nameFromFilename(file.name);
-      const employee = employeeMap.get(normalizeForMatch(name)) ?? null;
+      const employee = findEmployee(name, employees);
       list.push({ file, preview: URL.createObjectURL(file), employee, status: "idle" });
     }
     list.sort((a, b) => {
