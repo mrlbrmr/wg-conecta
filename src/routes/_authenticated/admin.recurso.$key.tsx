@@ -4,14 +4,18 @@ import { FileSpreadsheet } from "lucide-react";
 import { AdminCrud } from "@/components/admin-crud";
 import { findResource } from "@/lib/admin-resources";
 import { ImportSpreadsheet } from "@/components/import-spreadsheet";
+import { AniversariantesAdmin } from "@/components/aniversariantes-admin";
 
 export const Route = createFileRoute("/_authenticated/admin/recurso/$key")({
   component: () => {
     const { key } = Route.useParams();
+
+    if (key === "aniversariantes") return <AniversariantesAdmin />;
+
     const res = findResource(key);
     const [importing, setImporting] = useState(false);
     if (!res) return <div>Recurso não encontrado</div>;
-    const importable = res.table === "birthdays" || res.table === "work_anniversaries";
+    const importable = res.table === "work_anniversaries";
     return (
       <div>
         {importable && (
