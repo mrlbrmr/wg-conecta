@@ -43,11 +43,12 @@ function calcTenure(admissionDate: string): Tenure {
 }
 
 function TenureBadge({ years }: { years: number }) {
-  if (years < 1) return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">Menos de 1 ano</span>;
-  if (years < 5) return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">{years} ano{years !== 1 ? "s" : ""}</span>;
-  if (years < 10) return <span className="chip-success text-[11px]">{years} anos</span>;
-  if (years < 20) return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700">{years} anos</span>;
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">{years} anos</span>;
+  const base = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium";
+  if (years < 1) return <span className={`${base} bg-slate-100 text-slate-500`}>Menos de 1 ano</span>;
+  const isMilestone = years > 0 && years % 5 === 0;
+  const label = `${years} ano${years !== 1 ? "s" : ""}`;
+  if (isMilestone) return <span className={`${base} bg-indigo-100 text-indigo-700 font-semibold`}>{label}</span>;
+  return <span className={`${base} bg-slate-100 text-slate-700`}>{label}</span>;
 }
 
 function initials(name: string): string {
