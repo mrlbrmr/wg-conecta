@@ -911,47 +911,71 @@ function normalizeForMatch(s: string): string {
 
 function nameFromFilename(filename: string): string {
   const noExt = filename.replace(/\.[^.]+$/, "");
-  // Aceita " - SP", " -SP", " - SJP", " -SJP" etc. (espaço + traço + letras maiúsculas no final)
-  const m = noExt.match(/^(.*?)\s+-\s*[A-Z]{2,}[A-Z0-9]*\s*$/);
-  return m ? m[1].trim() : noExt.trim();
+  // Estratégia 1: último " - " (cobre "Nome - SP", "Nome - MGÁ", "Nome - SJP CWG")
+  const lastDash = noExt.lastIndexOf(" - ");
+  if (lastDash > 0) return noExt.slice(0, lastDash).trim();
+  // Estratégia 2: " -SUFIXO" sem espaço após o traço (ex: "Nome -SJP")
+  const m = noExt.match(/^(.*?)\s+-\S/);
+  if (m) return m[1].trim();
+  return noExt.trim();
 }
 
-// Palavras funcionais que não devem ser usadas como tokens de match
+// Palavras funcionais ignoradas no matching por tokens
 const STOP_WORDS = new Set(["da", "de", "do", "das", "dos", "e", "a", "o", "em", "di"]);
+
+function contentWords(norm: string): string[] {
+  return norm.split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+}
 
 function findEmployee(name: string, employees: Employee[]): Employee | null {
   const norm = normalizeForMatch(name);
-  const normWords = norm.split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+  const fileWords = contentWords(norm);
 
-  // 1) Exato
+  // 1) Exato normalizado
   for (const e of employees) {
     if (normalizeForMatch(e.name) === norm) return e;
   }
 
-  if (normWords.length === 0) return null;
+  if (fileWords.length === 0) return null;
 
-  // 2) Todas as palavras do arquivo estão no nome do colaborador
-  //    (ex: "Jose Mendes" ⊆ "Jose Luiz Mendes")
+  // 2) Todas as palavras do arquivo ⊆ palavras do colaborador
+  //    "Jose Mendes" → "Jose Luiz Mendes"
   for (const e of employees) {
     const empWords = normalizeForMatch(e.name).split(" ");
-    if (normWords.every((w) => empWords.includes(w))) return e;
+    if (fileWords.every((w) => empWords.includes(w))) return e;
   }
 
-  // 3) Primeiro + último token coincidem
-  //    (ex: "Jose Benvindo" vs "Jose Willian da Silva Benvindo")
-  if (normWords.length >= 2) {
-    const first = normWords[0];
-    const last = normWords[normWords.length - 1];
+  // 3) Todas as palavras do colaborador ⊆ palavras do arquivo (nome mais curto no banco)
+  //    DB: "Priscila Dutra" → arquivo: "Priscila Amorim Dutra"
+  for (const e of employees) {
+    const empContent = contentWords(normalizeForMatch(e.name));
+    if (empContent.length >= 2 && empContent.every((w) => fileWords.includes(w))) return e;
+  }
+
+  // 4) Primeiro + último token coincidem
+  //    "Jose Benvindo" → "Jose Willian da Silva Benvindo"
+  if (fileWords.length >= 2) {
+    const first = fileWords[0];
+    const last = fileWords[fileWords.length - 1];
     for (const e of employees) {
       const empWords = normalizeForMatch(e.name).split(" ");
       if (empWords[0] === first && empWords[empWords.length - 1] === last) return e;
     }
   }
 
-  // 4) Nome único no arquivo → único colaborador com esse primeiro nome
-  if (normWords.length === 1) {
+  // 5) Pelo menos 3 palavras de conteúdo em comum (sem ambiguidade)
+  if (fileWords.length >= 3) {
+    const candidates = employees.filter((e) => {
+      const empWords = normalizeForMatch(e.name).split(" ");
+      return fileWords.filter((w) => empWords.includes(w)).length >= 3;
+    });
+    if (candidates.length === 1) return candidates[0];
+  }
+
+  // 6) Nome único no arquivo → único colaborador com esse primeiro nome
+  if (fileWords.length === 1) {
     const candidates = employees.filter(
-      (e) => normalizeForMatch(e.name).split(" ")[0] === normWords[0],
+      (e) => normalizeForMatch(e.name).split(" ")[0] === fileWords[0],
     );
     if (candidates.length === 1) return candidates[0];
   }
