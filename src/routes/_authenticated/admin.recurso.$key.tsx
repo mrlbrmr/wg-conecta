@@ -5,12 +5,14 @@ import { AdminCrud } from "@/components/admin-crud";
 import { findResource } from "@/lib/admin-resources";
 import { ImportSpreadsheet } from "@/components/import-spreadsheet";
 import { AniversariantesAdmin } from "@/components/aniversariantes-admin";
+import { TempoDeCasaAdmin } from "@/components/tempo-de-casa-admin";
 
 export const Route = createFileRoute("/_authenticated/admin/recurso/$key")({
   component: () => {
     const { key } = Route.useParams();
 
     if (key === "aniversariantes") return <AniversariantesAdmin />;
+    if (key === "tempo-de-casa") return <TempoDeCasaAdmin />;
 
     const res = findResource(key);
     const [importing, setImporting] = useState(false);

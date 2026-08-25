@@ -232,19 +232,29 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           department: z.string().max(120).optional(),
           job_title: z.string().max(120).optional(),
           admission_date: z.string().optional(),
+          birth_date: z.string().optional(),
         }),
       ),
     }),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { randomUUID } = await import("crypto");
 
     // Carrega colaboradores existentes
     const { data: existing } = await supabaseAdmin
       .from("employees")
-      .select("id, name, email");
+      .select("id, name, email, birth_date, admission_date, department, job_title");
 
-    type Emp = { id: string; name: string; email: string | null };
+    type Emp = {
+      id: string;
+      name: string;
+      email: string | null;
+      birth_date: string | null;
+      admission_date: string | null;
+      department: string | null;
+      job_title: string | null;
+    };
     const employees = (existing ?? []) as Emp[];
 
     // Índice por nome completo (exato)
@@ -261,28 +271,50 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
 
     const findMatch = (name: string): Emp | null => {
       const key = name.toLowerCase().trim();
-      // 1. Nome exato
       const exact = byFullName.get(key);
       if (exact) return exact;
-      // 2. Primeiro nome (só se não ambíguo)
       const first = key.split(" ")[0];
       return byFirstName.get(first) ?? null;
     };
 
-    // Atualiza e-mail apenas de quem já existe e ainda não tem e-mail
     let updated = 0;
+    let inserted = 0;
+    let skipped = 0;
+
     for (const emp of data.employees) {
-      if (!emp.email) continue;
       const match = findMatch(emp.name);
-      if (!match || match.email) continue;
-      const { error } = await supabaseAdmin
-        .from("employees")
-        .update({ email: emp.email, updated_at: new Date().toISOString() })
-        .eq("id", match.id);
-      if (!error) updated++;
+
+      if (match) {
+        // Atualiza campos ausentes/novos — nunca sobrescreve dados existentes sem motivo
+        const patch: Record<string, unknown> = {};
+        if (emp.email && !match.email) patch.email = emp.email;
+        if (emp.birth_date && !match.birth_date) patch.birth_date = emp.birth_date;
+        if (emp.admission_date && !match.admission_date) patch.admission_date = emp.admission_date;
+        if (emp.department) patch.department = emp.department;
+        if (emp.job_title) patch.job_title = emp.job_title;
+
+        if (Object.keys(patch).length === 0) { skipped++; continue; }
+
+        patch.updated_at = new Date().toISOString();
+        const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", match.id);
+        if (!error) updated++;
+      } else {
+        // Insere novo colaborador sem conta de acesso
+        const { error } = await supabaseAdmin.from("employees").insert({
+          id: randomUUID(),
+          name: emp.name,
+          email: emp.email ?? null,
+          department: emp.department ?? null,
+          job_title: emp.job_title ?? null,
+          birth_date: emp.birth_date ?? null,
+          admission_date: emp.admission_date ?? null,
+          active: true,
+        });
+        if (!error) inserted++;
+      }
     }
 
-    return { ok: true, updated, skipped: data.employees.length - updated };
+    return { ok: true, updated, inserted, skipped };
   });
 
 export const updateOwnProfile = createServerFn({ method: "POST" })

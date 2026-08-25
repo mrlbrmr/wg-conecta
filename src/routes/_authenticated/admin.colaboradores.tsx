@@ -39,6 +39,7 @@ type ImportRow = {
   department?: string;
   job_title?: string;
   admission_date?: string;
+  birth_date?: string;
 };
 
 type StatusFilter = "todos" | "ativos" | "inativos";
@@ -138,12 +139,12 @@ function ColaboradoresPage() {
   const mBulk = useMutation({
     mutationFn: (rows: ImportRow[]) => doBulk({ data: { employees: rows } }),
     onSuccess: (res) => {
-      const r = res as { updated: number; skipped: number };
-      toast.success(
-        r.updated > 0
-          ? `${r.updated} e-mail${r.updated > 1 ? "s" : ""} atualizado${r.updated > 1 ? "s" : ""}${r.skipped > 0 ? ` · ${r.skipped} sem correspondência` : ""}.`
-          : `Nenhum e-mail atualizado — nenhum nome da planilha bateu com o diretório.`,
-      );
+      const r = res as { updated: number; inserted: number; skipped: number };
+      const parts: string[] = [];
+      if (r.inserted > 0) parts.push(`${r.inserted} inserido${r.inserted !== 1 ? "s" : ""}`);
+      if (r.updated > 0) parts.push(`${r.updated} atualizado${r.updated !== 1 ? "s" : ""}`);
+      if (r.skipped > 0) parts.push(`${r.skipped} sem alteração`);
+      toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Nenhum registro processado.");
       invalidate();
       setImporting(false);
     },
@@ -607,11 +608,26 @@ function ImportModal({
           norm["filial"] || norm["filiais"] || norm["unidade"] || norm["department"];
 
         const admissao =
-          norm["admissão"] || norm["admissao"] || norm["admission_date"] || norm["data_admissão"] || norm["data_admissao"];
+          norm["admissão"] || norm["admissao"] || norm["admission_date"] ||
+          norm["data_admissão"] || norm["data_admissao"] || norm["dt._admissão"] || norm["dt._admissao"];
+
+        const dataNasc =
+          norm["data_nasc."] || norm["dt._nasc."] || norm["data_nasc"] ||
+          norm["dt_nasc"] || norm["data_nascimento"] || norm["data_de_nascimento"] ||
+          norm["nascimento"] || norm["birth_date"];
 
         const emailStr = emailRaw
           ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
           : undefined;
+
+        const birthDateISO = (() => {
+          if (!dataNasc) return undefined;
+          const s = String(dataNasc).trim();
+          const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+          if (typeof dataNasc === "number") return xlDateToISO(dataNasc);
+          return undefined;
+        })();
 
         parsed.push({
           name: toTitleCase(String(nome).trim()),
@@ -619,6 +635,7 @@ function ImportModal({
           department: filial ? String(filial).trim() : undefined,
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
           admission_date: xlDateToISO(admissao),
+          birth_date: birthDateISO,
         });
       }
 
@@ -662,10 +679,10 @@ function ImportModal({
           <div className="rounded-xl bg-surface-muted p-4 text-sm space-y-1">
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
-              Nome / Quem usa, E-mail, Cargo, Filial / Filiais / Unidade, Admissão / Data_admissão
+              Nome / Quem usa, E-mail, Cargo, Filial / Unidade, Admissão / Data_admissão, Data Nasc. / Data_nascimento
             </p>
             <p className="text-muted-foreground text-xs mt-2">
-              Atualiza o e-mail de colaboradores já cadastrados pelo nome. Nomes sem correspondência no diretório são ignorados.
+              Insere novos colaboradores e atualiza os já cadastrados (por nome). Datas de admissão e nascimento são importadas automaticamente.
             </p>
           </div>
 
@@ -708,6 +725,7 @@ function ImportModal({
                         <th className="px-3 py-2">Filial</th>
                         <th className="px-3 py-2">Cargo</th>
                         <th className="px-3 py-2">Admissão</th>
+                        <th className="px-3 py-2">Nasc.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -719,6 +737,9 @@ function ImportModal({
                           <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">
                             {r.admission_date ? fmtDate(r.admission_date) : "—"}
+                          </td>
+                          <td className="px-3 py-1.5 text-muted-foreground">
+                            {r.birth_date ? fmtDate(r.birth_date, "dd/mm") : "—"}
                           </td>
                         </tr>
                       ))}
