@@ -586,56 +586,62 @@ function ImportModal({
       const ws = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
 
+      // Normaliza chave de coluna: minúsculo, sem acentos, sem qualquer pontuação/espaço.
+      // "Data Nasc." → "datanasc", "Dt. Admissão" → "dtadmissao", "E-mail" → "email"
+      const nk = (k: string) =>
+        k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
+
+      // Converte string DD/MM/YYYY, YYYY-MM-DD ou serial Excel → ISO YYYY-MM-DD
+      const parseDateISO = (val: unknown): string | undefined => {
+        if (!val) return undefined;
+        const s = String(val).trim();
+        const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        if (typeof val === "number") return xlDateToISO(val);
+        return undefined;
+      };
+
       const parsed: ImportRow[] = [];
       for (const r of raw) {
-        // normaliza chaves
         const norm: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(r)) {
-          norm[k.toLowerCase().trim().replace(/\s+/g, "_")] = v;
+          norm[nk(k)] = v;
         }
 
         const nome =
-          norm["nome"] || norm["name"] || norm["colaborador"] || norm["quem_usa"];
+          norm["nome"] || norm["name"] || norm["colaborador"] || norm["quemusai"] || norm["quemusao"] || norm["quemusa"];
         if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
 
         const emailRaw =
-          norm["e-mail"] || norm["email"] || norm["e_mail"];
+          norm["email"] || norm["email1"] || norm["corretoeletronico"];
 
         const cargo =
-          norm["cargo"] || norm["job_title"] || norm["função"] || norm["funcao"];
+          norm["cargo"] || norm["jobtitle"] || norm["funcao"] || norm["funcaocargo"] || norm["ocupacao"];
 
         const filial =
-          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["department"];
+          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["department"] || norm["empresa"] || norm["estabelecimento"];
 
         const admissao =
-          norm["admissão"] || norm["admissao"] || norm["admission_date"] ||
-          norm["data_admissão"] || norm["data_admissao"] || norm["dt._admissão"] || norm["dt._admissao"];
+          norm["admissao"] || norm["dtadmissao"] || norm["dataadmissao"] ||
+          norm["admissaodaempresa"] || norm["dataadmissaodaempresa"] || norm["admissiondate"];
 
         const dataNasc =
-          norm["data_nasc."] || norm["dt._nasc."] || norm["data_nasc"] ||
-          norm["dt_nasc"] || norm["data_nascimento"] || norm["data_de_nascimento"] ||
-          norm["nascimento"] || norm["birth_date"];
+          norm["datanasc"] || norm["dtnasc"] || norm["dtnac"] ||
+          norm["datanascimento"] || norm["datadenascimento"] ||
+          norm["nascimento"] || norm["birthdate"] || norm["datanascimentocompleta"];
 
         const emailStr = emailRaw
-          ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+          ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
           : undefined;
-
-        const birthDateISO = (() => {
-          if (!dataNasc) return undefined;
-          const s = String(dataNasc).trim();
-          const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-          if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-          if (typeof dataNasc === "number") return xlDateToISO(dataNasc);
-          return undefined;
-        })();
 
         parsed.push({
           name: toTitleCase(String(nome).trim()),
           email: emailStr && emailStr.includes("@") ? emailStr : undefined,
           department: filial ? String(filial).trim() : undefined,
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
-          admission_date: xlDateToISO(admissao),
-          birth_date: birthDateISO,
+          admission_date: parseDateISO(admissao),
+          birth_date: parseDateISO(dataNasc),
         });
       }
 

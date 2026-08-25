@@ -257,20 +257,23 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     };
     const employees = (existing ?? []) as Emp[];
 
-    // Índice por nome completo (exato)
-    const byFullName = new Map(
-      employees.map((e) => [e.name.toLowerCase().trim(), e]),
-    );
+    // Normaliza: minúsculo, sem acentos, espaços comprimidos.
+    // "CÉLIO DE BRITTO" e "Celio de Britto" viram "celio de britto".
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+
+    // Índice por nome completo normalizado
+    const byFullName = new Map(employees.map((e) => [norm(e.name), e]));
 
     // Índice por primeiro nome → null se ambíguo (mais de um colaborador)
     const byFirstName = new Map<string, Emp | null>();
     for (const e of employees) {
-      const first = e.name.toLowerCase().trim().split(" ")[0];
+      const first = norm(e.name).split(" ")[0];
       byFirstName.set(first, byFirstName.has(first) ? null : e);
     }
 
     const findMatch = (name: string): Emp | null => {
-      const key = name.toLowerCase().trim();
+      const key = norm(name);
       const exact = byFullName.get(key);
       if (exact) return exact;
       const first = key.split(" ")[0];
