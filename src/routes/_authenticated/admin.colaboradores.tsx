@@ -4,9 +4,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import {
-  CheckCircle2, Loader2, MailCheck, Pencil, RefreshCcw, Search,
-  ShieldOff, Upload, UserPlus, X,
+  CheckCircle2, Loader2, MailCheck, MoreHorizontal, Pencil, RefreshCcw,
+  Search, ShieldOff, Upload, UserPlus, X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   addEmployee,
   bulkImportEmployees,
@@ -17,6 +24,32 @@ import {
   updateEmployee,
 } from "@/lib/employee.functions";
 import { toast } from "sonner";
+
+/* ─── Avatar ────────────────────────────────────────────────────────────────── */
+
+const AVATAR_COLORS = [
+  "bg-blue-100 text-blue-700",
+  "bg-purple-100 text-purple-700",
+  "bg-pink-100 text-pink-700",
+  "bg-amber-100 text-amber-700",
+  "bg-teal-100 text-teal-700",
+  "bg-indigo-100 text-indigo-700",
+  "bg-rose-100 text-rose-700",
+  "bg-emerald-100 text-emerald-700",
+];
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length === 1
+    ? parts[0].slice(0, 2).toUpperCase()
+    : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function avatarColor(name: string): string {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
 type Employee = {
   id: string;
@@ -172,8 +205,8 @@ function ColaboradoresPage() {
   };
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+    <div className="min-h-[calc(100vh-4rem)] bg-background -m-6 p-6">
+      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Colaboradores</h1>
           <p className="text-sm text-muted-foreground">
@@ -196,140 +229,156 @@ function ColaboradoresPage() {
         </div>
       </div>
 
-      {/* Busca e filtros */}
-      <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome, e-mail, filial ou cargo…"
-            className="w-full rounded-xl border border-input bg-surface pl-9 pr-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-          />
-        </div>
-        <div className="inline-flex rounded-xl border border-input overflow-hidden bg-surface text-sm font-semibold">
-          {(["todos", "ativos", "inativos"] as StatusFilter[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2 capitalize transition ${statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
-            >
-              {s} <span className="ml-1 text-xs opacity-70">({counts[s]})</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="card-soft overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-            <tr>
-              <th className="px-6 py-4">Nome</th>
-              <th className="px-6 py-4">E-mail</th>
-              <th className="px-6 py-4">Filial / Cargo</th>
-              <th className="px-6 py-4">Admissão</th>
-              <th className="px-6 py-4">Acesso</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.isLoading && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center">
-                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
-                </td>
-              </tr>
-            )}
-            {!q.isLoading && filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-xs">
-                  {employees.length === 0
-                    ? "Nenhum colaborador cadastrado."
-                    : "Nenhum resultado para os filtros aplicados."}
-                </td>
-              </tr>
-            )}
-            {filtered.map((emp) => (
-              <tr key={emp.id} className="border-t border-border hover:bg-surface-muted/40 transition-colors">
-                <td className="px-6 py-4 font-semibold">{emp.name}</td>
-                <td className="px-6 py-4 text-muted-foreground text-xs">{emp.email ?? <span className="italic">—</span>}</td>
-                <td className="px-6 py-4">
-                  {emp.department && <div className="text-xs font-bold">{emp.department}</div>}
-                  {emp.job_title && <div className="text-xs text-muted-foreground">{emp.job_title}</div>}
-                  {!emp.department && !emp.job_title && <span className="text-muted-foreground">—</span>}
-                </td>
-                <td className="px-6 py-4 text-muted-foreground text-xs">{fmtDate(emp.admission_date) ?? "—"}</td>
-                <td className="px-6 py-4">
-                  {emp.auth_user_id
-                    ? <span className="chip-soft">Portal</span>
-                    : <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground"><ShieldOff className="h-3 w-3" /> Sem acesso</span>
-                  }
-                </td>
-                <td className="px-6 py-4">
-                  {emp.active
-                    ? <span className="chip-success">Ativo</span>
-                    : <span className="text-xs font-semibold text-muted-foreground">Inativo</span>
-                  }
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="inline-flex flex-wrap gap-1 justify-end">
-                    <button
-                      onClick={() => setEditing(emp)}
-                      title="Editar"
-                      className="rounded-lg p-2 text-muted-foreground hover:text-primary hover:bg-primary-softer transition-colors"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    {emp.auth_user_id ? (
-                      <>
-                        <button
-                          onClick={() => mResend.mutate(emp.id)}
-                          disabled={mResend.isPending}
-                          title="Reenviar convite"
-                          className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-secondary"
-                        >
-                          <MailCheck className="h-3 w-3" /> Convite
-                        </button>
-                        {emp.email && (
-                          <button
-                            onClick={() => mReset.mutate(emp.email!)}
-                            disabled={mReset.isPending}
-                            title="Enviar link de reset de senha"
-                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-secondary"
-                          >
-                            <RefreshCcw className="h-3 w-3" /> Senha
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => setInvitingExisting(emp)}
-                        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary-softer"
-                      >
-                        <MailCheck className="h-3 w-3" /> Dar acesso
-                      </button>
-                    )}
-                    <button
-                      onClick={() => mToggle.mutate(emp)}
-                      disabled={mToggle.isPending}
-                      className="rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-secondary"
-                    >
-                      {emp.active ? "Desativar" : "Reativar"}
-                    </button>
-                  </div>
-                </td>
-              </tr>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Toolbar: busca e filtros */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-4 py-3 border-b border-slate-100">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, e-mail, filial ou cargo…"
+              className="w-full rounded-lg border border-border bg-surface pl-9 pr-4 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
+          </div>
+          <div className="inline-flex rounded-lg border border-input overflow-hidden bg-surface text-sm font-semibold">
+            {(["todos", "ativos", "inativos"] as StatusFilter[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 capitalize transition ${statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+              >
+                {s} <span className="ml-1 text-xs opacity-70">({counts[s]})</span>
+              </button>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+          {filtered.length > 0 && (
+            <span className="text-xs text-muted-foreground sm:ml-auto">
+              {filtered.length} de {employees.length}
+            </span>
+          )}
+        </div>
 
-      {filtered.length > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground text-right">
-          {filtered.length} de {employees.length} colaboradores
-        </p>
-      )}
+        {/* Tabela */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Colaborador</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Filial / Cargo</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Admissão</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Acesso</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {q.isLoading && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                  </td>
+                </tr>
+              )}
+              {!q.isLoading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground text-sm">
+                    {employees.length === 0
+                      ? "Nenhum colaborador cadastrado."
+                      : "Nenhum resultado para os filtros aplicados."}
+                  </td>
+                </tr>
+              )}
+              {filtered.map((emp) => (
+                <tr key={emp.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                  {/* Colaborador: avatar + nome + email */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
+                        {initials(emp.name)}
+                      </span>
+                      <div>
+                        <div className="font-medium text-slate-800">{emp.name}</div>
+                        {emp.email && (
+                          <div className="text-xs text-slate-500">{emp.email}</div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  {/* Filial / Cargo */}
+                  <td className="px-6 py-4">
+                    {emp.department && <div className="text-sm font-medium text-slate-700">{emp.department}</div>}
+                    {emp.job_title && <div className="text-xs text-slate-500">{emp.job_title}</div>}
+                    {!emp.department && !emp.job_title && <span className="text-slate-400">—</span>}
+                  </td>
+                  {/* Admissão */}
+                  <td className="px-6 py-4 text-sm text-slate-500">
+                    {fmtDate(emp.admission_date) ?? <span className="text-slate-400">—</span>}
+                  </td>
+                  {/* Acesso */}
+                  <td className="px-6 py-4">
+                    {emp.auth_user_id ? (
+                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">Portal</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                        <ShieldOff className="h-3 w-3" /> Sem acesso
+                      </span>
+                    )}
+                  </td>
+                  {/* Status */}
+                  <td className="px-6 py-4">
+                    {emp.active ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Ativo</span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">Inativo</span>
+                    )}
+                  </td>
+                  {/* Ações */}
+                  <td className="px-6 py-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => setEditing(emp)}>
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {emp.auth_user_id ? (
+                          <>
+                            <DropdownMenuItem onClick={() => mResend.mutate(emp.id)} disabled={mResend.isPending}>
+                              <MailCheck className="mr-2 h-3.5 w-3.5" /> Reenviar convite
+                            </DropdownMenuItem>
+                            {emp.email && (
+                              <DropdownMenuItem onClick={() => mReset.mutate(emp.email!)} disabled={mReset.isPending}>
+                                <RefreshCcw className="mr-2 h-3.5 w-3.5" /> Resetar senha
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setInvitingExisting(emp)}>
+                            <MailCheck className="mr-2 h-3.5 w-3.5" /> Dar acesso
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => mToggle.mutate(emp)}
+                          disabled={mToggle.isPending}
+                          className={emp.active ? "text-red-600 focus:text-red-600" : ""}
+                        >
+                          {emp.active ? "Desativar colaborador" : "Reativar colaborador"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Modal: cadastrar colaborador no diretório (sem convite) */}
       {adding && (
