@@ -231,30 +231,40 @@ function ColaboradoresPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Toolbar: busca e filtros */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-4 py-3 border-b border-slate-100">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-slate-100">
+          {/* Busca */}
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, e-mail, filial ou cargo…"
-              className="w-full rounded-lg border border-border bg-surface pl-9 pr-4 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500"
             />
           </div>
-          <div className="inline-flex rounded-lg border border-input overflow-hidden bg-surface text-sm font-semibold">
+          {/* Tabs de filtro */}
+          <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1">
             {(["todos", "ativos", "inativos"] as StatusFilter[]).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 capitalize transition ${statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+                className={`rounded-md px-3 py-1 text-sm transition-all ${
+                  statusFilter === s
+                    ? "bg-white shadow-sm text-slate-900 font-medium"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                {s} <span className="ml-1 text-xs opacity-70">({counts[s]})</span>
+                <span className="capitalize">{s}</span>
+                <span className={`ml-1.5 text-xs ${statusFilter === s ? "text-slate-500" : "text-slate-400"}`}>
+                  {counts[s]}
+                </span>
               </button>
             ))}
           </div>
-          {filtered.length > 0 && (
-            <span className="text-xs text-muted-foreground sm:ml-auto">
-              {filtered.length} de {employees.length}
+          {/* Contador */}
+          {employees.length > 0 && (
+            <span className="text-xs text-slate-400 sm:ml-auto whitespace-nowrap">
+              {filtered.length} de {employees.length} colaboradores
             </span>
           )}
         </div>
