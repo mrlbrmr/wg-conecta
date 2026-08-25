@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { listBirthdays, listAnniversaries, listContacts } from "@/lib/portal-public.functions";
+import type { PortalBirthday, PortalAnniversary } from "@/lib/portal-public.functions";
 
 export type PortalSettings = Tables<"portal_settings">;
 export type QuickLink = Tables<"quick_links">;
@@ -12,8 +13,9 @@ export type FaqItem = Tables<"faq_items">;
 export type InternalJob = Tables<"internal_jobs">;
 export type OnboardingMaterial = Tables<"onboarding_materials">;
 export type FormRow = Tables<"forms">;
-export type Birthday = Tables<"birthdays">;
-export type WorkAnniversary = Tables<"work_anniversaries">;
+// Birthday e WorkAnniversary agora derivados de `employees` (SSoT)
+export type Birthday = PortalBirthday;
+export type WorkAnniversary = PortalAnniversary;
 export type Recognition = Tables<"recognitions">;
 export type Campaign = Tables<"campaigns">;
 export type Contact = Tables<"contacts">;
@@ -112,12 +114,12 @@ export const formsQuery = queryOptions({
 
 export const birthdaysQuery = queryOptions({
   queryKey: ["birthdays"],
-  queryFn: (): Promise<Birthday[]> => listBirthdays(),
+  queryFn: (): Promise<PortalBirthday[]> => listBirthdays(),
 });
 
 export const anniversariesQuery = queryOptions({
   queryKey: ["work_anniversaries"],
-  queryFn: (): Promise<WorkAnniversary[]> => listAnniversaries(),
+  queryFn: (): Promise<PortalAnniversary[]> => listAnniversaries(),
 });
 
 export const recognitionsQuery = queryOptions({
