@@ -52,38 +52,41 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
   };
 
   return (
-    <div>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">{resource.label}</h1>
-          <p className="text-sm text-muted-foreground">Gerencie os itens desta seção.</p>
+          <h1 className="text-3xl font-black tracking-tight text-black">{resource.label}</h1>
+          <p className="text-sm text-gray-700">Gerencie os itens desta seção.</p>
         </div>
-        <button onClick={openNew} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-95">
+        <button
+          onClick={openNew}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#8FD152] px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
+        >
           <Plus className="h-4 w-4" /> Novo
         </button>
       </div>
 
-      <div className="card-soft overflow-hidden">
+      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-muted text-left text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+            <thead className="bg-black/5 text-left text-xs font-bold uppercase text-black tracking-wider border-b border-black/20">
               <tr>
                 {resource.displayColumns.map(c => <th key={c.key} className="px-6 py-4">{c.label}</th>)}
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {listQ.isLoading && <tr><td colSpan={99} className="p-6 text-center text-muted-foreground">Carregando...</td></tr>}
-              {!listQ.isLoading && (listQ.data ?? []).length === 0 && <tr><td colSpan={99} className="p-6 text-center text-muted-foreground">Nenhum registro. Clique em "Novo" para adicionar.</td></tr>}
+              {listQ.isLoading && <tr><td colSpan={99} className="p-6 text-center text-gray-700">Carregando...</td></tr>}
+              {!listQ.isLoading && (listQ.data ?? []).length === 0 && <tr><td colSpan={99} className="p-6 text-center text-gray-700">Nenhum registro. Clique em "Novo" para adicionar.</td></tr>}
               {(listQ.data ?? []).map(row => (
-                <tr key={String(row.id)} className="border-t border-border hover:bg-surface-muted/50">
+                <tr key={String(row.id)} className="border-t border-black/20 hover:bg-[#F5F2E9]/70 transition-colors">
                   {resource.displayColumns.map(c => (
                     <td key={c.key} className="px-6 py-4">{formatCell(row[c.key])}</td>
                   ))}
                   <td className="px-6 py-4 text-right">
                     <div className="inline-flex gap-1">
-                      <button onClick={() => setEditing(row)} className="rounded-lg p-2 text-muted-foreground hover:text-primary hover:bg-primary-softer transition-colors" aria-label="Editar"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => { if (confirm("Remover este item?")) del.mutate(String(row.id)); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => setEditing(row)} className="rounded-lg p-2 text-gray-500 hover:text-black hover:bg-black/5 transition-colors" aria-label="Editar"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => { if (confirm("Remover este item?")) del.mutate(String(row.id)); }} className="rounded-lg p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -99,8 +102,10 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
 }
 
 function formatCell(v: unknown) {
-  if (v === null || v === undefined || v === "") return <span className="text-muted-foreground">—</span>;
-  if (typeof v === "boolean") return v ? <span className="chip-success">Ativo</span> : <span className="text-muted-foreground">Inativo</span>;
+  if (v === null || v === undefined || v === "") return <span className="text-gray-500">—</span>;
+  if (typeof v === "boolean") return v
+    ? <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#8FD152]/30 text-black border border-black/40">Ativo</span>
+    : <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white text-black border border-black/30">Inativo</span>;
   if (Array.isArray(v)) return v.join(", ");
   if (typeof v === "string" && v.length > 60) return v.slice(0, 60) + "…";
   if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)) {
@@ -117,7 +122,6 @@ function FormDrawer({ resource, initial, onClose }: { resource: ResourceDef; ini
   const save = useMutation({
     mutationFn: async () => {
       const payload: Row = { ...form };
-      // clean empty date/string values
       resource.fields.forEach(f => {
         if (payload[f.key] === "" && (f.type === "date" || f.type === "number")) payload[f.key] = null;
       });

@@ -4,8 +4,6 @@ import { useState } from "react";
 import { listEmployees } from "@/lib/employee.functions";
 import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Search } from "lucide-react";
 
-/* ─── Tipos ──────────────────────────────────────────────────────────────────── */
-
 type Employee = {
   id: string;
   name: string;
@@ -19,8 +17,6 @@ type Employee = {
 type SortKey = "name" | "date";
 type SortDir = "asc" | "desc";
 
-/* ─── Constantes ─────────────────────────────────────────────────────────────── */
-
 const MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 const AVATAR_COLORS = [
@@ -33,8 +29,6 @@ const AVATAR_COLORS = [
   "bg-rose-100 text-rose-700",
   "bg-emerald-100 text-emerald-700",
 ];
-
-/* ─── Utilitários ────────────────────────────────────────────────────────────── */
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -67,34 +61,26 @@ function formatBirthDate(birthDate: string): string {
 }
 
 function CountdownBadge({ days }: { days: number }) {
-  if (days === 0) return <span className="chip-accent text-[10px]">Hoje</span>;
-  if (days <= 7) return <span className="text-[11px] font-semibold text-primary">em {days}d</span>;
-  if (days <= 30) return <span className="text-[11px] text-muted-foreground">em {days}d</span>;
+  if (days === 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#8FD152] text-black border border-black">Hoje</span>;
+  if (days <= 7) return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#8FD152]/20 text-black border border-black/40">em {days}d</span>;
+  if (days <= 30) return <span className="text-[11px] text-gray-700">em {days}d</span>;
   return null;
 }
 
-/* ─── Ícone de ordenação ─────────────────────────────────────────────────────── */
-
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
-  if (sortKey !== col) return <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (sortKey !== col) return <ArrowUpDown className="h-3.5 w-3.5 text-black/40" />;
   return sortDir === "asc"
-    ? <ArrowUp className="h-3.5 w-3.5 text-primary" />
-    : <ArrowDown className="h-3.5 w-3.5 text-primary" />;
+    ? <ArrowUp className="h-3.5 w-3.5 text-[#2F8F4A]" />
+    : <ArrowDown className="h-3.5 w-3.5 text-[#2F8F4A]" />;
 }
-
-/* ─── Componente (somente leitura) ───────────────────────────────────────────── */
 
 export function AniversariantesAdmin() {
   const doList = useServerFn(listEmployees);
-
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const q = useQuery({
-    queryKey: ["employees"],
-    queryFn: () => doList(),
-  });
+  const q = useQuery({ queryKey: ["employees"], queryFn: () => doList() });
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -113,44 +99,42 @@ export function AniversariantesAdmin() {
   });
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background -m-6 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-black tracking-tight">Aniversariantes</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-3xl font-black tracking-tight text-black">Aniversariantes</h1>
+        <p className="text-sm text-gray-700">
           Colaboradores ativos ordenados pelo próximo aniversário.
           Cadastros e importações são feitos na tela de{" "}
-          <a href="/admin/colaboradores" className="text-primary underline underline-offset-2">Colaboradores</a>.
+          <a href="/admin/colaboradores" className="text-black font-bold underline underline-offset-2">Colaboradores</a>.
         </p>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Toolbar somente busca */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-black/20">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nome…"
-              className="w-full rounded-lg border border-border bg-surface pl-9 pr-4 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              className="w-full rounded-lg border-2 border-black/20 bg-white pl-9 pr-4 py-2 text-sm text-black outline-none focus:border-black focus:ring-2 focus:ring-black/10"
             />
           </div>
           {all.length > 0 && (
-            <span className="text-xs text-muted-foreground ml-auto">
+            <span className="text-xs text-gray-700 ml-auto">
               {filtered.length} colaborador{filtered.length !== 1 ? "es" : ""}
             </span>
           )}
         </div>
 
-        {/* Tabela somente leitura */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100">
+              <tr className="border-b border-black/20 bg-black/5">
                 <th className="px-6 py-3 text-left">
                   <button
                     onClick={() => toggleSort("name")}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:text-black/70 transition-colors"
                   >
                     Nome <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
                   </button>
@@ -158,7 +142,7 @@ export function AniversariantesAdmin() {
                 <th className="px-6 py-3 text-left">
                   <button
                     onClick={() => toggleSort("date")}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:text-black/70 transition-colors"
                   >
                     Aniversário <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
                   </button>
@@ -169,13 +153,13 @@ export function AniversariantesAdmin() {
               {q.isLoading && (
                 <tr>
                   <td colSpan={2} className="px-6 py-10 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#2F8F4A]" />
                   </td>
                 </tr>
               )}
               {!q.isLoading && sorted.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="px-6 py-10 text-center text-muted-foreground text-sm">
+                  <td colSpan={2} className="px-6 py-10 text-center text-gray-700 text-sm">
                     {all.length === 0
                       ? "Nenhum colaborador ativo com data de nascimento cadastrada."
                       : "Nenhum resultado para a busca."}
@@ -185,7 +169,7 @@ export function AniversariantesAdmin() {
               {sorted.map(emp => {
                 const days = daysUntilBirthday(emp.birth_date!);
                 return (
-                  <tr key={emp.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                  <tr key={emp.id} className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {emp.photo_url ? (
@@ -196,9 +180,9 @@ export function AniversariantesAdmin() {
                           </span>
                         )}
                         <div>
-                          <div className="font-medium text-slate-900">{emp.name}</div>
+                          <div className="font-medium text-black">{emp.name}</div>
                           {(emp.job_title || emp.department) && (
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs text-gray-700">
                               {[emp.job_title, emp.department].filter(Boolean).join(" · ")}
                             </div>
                           )}
@@ -207,7 +191,7 @@ export function AniversariantesAdmin() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-700">{formatBirthDate(emp.birth_date!)}</span>
+                        <span className="font-medium text-black">{formatBirthDate(emp.birth_date!)}</span>
                         <CountdownBadge days={days} />
                       </div>
                     </td>

@@ -8,14 +8,14 @@ export function PageHeader({ eyebrow, title, description, backTo, action }: {
   return (
     <div className="mb-6 md:mb-8">
       {backTo && (
-        <Link to={backTo as "/"} className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition mb-3">
+        <Link to={backTo as "/"} className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-black transition mb-3">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
         </Link>
       )}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           {eyebrow && <span className="chip">{eyebrow}</span>}
-          <h1 className="mt-2 text-2xl md:text-3xl font-black tracking-tight">{title}</h1>
+          <h1 className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-black">{title}</h1>
           {description && <p className="mt-2 text-sm text-muted-foreground max-w-2xl">{description}</p>}
         </div>
         {action}

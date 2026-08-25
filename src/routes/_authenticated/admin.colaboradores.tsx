@@ -210,63 +210,63 @@ function ColaboradoresPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background -m-6 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Colaboradores</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-3xl font-black tracking-tight text-black">Colaboradores</h1>
+          <p className="text-sm text-gray-700">
             Gerencie o diretório e os acessos ao Portal do Colaborador.
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setImporting(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-input px-4 py-2 text-sm font-bold hover:bg-secondary"
+            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
           >
             <Upload className="h-4 w-4" /> Importar XLSX
           </button>
           <button
             onClick={() => setImportingPhotos(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-input px-4 py-2 text-sm font-bold hover:bg-secondary"
+            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
           >
             <ImagePlus className="h-4 w-4" /> Importar fotos
           </button>
           <button
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-95"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#8FD152] px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
           >
             <UserPlus className="h-4 w-4" /> Cadastrar colaborador
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
         {/* Toolbar: busca e filtros */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-black/20">
           {/* Busca */}
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, e-mail, filial ou cargo…"
-              className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              className="w-full rounded-lg border-2 border-black/20 bg-white pl-9 pr-4 py-2 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-black/10"
             />
           </div>
           {/* Tabs de filtro */}
-          <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+          <div className="inline-flex items-center gap-1 rounded-lg bg-black/5 p-1 border border-black/20">
             {(["todos", "ativos", "inativos"] as StatusFilter[]).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`rounded-md px-3 py-1 text-sm transition-all ${
+                className={`rounded px-3 py-1 text-sm transition-all ${
                   statusFilter === s
-                    ? "bg-white shadow-sm text-slate-900 font-medium"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white border border-black text-black font-bold"
+                    : "text-gray-700 hover:text-black"
                 }`}
               >
                 <span className="capitalize">{s}</span>
-                <span className={`ml-1.5 text-xs ${statusFilter === s ? "text-slate-500" : "text-slate-400"}`}>
+                <span className={`ml-1.5 text-xs ${statusFilter === s ? "text-black/60" : "text-gray-500"}`}>
                   {counts[s]}
                 </span>
               </button>
@@ -274,7 +274,7 @@ function ColaboradoresPage() {
           </div>
           {/* Contador */}
           {employees.length > 0 && (
-            <span className="text-xs text-slate-400 sm:ml-auto whitespace-nowrap">
+            <span className="text-xs text-gray-700 sm:ml-auto whitespace-nowrap">
               {filtered.length} de {employees.length} colaboradores
             </span>
           )}
@@ -284,26 +284,26 @@ function ColaboradoresPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100">
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Colaborador</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Filial / Cargo</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Admissão</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Acesso</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Ações</th>
+              <tr className="border-b border-black/20 bg-black/5">
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Colaborador</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Filial / Cargo</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Admissão</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Acesso</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black">Ações</th>
               </tr>
             </thead>
             <tbody>
               {q.isLoading && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#2F8F4A]" />
                   </td>
                 </tr>
               )}
               {!q.isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-700 text-sm">
                     {employees.length === 0
                       ? "Nenhum colaborador cadastrado."
                       : "Nenhum resultado para os filtros aplicados."}
@@ -311,7 +311,7 @@ function ColaboradoresPage() {
                 </tr>
               )}
               {filtered.map((emp) => (
-                <tr key={emp.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                <tr key={emp.id} className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors">
                   {/* Colaborador: avatar + nome + email */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -327,29 +327,29 @@ function ColaboradoresPage() {
                         </span>
                       )}
                       <div>
-                        <div className="font-medium text-slate-800">{emp.name}</div>
+                        <div className="font-medium text-black">{emp.name}</div>
                         {emp.email && (
-                          <div className="text-xs text-slate-500">{emp.email}</div>
+                          <div className="text-xs text-gray-700">{emp.email}</div>
                         )}
                       </div>
                     </div>
                   </td>
                   {/* Filial / Cargo */}
                   <td className="px-6 py-4">
-                    {emp.department && <div className="text-sm font-medium text-slate-700">{emp.department}</div>}
-                    {emp.job_title && <div className="text-xs text-slate-500">{emp.job_title}</div>}
-                    {!emp.department && !emp.job_title && <span className="text-slate-400">—</span>}
+                    {emp.department && <div className="text-sm font-medium text-black">{emp.department}</div>}
+                    {emp.job_title && <div className="text-xs text-gray-700">{emp.job_title}</div>}
+                    {!emp.department && !emp.job_title && <span className="text-gray-500">—</span>}
                   </td>
                   {/* Admissão */}
-                  <td className="px-6 py-4 text-sm text-slate-500">
-                    {fmtDate(emp.admission_date) ?? <span className="text-slate-400">—</span>}
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {fmtDate(emp.admission_date) ?? <span className="text-gray-500">—</span>}
                   </td>
                   {/* Acesso */}
                   <td className="px-6 py-4">
                     {emp.auth_user_id ? (
-                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">Portal</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-blue-100 border border-black/30">Portal</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded px-2.5 py-0.5 text-xs font-bold text-black border border-black/20 bg-white">
                         <ShieldOff className="h-3 w-3" /> Sem acesso
                       </span>
                     )}
@@ -357,16 +357,16 @@ function ColaboradoresPage() {
                   {/* Status */}
                   <td className="px-6 py-4">
                     {emp.active ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Ativo</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-[#8FD152]/30 border border-black/40">Ativo</span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">Inativo</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-white border border-black/30">Inativo</span>
                     )}
                   </td>
                   {/* Ações */}
                   <td className="px-6 py-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                        <button className="rounded-lg p-1.5 text-gray-500 hover:text-black hover:bg-black/5 transition-colors">
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
