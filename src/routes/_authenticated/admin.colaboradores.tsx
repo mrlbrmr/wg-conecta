@@ -4,8 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import {
-  CheckCircle2, Loader2, MailCheck, MoreHorizontal, Pencil, RefreshCcw,
-  Search, ShieldOff, Upload, UserPlus, X,
+  AlertCircle, CheckCircle2, ImagePlus, Loader2, MailCheck, MoreHorizontal,
+  Pencil, RefreshCcw, Search, ShieldOff, Upload, UserPlus, X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,7 +22,9 @@ import {
   resendEmployeeInvite,
   triggerEmployeePasswordReset,
   updateEmployee,
+  updateEmployeePhotoUrl,
 } from "@/lib/employee.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /* ─── Avatar ────────────────────────────────────────────────────────────────── */
@@ -64,6 +66,7 @@ type Employee = {
   active: boolean;
   invited_at: string | null;
   created_at: string;
+  photo_url: string | null;
 };
 
 type ImportRow = {
@@ -118,6 +121,7 @@ function ColaboradoresPage() {
   const doReset = useServerFn(triggerEmployeePasswordReset);
   const doUpdate = useServerFn(updateEmployee);
   const doBulk = useServerFn(bulkImportEmployees);
+  const doUpdatePhoto = useServerFn(updateEmployeePhotoUrl);
 
   const q = useQuery({ queryKey: ["employees"], queryFn: () => doList() });
 
@@ -125,6 +129,7 @@ function ColaboradoresPage() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [invitingExisting, setInvitingExisting] = useState<Employee | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importingPhotos, setImportingPhotos] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
 
@@ -221,6 +226,12 @@ function ColaboradoresPage() {
             <Upload className="h-4 w-4" /> Importar XLSX
           </button>
           <button
+            onClick={() => setImportingPhotos(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-input px-4 py-2 text-sm font-bold hover:bg-secondary"
+          >
+            <ImagePlus className="h-4 w-4" /> Importar fotos
+          </button>
+          <button
             onClick={() => setAdding(true)}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-95"
           >
@@ -304,9 +315,17 @@ function ColaboradoresPage() {
                   {/* Colaborador: avatar + nome + email */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
-                        {initials(emp.name)}
-                      </span>
+                      {emp.photo_url ? (
+                        <img
+                          src={emp.photo_url}
+                          alt={emp.name}
+                          className="h-9 w-9 shrink-0 rounded-full object-cover object-top"
+                        />
+                      ) : (
+                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
+                          {initials(emp.name)}
+                        </span>
+                      )}
                       <div>
                         <div className="font-medium text-slate-800">{emp.name}</div>
                         {emp.email && (
@@ -442,6 +461,15 @@ function ColaboradoresPage() {
           onImport={(rows) => mBulk.mutate(rows)}
           loading={mBulk.isPending}
           onClose={() => setImporting(false)}
+        />
+      )}
+
+      {/* Modal: importação em lote de fotos */}
+      {importingPhotos && (
+        <PhotoImportModal
+          employees={employees}
+          onSaveUrl={(id, url) => doUpdatePhoto({ data: { id, photo_url: url } })}
+          onClose={() => { setImportingPhotos(false); invalidate(); }}
         />
       )}
     </div>
@@ -855,6 +883,234 @@ function ImportModal({
               </button>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Modal de importação de fotos ─────────────────────────────────────────── */
+
+type PhotoMatch = {
+  file: File;
+  preview: string;
+  employee: Employee | null;
+  status: "idle" | "uploading" | "done" | "error";
+  error?: string;
+};
+
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim();
+}
+
+function nameFromFilename(filename: string): string {
+  // "Alessandra Escudero - SP.jpg" → "Alessandra Escudero"
+  const noExt = filename.replace(/\.[^.]+$/, "");
+  const dashIdx = noExt.lastIndexOf(" - ");
+  return dashIdx !== -1 ? noExt.slice(0, dashIdx).trim() : noExt.trim();
+}
+
+function PhotoImportModal({
+  employees,
+  onSaveUrl,
+  onClose,
+}: {
+  employees: Employee[];
+  onSaveUrl: (id: string, url: string) => Promise<unknown>;
+  onClose: () => void;
+}) {
+  const [matches, setMatches] = useState<PhotoMatch[]>([]);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const employeeMap = new Map(
+    employees.map((e) => [normalizeForMatch(e.name), e]),
+  );
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    const list: PhotoMatch[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      const name = nameFromFilename(file.name);
+      const employee = employeeMap.get(normalizeForMatch(name)) ?? null;
+      list.push({ file, preview: URL.createObjectURL(file), employee, status: "idle" });
+    }
+    list.sort((a, b) => {
+      if (a.employee && !b.employee) return -1;
+      if (!a.employee && b.employee) return 1;
+      return a.file.name.localeCompare(b.file.name);
+    });
+    setMatches(list);
+    setDone(false);
+  }
+
+  async function handleUpload() {
+    setRunning(true);
+    const updated = [...matches];
+
+    for (let i = 0; i < updated.length; i++) {
+      const m = updated[i];
+      if (!m.employee) continue;
+      updated[i] = { ...m, status: "uploading" };
+      setMatches([...updated]);
+
+      try {
+        const ext = m.file.name.split(".").pop() ?? "jpg";
+        const path = `employee-photos/${m.employee.id}.${ext}`;
+        const { error: storageErr } = await supabase.storage
+          .from("portal-public")
+          .upload(path, m.file, { upsert: true, contentType: m.file.type });
+        if (storageErr) throw new Error(storageErr.message);
+
+        const { data: urlData } = supabase.storage.from("portal-public").getPublicUrl(path);
+        await onSaveUrl(m.employee.id, urlData.publicUrl);
+
+        updated[i] = { ...updated[i], status: "done" };
+      } catch (e) {
+        updated[i] = { ...updated[i], status: "error", error: (e as Error).message };
+      }
+      setMatches([...updated]);
+    }
+
+    setRunning(false);
+    setDone(true);
+    const successes = updated.filter((m) => m.status === "done").length;
+    const errors = updated.filter((m) => m.status === "error").length;
+    if (successes > 0) toast.success(`${successes} foto${successes !== 1 ? "s" : ""} importada${successes !== 1 ? "s" : ""}.`);
+    if (errors > 0) toast.error(`${errors} foto${errors !== 1 ? "s" : ""} com erro.`);
+  }
+
+  const matched = matches.filter((m) => m.employee).length;
+  const unmatched = matches.filter((m) => !m.employee).length;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[95vh] flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">Importar fotos em lote</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Selecione os arquivos — o nome do arquivo deve conter o nome do colaborador.</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Corpo */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+          {/* Dropzone */}
+          {!running && (
+            <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-sm text-slate-500 cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors">
+              <ImagePlus className="h-8 w-8 text-slate-300" />
+              <span className="font-medium text-slate-600">Clique para selecionar as fotos</span>
+              <span className="text-xs">PNG, JPG, WEBP — múltiplos arquivos permitidos</span>
+              <input
+                type="file"
+                hidden
+                multiple
+                accept="image/*"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </label>
+          )}
+
+          {/* Resumo */}
+          {matches.length > 0 && (
+            <div className="flex gap-3 text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" /> {matched} com match
+              </span>
+              {unmatched > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-700">
+                  <AlertCircle className="h-3.5 w-3.5" /> {unmatched} sem match
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Lista de fotos */}
+          {matches.length > 0 && (
+            <div className="rounded-xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+              {matches.map((m, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                  <img
+                    src={m.preview}
+                    alt=""
+                    className="h-9 w-9 rounded-full object-cover object-top shrink-0 bg-slate-100"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-800 truncate">
+                      {nameFromFilename(m.file.name)}
+                    </div>
+                    {m.employee ? (
+                      <div className="text-xs text-slate-400 truncate">→ {m.employee.name}</div>
+                    ) : (
+                      <div className="text-xs text-amber-600">Sem match no cadastro</div>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    {m.status === "idle" && m.employee && (
+                      <span className="h-2 w-2 rounded-full bg-slate-300 inline-block" />
+                    )}
+                    {m.status === "uploading" && (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    )}
+                    {m.status === "done" && (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    )}
+                    {m.status === "error" && (
+                      <span title={m.error}>
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center justify-between gap-2 rounded-b-2xl">
+          <span className="text-xs text-slate-400">
+            {matches.length > 0
+              ? `${matches.length} arquivo${matches.length !== 1 ? "s" : ""} selecionado${matches.length !== 1 ? "s" : ""}`
+              : "Nenhum arquivo selecionado"}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              {done ? "Fechar" : "Cancelar"}
+            </button>
+            {!done && matched > 0 && (
+              <button
+                onClick={handleUpload}
+                disabled={running}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {running && <Loader2 className="h-4 w-4 animate-spin" />}
+                Importar {matched} foto{matched !== 1 ? "s" : ""}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
