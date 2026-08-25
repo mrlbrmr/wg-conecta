@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fileUrl, uploadFile } from "@/lib/storage";
 import {
   ArrowDown, ArrowUp, ArrowUpDown,
   Loader2, Pencil, Plus, Search, Trash2, Upload, X,
@@ -16,6 +17,9 @@ type Birthday = {
   birthday_day: number;
   birthday_month: number;
   active: boolean;
+  photo_url: string | null;
+  role: string | null;
+  unit: string | null;
 };
 
 type ParsedRow = { name: string; birthday_day: number; birthday_month: number };
@@ -112,7 +116,15 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
 
 /* ─── Componente principal ───────────────────────────────────────────────────── */
 
-type FormValues = { name: string; birthday_day: number; birthday_month: number; active: boolean };
+type FormValues = {
+  name: string;
+  birthday_day: number;
+  birthday_month: number;
+  active: boolean;
+  photo_url: string | null;
+  role: string;
+  unit: string;
+};
 
 export function AniversariantesAdmin() {
   const qc = useQueryClient();
@@ -319,10 +331,25 @@ export function AniversariantesAdmin() {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(b.name)}`}>
-                        {initials(b.name)}
-                      </span>
-                      <span className="font-medium text-slate-900">{b.name}</span>
+                      {fileUrl(b.photo_url) ? (
+                        <img
+                          src={fileUrl(b.photo_url)!}
+                          alt={b.name}
+                          className="h-8 w-8 shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(b.name)}`}>
+                          {initials(b.name)}
+                        </span>
+                      )}
+                      <div>
+                        <div className="font-medium text-slate-900">{b.name}</div>
+                        {(b.role || b.unit) && (
+                          <div className="text-xs text-muted-foreground">
+                            {[b.role, b.unit].filter(Boolean).join(" · ")}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-700">
@@ -524,7 +551,11 @@ function BirthdayModal({
     birthday_day: initial?.birthday_day ?? 1,
     birthday_month: initial?.birthday_month ?? 1,
     active: initial?.active ?? true,
+    photo_url: initial?.photo_url ?? null,
+    role: initial?.role ?? "",
+    unit: initial?.unit ?? "",
   });
+  const [uploading, setUploading] = useState(false);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -595,6 +626,72 @@ function BirthdayModal({
               </select>
             </label>
           </div>
+          {/* Foto */}
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Foto</span>
+            {form.photo_url && fileUrl(form.photo_url) && (
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={fileUrl(form.photo_url)!}
+                  alt="Foto atual"
+                  className="h-14 w-14 rounded-full object-cover border border-border"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm(s => ({ ...s, photo_url: null }))}
+                  className="text-xs font-semibold text-destructive hover:underline"
+                >
+                  Remover foto
+                </button>
+              </div>
+            )}
+            <label className="mt-2 inline-flex items-center gap-2 rounded-xl border border-dashed border-input px-4 py-2.5 text-sm font-semibold cursor-pointer hover:bg-secondary transition-colors">
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {form.photo_url ? "Substituir foto" : "Fazer upload"}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setUploading(true);
+                  try {
+                    const path = await uploadFile(f, "aniversariantes");
+                    setForm(s => ({ ...s, photo_url: path }));
+                  } catch (err) {
+                    toast.error((err as Error).message);
+                  } finally {
+                    setUploading(false);
+                    e.target.value = "";
+                  }
+                }}
+              />
+            </label>
+          </div>
+
+          {/* Cargo e Unidade */}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Cargo</span>
+              <input
+                value={form.role}
+                onChange={e => setForm(s => ({ ...s, role: e.target.value }))}
+                placeholder="Analista, Vendedor…"
+                className="mt-1.5 w-full rounded-xl border border-input bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Unidade</span>
+              <input
+                value={form.unit}
+                onChange={e => setForm(s => ({ ...s, unit: e.target.value }))}
+                placeholder="Filial, Matriz…"
+                className="mt-1.5 w-full rounded-xl border border-input bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              />
+            </label>
+          </div>
+
           <label className="flex items-center gap-3 text-sm font-semibold cursor-pointer">
             <input
               type="checkbox"
