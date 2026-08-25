@@ -13,6 +13,7 @@ type Employee = {
   department: string | null;
   admission_date: string | null;
   active: boolean;
+  photo_url: string | null;
 };
 
 type Tenure = { years: number; months: number; totalMonths: number; label: string };
@@ -179,9 +180,13 @@ export function TempoDeCasaAdmin() {
                   <tr key={emp.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
-                          {initials(emp.name)}
-                        </span>
+                        {emp.photo_url ? (
+                          <img src={emp.photo_url} alt={emp.name} className="h-8 w-8 shrink-0 rounded-full object-cover object-top" />
+                        ) : (
+                          <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
+                            {initials(emp.name)}
+                          </span>
+                        )}
                         <div>
                           <div className="font-medium text-slate-900">{emp.name}</div>
                           {(emp.job_title || emp.department) && (
