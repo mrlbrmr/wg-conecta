@@ -95,15 +95,21 @@ export const Route = createFileRoute("/_portal/cultura")({
             <p className="text-sm text-muted-foreground card-soft p-6 text-center">Nenhum aniversário de casa neste mês.</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {waMonth.map(w => (
-                <div key={w.id} className="card-soft p-4 flex items-center gap-3">
-                  {w.photo_url ? <img src={fileUrl(w.photo_url) ?? ""} alt="" className="h-12 w-12 rounded-full object-cover" /> : <div className="grid h-12 w-12 place-items-center rounded-full bg-primary-softer text-primary"><PartyPopper className="h-5 w-5" /></div>}
-                  <div className="min-w-0">
-                    <div className="font-bold truncate">{w.name}</div>
-                    <div className="text-xs text-muted-foreground">{yearsFrom(w.admission_date)} {yearsFrom(w.admission_date) === 1 ? "ano" : "anos"} de casa {w.role ? `· ${w.role}` : ""}</div>
+              {waMonth.map(w => {
+                const d = new Date(w.admission_date + "T00:00:00");
+                const years = yearsFrom(w.admission_date);
+                return (
+                  <div key={w.id} className="card-soft p-4 flex items-center gap-3">
+                    {w.photo_url ? <img src={fileUrl(w.photo_url) ?? ""} alt="" className="h-12 w-12 rounded-full object-cover" /> : <div className="grid h-12 w-12 place-items-center rounded-full bg-primary-softer text-primary"><PartyPopper className="h-5 w-5" /></div>}
+                    <div className="min-w-0">
+                      <div className="font-bold truncate">{w.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Dia {d.getDate()} · {years} {years === 1 ? "ano" : "anos"} de casa{w.role ? ` · ${w.role}` : ""}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {(() => {
