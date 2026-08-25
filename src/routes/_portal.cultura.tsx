@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_portal/cultura")({
     const cmp = useQuery(campaignsQuery);
     const currentMonth = new Date().getMonth() + 1;
     const bdMonth = (bd.data ?? []).filter(b => b.birthday_month === currentMonth);
-    const waMonth = (wa.data ?? []).filter(w => new Date(w.admission_date).getMonth() + 1 === currentMonth);
+    const waMonth = (wa.data ?? []).filter(w => new Date(w.admission_date).getMonth() + 1 === currentMonth && yearsFrom(w.admission_date) > 0);
 
     return (
       <PortalLayout>
@@ -106,31 +106,35 @@ export const Route = createFileRoute("/_portal/cultura")({
               ))}
             </div>
           )}
-          {(wa.data ?? []).length > waMonth.length && (
-            <details className="mt-4 card-soft p-4">
-              <summary className="cursor-pointer text-sm font-bold">Ver todos os aniversários de casa ({(wa.data ?? []).length})</summary>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {(wa.data ?? []).filter(w => new Date(w.admission_date).getMonth() + 1 !== currentMonth).sort((a, b) => {
-                    const da = new Date(a.admission_date), db = new Date(b.admission_date);
-                    return da.getMonth() - db.getMonth() || da.getDate() - db.getDate();
-                  }).map(w => {
-                  const d = new Date(w.admission_date);
-                  return (
-                    <div key={w.id} className="flex items-center gap-3">
-                      {w.photo_url ? <img src={fileUrl(w.photo_url) ?? ""} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" /> : <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-softer text-primary"><PartyPopper className="h-4 w-4" /></div>}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-bold text-sm truncate">{w.name}</div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-muted-foreground">{d.getDate()} de {MONTHS[d.getMonth()].toLowerCase()}</span>
-                          <span className="text-xs font-bold text-primary bg-primary-softer px-2 py-0.5 rounded-full">{yearsFrom(w.admission_date)} {yearsFrom(w.admission_date) === 1 ? "ano" : "anos"}</span>
+          {(() => {
+            const all = (wa.data ?? []).filter(w => yearsFrom(w.admission_date) > 0);
+            if (all.length <= waMonth.length) return null;
+            return (
+              <details className="mt-4 card-soft p-4">
+                <summary className="cursor-pointer text-sm font-bold">Ver todos os aniversários de casa ({all.length})</summary>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                  {all.filter(w => new Date(w.admission_date).getMonth() + 1 !== currentMonth).sort((a, b) => {
+                      const da = new Date(a.admission_date), db = new Date(b.admission_date);
+                      return da.getMonth() - db.getMonth() || da.getDate() - db.getDate();
+                    }).map(w => {
+                    const d = new Date(w.admission_date);
+                    return (
+                      <div key={w.id} className="flex items-center gap-3">
+                        {w.photo_url ? <img src={fileUrl(w.photo_url) ?? ""} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" /> : <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-softer text-primary"><PartyPopper className="h-4 w-4" /></div>}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-sm truncate">{w.name}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground">{d.getDate()} de {MONTHS[d.getMonth()].toLowerCase()}</span>
+                            <span className="text-xs font-bold text-primary bg-primary-softer px-2 py-0.5 rounded-full">{yearsFrom(w.admission_date)} {yearsFrom(w.admission_date) === 1 ? "ano" : "anos"}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </details>
-          )}
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          })()}
         </section>
 
 
