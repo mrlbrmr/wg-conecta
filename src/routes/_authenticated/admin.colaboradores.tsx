@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import {
-  CheckCircle2, Loader2, MailCheck, RefreshCcw, Search,
+  CheckCircle2, Loader2, MailCheck, Pencil, RefreshCcw, Search,
   ShieldOff, Upload, UserPlus, X,
 } from "lucide-react";
 import {
@@ -221,15 +221,15 @@ function ColaboradoresPage() {
 
       <div className="card-soft overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left text-xs font-bold uppercase text-muted-foreground">
+          <thead className="bg-surface-muted text-left text-xs font-semibold uppercase text-muted-foreground tracking-wider">
             <tr>
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">E-mail</th>
-              <th className="px-4 py-3">Filial / Cargo</th>
-              <th className="px-4 py-3">Admissão</th>
-              <th className="px-4 py-3">Acesso</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Ações</th>
+              <th className="px-6 py-4">Nome</th>
+              <th className="px-6 py-4">E-mail</th>
+              <th className="px-6 py-4">Filial / Cargo</th>
+              <th className="px-6 py-4">Admissão</th>
+              <th className="px-6 py-4">Acesso</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -250,34 +250,35 @@ function ColaboradoresPage() {
               </tr>
             )}
             {filtered.map((emp) => (
-              <tr key={emp.id} className="border-t border-border">
-                <td className="px-4 py-3 font-semibold">{emp.name}</td>
-                <td className="px-4 py-3 text-muted-foreground text-xs">{emp.email ?? <span className="italic">—</span>}</td>
-                <td className="px-4 py-3">
+              <tr key={emp.id} className="border-t border-border hover:bg-surface-muted/40 transition-colors">
+                <td className="px-6 py-4 font-semibold">{emp.name}</td>
+                <td className="px-6 py-4 text-muted-foreground text-xs">{emp.email ?? <span className="italic">—</span>}</td>
+                <td className="px-6 py-4">
                   {emp.department && <div className="text-xs font-bold">{emp.department}</div>}
                   {emp.job_title && <div className="text-xs text-muted-foreground">{emp.job_title}</div>}
                   {!emp.department && !emp.job_title && <span className="text-muted-foreground">—</span>}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground text-xs">{fmtDate(emp.admission_date) ?? "—"}</td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4 text-muted-foreground text-xs">{fmtDate(emp.admission_date) ?? "—"}</td>
+                <td className="px-6 py-4">
                   {emp.auth_user_id
-                    ? <span className="chip">Portal</span>
+                    ? <span className="chip-soft">Portal</span>
                     : <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground"><ShieldOff className="h-3 w-3" /> Sem acesso</span>
                   }
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   {emp.active
-                    ? <span className="chip">Ativo</span>
+                    ? <span className="chip-success">Ativo</span>
                     : <span className="text-xs font-semibold text-muted-foreground">Inativo</span>
                   }
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-6 py-4 text-right">
                   <div className="inline-flex flex-wrap gap-1 justify-end">
                     <button
                       onClick={() => setEditing(emp)}
-                      className="rounded-lg px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary-softer"
+                      title="Editar"
+                      className="rounded-lg p-2 text-muted-foreground hover:text-primary hover:bg-primary-softer transition-colors"
                     >
-                      Editar
+                      <Pencil className="h-4 w-4" />
                     </button>
                     {emp.auth_user_id ? (
                       <>

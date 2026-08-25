@@ -66,10 +66,10 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
       <div className="card-soft overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-muted text-left text-xs font-bold uppercase text-muted-foreground">
+            <thead className="bg-surface-muted text-left text-xs font-semibold uppercase text-muted-foreground tracking-wider">
               <tr>
-                {resource.displayColumns.map(c => <th key={c.key} className="px-4 py-3">{c.label}</th>)}
-                <th className="px-4 py-3 text-right">Ações</th>
+                {resource.displayColumns.map(c => <th key={c.key} className="px-6 py-4">{c.label}</th>)}
+                <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -78,12 +78,12 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
               {(listQ.data ?? []).map(row => (
                 <tr key={String(row.id)} className="border-t border-border hover:bg-surface-muted/50">
                   {resource.displayColumns.map(c => (
-                    <td key={c.key} className="px-4 py-3">{formatCell(row[c.key])}</td>
+                    <td key={c.key} className="px-6 py-4">{formatCell(row[c.key])}</td>
                   ))}
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-6 py-4 text-right">
                     <div className="inline-flex gap-1">
-                      <button onClick={() => setEditing(row)} className="rounded-lg p-2 text-primary hover:bg-primary-softer" aria-label="Editar"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => { if (confirm("Remover este item?")) del.mutate(String(row.id)); }} className="rounded-lg p-2 text-destructive hover:bg-destructive/10" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => setEditing(row)} className="rounded-lg p-2 text-muted-foreground hover:text-primary hover:bg-primary-softer transition-colors" aria-label="Editar"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => { if (confirm("Remover este item?")) del.mutate(String(row.id)); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -100,7 +100,7 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
 
 function formatCell(v: unknown) {
   if (v === null || v === undefined || v === "") return <span className="text-muted-foreground">—</span>;
-  if (typeof v === "boolean") return v ? <span className="chip">Ativo</span> : <span className="text-muted-foreground">Inativo</span>;
+  if (typeof v === "boolean") return v ? <span className="chip-success">Ativo</span> : <span className="text-muted-foreground">Inativo</span>;
   if (Array.isArray(v)) return v.join(", ");
   if (typeof v === "string" && v.length > 60) return v.slice(0, 60) + "…";
   if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)) {

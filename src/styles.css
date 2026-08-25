@@ -222,6 +222,19 @@
   color: var(--color-ink);
   border: 1.5px solid var(--color-ink);
 }
+@utility chip-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: oklch(0.92 0.07 148);
+  color: oklch(0.38 0.12 148);
+}
 
 /* "Kicker" — pequeno rótulo editorial acima de títulos */
 @utility kicker {
