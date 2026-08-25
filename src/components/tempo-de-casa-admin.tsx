@@ -41,10 +41,20 @@ function calcTenure(admissionDate: string): Tenure {
 
 function TenureBadge({ years }: { years: number }) {
   const base = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold";
-  if (years < 1) return <span className={`${base} bg-white text-gray-700 border border-black/20`}>Menos de 1 ano</span>;
-  const isMilestone = years > 0 && years % 5 === 0;
   const label = `${years} ano${years !== 1 ? "s" : ""}`;
-  if (isMilestone) return <span className={`${base} bg-[#8FD152] text-black border border-black`}>{label}</span>;
+
+  if (years < 1) return <span className={`${base} bg-white text-gray-700 border border-black/20`}>Menos de 1 ano</span>;
+
+  // Marco exato (5, 10, 15…): verde vibrante com borda preta
+  if (years % 5 === 0) return <span className={`${base} bg-[#8FD152] text-black border border-black`}>{label}</span>;
+
+  // Passou do marco de 10 anos mas não é exato: verde médio
+  if (years >= 10) return <span className={`${base} bg-[#8FD152]/50 text-black border border-[#2F8F4A]/60`}>{label}</span>;
+
+  // Passou do marco de 5 anos mas não é exato: verde leve
+  if (years >= 5) return <span className={`${base} bg-[#8FD152]/20 text-black border border-[#2F8F4A]/40`}>{label}</span>;
+
+  // 1–4 anos: neutro
   return <span className={`${base} bg-black/5 text-black border border-black/20`}>{label}</span>;
 }
 
