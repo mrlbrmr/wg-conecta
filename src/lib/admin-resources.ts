@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Megaphone, Gift, FileText, HelpCircle, Briefcase, Sparkles,
-  ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2, UserCheck,
+  ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2, UserCheck, Inbox,
 } from "lucide-react";
 
 export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "date" | "url" | "email" | "file" | "image" | "tags" | "richtext" | "icon";
@@ -240,8 +240,20 @@ export const RESOURCES: ResourceDef[] = [
 ];
 
 export function findResource(key: string) { return RESOURCES.find(r => r.key === key); }
-export const SIDEBAR_EXTRA = [
-  { key: "colaboradores", label: "Colaboradores", icon: UserCheck, section: "Configurações" },
-  { key: "usuarios", label: "Usuários admin", icon: Users, section: "Configurações" },
-  { key: "configuracoes", label: "Configurações gerais", icon: Building2, section: "Configurações" },
+export interface SidebarExtraDef {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  section: string;
+  to: string;
+}
+
+export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
+  { key: "solicitacoes", label: "Solicitações", icon: Inbox, section: "Gente & Gestão", to: "/admin/solicitacoes" },
+  { key: "colaboradores", label: "Colaboradores", icon: UserCheck, section: "Configurações", to: "/admin/colaboradores" },
+  { key: "usuarios", label: "Usuários admin", icon: Users, section: "Configurações", to: "/admin/usuarios" },
+  { key: "configuracoes", label: "Configurações gerais", icon: Building2, section: "Configurações", to: "/admin/configuracoes" },
 ];
+
+// Derivado do array acima — evita a lista hardcoded que existia em admin.tsx
+export const EXTRA_KEYS = new Set(SIDEBAR_EXTRA.map((x) => x.key));

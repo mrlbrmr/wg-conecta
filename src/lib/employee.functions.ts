@@ -312,7 +312,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         if (Object.keys(patch).length === 0) { skipped++; continue; }
 
         patch.updated_at = new Date().toISOString();
-        const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", match.id);
+        const { error } = await supabaseAdmin.from("employees").update(patch as never).eq("id", match.id);
         if (!error) updated++;
       } else {
         // Insere novo colaborador sem conta de acesso
@@ -331,27 +331,4 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     }
 
     return { ok: true, updated, inserted, skipped };
-  });
-
-export const updateOwnProfile = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator(
-    z.object({
-      name: z.string().min(2).max(120),
-      email: emailSchema,
-    }),
-  )
-  .handler(async ({ data, context }) => {
-    const { userId } = context as { userId: string };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { email: data.email });
-      if (error) throw new Error(error.message);
-    }
-    const { error } = await supabaseAdmin
-      .from("employees")
-      .update({ name: data.name, email: data.email, updated_at: new Date().toISOString() })
-      .eq("auth_user_id", userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
