@@ -147,10 +147,10 @@ export const triggerEmployeePasswordReset = createServerFn({ method: "POST" })
   .validator(z.object({ email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: data.email,
-      options: { redirectTo: CONFIRM_URL },
+    // auth.admin.generateLink() apenas GERA o link e o devolve na resposta — não
+    // envia e-mail. resetPasswordForEmail é o método que faz o GoTrue disparar.
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+      redirectTo: CONFIRM_URL,
     });
     if (error) throw new Error(error.message);
     return { ok: true };

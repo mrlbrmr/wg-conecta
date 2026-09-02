@@ -20,10 +20,13 @@ function RecuperarSenhaPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${SITE_URL}/colaborador/confirmar`,
     });
     setLoading(false);
+    // Sem isto, uma recusa do Supabase (limite de envio, SMTP, redirect não
+    // autorizado) aparecia como sucesso e o e-mail simplesmente nunca chegava.
+    if (error) return toast.error(error.message);
     setSent(true);
     toast.success("E-mail enviado! Verifique sua caixa de entrada.");
   };
