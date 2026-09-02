@@ -9,6 +9,7 @@ import {
   campaignsQuery,
 } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
+import { yearsSince, parseISODate } from "@/lib/tenure";
 
 const MONTHS = [
   "Janeiro",
@@ -24,15 +25,6 @@ const MONTHS = [
   "Novembro",
   "Dezembro",
 ];
-
-function yearsFrom(date: string) {
-  const d = new Date(date);
-  const now = new Date();
-  let y = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) y--;
-  return y;
-}
 
 export const Route = createFileRoute("/_portal/cultura")({
   head: () => ({ meta: [{ title: "Cultura — Portal WG" }] }),
@@ -63,9 +55,13 @@ function CulturaPage() {
   const cmp = useQuery(campaignsQuery);
   const currentMonth = new Date().getMonth() + 1;
   const bdMonth = (bd.data ?? []).filter((b) => b.birthday_month === currentMonth);
-  const waMonth = (wa.data ?? []).filter(
+  const anniversaries = (wa.data ?? []).filter(
+    (w): w is typeof w & { admission_date: string } => w.admission_date !== null,
+  );
+  const waMonth = anniversaries.filter(
     (w) =>
-      new Date(w.admission_date).getMonth() + 1 === currentMonth && yearsFrom(w.admission_date) > 0,
+      parseISODate(w.admission_date).getMonth() + 1 === currentMonth &&
+      yearsSince(w.admission_date) > 0,
   );
 
   return (
@@ -135,7 +131,7 @@ function CulturaPage() {
                 <div className="min-w-0">
                   <div className="font-bold truncate">{b.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    Dia {b.birthday_day} {b.role ? `· ${b.role}` : ""}
+                    Dia {b.birthday_day} {b.job_title ? `· ${b.job_title}` : ""}
                   </div>
                   {b.unit && <div className="text-[11px] font-bold truncate">{b.unit}</div>}
                 </div>
@@ -167,8 +163,8 @@ function CulturaPage() {
                     <div className="min-w-0">
                       <div className="font-bold text-sm truncate">{b.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {MONTHS[b.birthday_month - 1]}, dia {b.birthday_day}
-                        {b.role ? ` · ${b.role}` : ""}
+                        {MONTHS[(b.birthday_month ?? 1) - 1]}, dia {b.birthday_day}
+                        {b.job_title ? ` · ${b.job_title}` : ""}
                       </div>
                       {b.unit && <div className="text-[11px] font-bold truncate">{b.unit}</div>}
                     </div>
@@ -188,8 +184,8 @@ function CulturaPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {waMonth.map((w) => {
-              const d = new Date(w.admission_date + "T00:00:00");
-              const years = yearsFrom(w.admission_date);
+              const d = parseISODate(w.admission_date);
+              const years = yearsSince(w.admission_date);
               return (
                 <div key={w.id} className="card-soft p-4 flex items-center gap-3">
                   {w.photo_url ? (
@@ -207,7 +203,7 @@ function CulturaPage() {
                     <div className="font-bold truncate">{w.name}</div>
                     <div className="text-xs text-muted-foreground">
                       Dia {d.getDate()} · {years} {years === 1 ? "ano" : "anos"} de casa
-                      {w.role ? ` · ${w.role}` : ""}
+                      {w.job_title ? ` · ${w.job_title}` : ""}
                     </div>
                   </div>
                 </div>
@@ -216,7 +212,7 @@ function CulturaPage() {
           </div>
         )}
         {(() => {
-          const all = (wa.data ?? []).filter((w) => yearsFrom(w.admission_date) > 0);
+          const all = anniversaries.filter((w) => yearsSince(w.admission_date) > 0);
           if (all.length <= waMonth.length) return null;
           return (
             <details className="mt-4 card-soft p-4">
@@ -225,14 +221,14 @@ function CulturaPage() {
               </summary>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {all
-                  .filter((w) => new Date(w.admission_date).getMonth() + 1 !== currentMonth)
+                  .filter((w) => parseISODate(w.admission_date).getMonth() + 1 !== currentMonth)
                   .sort((a, b) => {
-                    const da = new Date(a.admission_date),
-                      db = new Date(b.admission_date);
+                    const da = parseISODate(a.admission_date),
+                      db = parseISODate(b.admission_date);
                     return da.getMonth() - db.getMonth() || da.getDate() - db.getDate();
                   })
                   .map((w) => {
-                    const d = new Date(w.admission_date);
+                    const d = parseISODate(w.admission_date);
                     return (
                       <div key={w.id} className="flex items-center gap-3">
                         {w.photo_url ? (
@@ -253,8 +249,8 @@ function CulturaPage() {
                               {d.getDate()} de {MONTHS[d.getMonth()].toLowerCase()}
                             </span>
                             <span className="text-xs font-bold text-primary bg-primary-softer px-2 py-0.5 rounded-full">
-                              {yearsFrom(w.admission_date)}{" "}
-                              {yearsFrom(w.admission_date) === 1 ? "ano" : "anos"}
+                              {yearsSince(w.admission_date)}{" "}
+                              {yearsSince(w.admission_date) === 1 ? "ano" : "anos"}
                             </span>
                           </div>
                         </div>

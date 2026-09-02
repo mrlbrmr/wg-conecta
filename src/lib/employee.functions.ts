@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/require-admin";
 
 const SITE_URL = (process.env.SITE_URL ?? "http://localhost:8080").replace(/\/$/, "");
 const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
@@ -9,7 +10,7 @@ const emailSchema = z.string().email();
 
 // Cria convite + insere novo colaborador (sem registro prévio no diretório)
 export const inviteEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       name: z.string().min(2).max(120),
@@ -46,7 +47,7 @@ export const inviteEmployee = createServerFn({ method: "POST" })
 
 // Cadastra colaborador no diretório sem enviar convite (email opcional)
 export const addEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       name: z.string().min(2).max(120),
@@ -79,7 +80,7 @@ export const addEmployee = createServerFn({ method: "POST" })
 // Dá acesso ao portal para colaborador do diretório.
 // Se o e-mail já tiver conta no Auth, vincula direto (sem novo convite).
 export const inviteExistingEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ employeeId: z.string().uuid(), email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -125,7 +126,7 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
   });
 
 export const resendEmployeeInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ employeeId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -147,7 +148,7 @@ export const resendEmployeeInvite = createServerFn({ method: "POST" })
   });
 
 export const triggerEmployeePasswordReset = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -161,7 +162,7 @@ export const triggerEmployeePasswordReset = createServerFn({ method: "POST" })
   });
 
 export const updateEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       id: z.string().uuid(),
@@ -214,7 +215,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
   });
 
 export const listEmployees = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
@@ -228,7 +229,7 @@ export const listEmployees = createServerFn({ method: "GET" })
   });
 
 export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ id: z.string().uuid(), photo_url: z.string().url() }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -241,7 +242,7 @@ export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
   });
 
 export const bulkImportEmployees = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       employees: z.array(
