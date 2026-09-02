@@ -7,10 +7,11 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { installStaleChunkRecovery } from "@/lib/stale-chunk-recovery";
 
 function NotFoundComponent() {
   return (
@@ -102,6 +103,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    installStaleChunkRecovery();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
