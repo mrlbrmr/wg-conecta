@@ -55,6 +55,9 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
+  /* Movimento — uma curva assina o produto inteiro */
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* Sombras editoriais — offsets curtos, sem blur exagerado */
   --shadow-paper: 2px 3px 0 var(--ink);
   --shadow-paper-sm: 1px 2px 0 var(--ink);
@@ -66,13 +69,13 @@
   --radius: 0.5rem; /* menos SaaS: cantos mais firmes */
 
   /* Papel + tinta */
-  --background: oklch(0.955 0.014 85);          /* #F4EFE4 papel creme */
-  --foreground: oklch(0.18 0 0);                /* #141414 tinta preta WG */
+  --background: oklch(0.955 0.014 85); /* #F4EFE4 papel creme */
+  --foreground: oklch(0.18 0 0); /* #141414 tinta preta WG */
   --paper: oklch(0.955 0.014 85);
   --ink: oklch(0.18 0 0);
 
-  --surface: oklch(0.985 0.008 85);             /* papel claro para cards */
-  --surface-muted: oklch(0.925 0.018 85);       /* papel mais quente/rebaixado */
+  --surface: oklch(0.985 0.008 85); /* papel claro para cards */
+  --surface-muted: oklch(0.925 0.018 85); /* papel mais quente/rebaixado */
 
   --card: oklch(0.985 0.008 85);
   --card-foreground: oklch(0.18 0 0);
@@ -80,7 +83,7 @@
   --popover-foreground: oklch(0.18 0 0);
 
   /* Verde WG institucional */
-  --primary: oklch(0.58 0.15 148);              /* #2F8F4A */
+  --primary: oklch(0.58 0.15 148); /* #2F8F4A */
   --primary-foreground: oklch(0.98 0.008 85);
   --primary-soft: oklch(0.86 0.11 140);
   --primary-softer: oklch(0.94 0.05 138);
@@ -92,7 +95,7 @@
   --muted-foreground: oklch(0.42 0.02 90);
 
   /* Verde elétrico WG — destaque, chips, botões de ação */
-  --accent: oklch(0.82 0.19 135);               /* #8FD152 */
+  --accent: oklch(0.82 0.19 135); /* #8FD152 */
   --accent-foreground: oklch(0.18 0 0);
   --accent-soft: oklch(0.93 0.09 135);
 
@@ -104,6 +107,10 @@
 
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.2 0.05 80);
+
+  /* Grade de pontos do fundo de papel */
+  --paper-dot: oklch(0.18 0 0 / 0.035);
+  --paper-dot-size: 22px;
 
   --border: oklch(0.86 0.015 85);
   --border-strong: oklch(0.18 0 0);
@@ -136,24 +143,34 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
   body {
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    background-image:
-      radial-gradient(oklch(0.18 0 0 / 0.035) 1px, transparent 1px);
-    background-size: 22px 22px;
+    background-image: radial-gradient(var(--paper-dot) 1px, transparent 1px);
+    background-size: var(--paper-dot-size) var(--paper-dot-size);
     background-position: 0 0;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
     font-weight: 800;
   }
-  a { text-underline-offset: 3px; }
+  a {
+    text-underline-offset: 3px;
+  }
 }
 
 /* Cartões estilo mural: fundo papel, borda preta firme, sombra offset */
@@ -162,7 +179,9 @@
   border: 1.5px solid var(--color-ink);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-paper);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition:
+    transform 120ms var(--ease-standard),
+    box-shadow 120ms var(--ease-standard);
 }
 @utility card-paper-hover {
   &:hover {
@@ -245,12 +264,12 @@
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--kicker-color, var(--color-primary));
   &::before {
     content: "";
     width: 1.75rem;
     height: 2px;
-    background: var(--color-primary);
+    background: var(--kicker-color, var(--color-primary));
   }
 }
 
@@ -268,8 +287,10 @@
   font-size: 0.85rem;
   letter-spacing: 0.01em;
   border: 1.5px solid var(--color-ink);
-  transition: transform 120ms ease;
-  &:hover { transform: translateY(-1px); }
+  transition: transform 120ms var(--ease-standard);
+  &:hover {
+    transform: translateY(-1px);
+  }
 }
 @utility btn-outline {
   display: inline-flex;
@@ -283,8 +304,30 @@
   font-weight: 700;
   font-size: 0.85rem;
   border: 1.5px solid var(--color-ink);
-  transition: background 120ms ease;
-  &:hover { background: var(--color-accent); }
+  transition: background 120ms var(--ease-standard);
+  &:hover {
+    background: var(--color-accent);
+  }
+}
+
+/* Botão de destaque — verde elétrico sobre tinta; usado dentro de cartões escuros */
+@utility btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  border: 1.5px solid var(--color-ink);
+  transition: transform 120ms var(--ease-standard);
+  &:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* Divisor tipo jornal */
@@ -295,26 +338,55 @@
 
 /* ── Animações de entrada ──────────────────────────────────────────── */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up-fade {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @utility animate-fade-in {
-  animation: fade-in 0.22s ease both;
+  animation: fade-in 0.22s var(--ease-standard) both;
 }
 
 @utility animate-slide-up {
-  animation: slide-up-fade 0.32s ease both;
+  animation: slide-up-fade 0.32s var(--ease-standard) both;
+}
+
+@utility animate-content-in {
+  animation: content-in 0.24s var(--ease-standard) both;
 }
 
 @utility animate-shimmer {
@@ -326,4 +398,21 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Movimento reduzido ────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-content-in,
+  .animate-shimmer {
+    animation: none;
+  }
+  .card-paper,
+  .card-paper-hover:hover,
+  .btn-ink:hover,
+  .btn-accent:hover {
+    transform: none;
+    transition: none;
+  }
 }

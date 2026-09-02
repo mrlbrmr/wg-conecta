@@ -99,7 +99,11 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
         if (!existing) throw new Error(error.message);
         const { error: dbErr } = await supabaseAdmin
           .from("employees")
-          .update({ auth_user_id: existing.id, email: data.email, updated_at: new Date().toISOString() })
+          .update({
+            auth_user_id: existing.id,
+            email: data.email,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", data.employeeId);
         if (dbErr) throw new Error(dbErr.message);
         return { ok: true, linked: true };
@@ -215,7 +219,9 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select("id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url")
+      .select(
+        "id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url",
+      )
       .order("name");
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -273,7 +279,12 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     // Normaliza: minúsculo, sem acentos, espaços comprimidos.
     // "CÉLIO DE BRITTO" e "Celio de Britto" viram "celio de britto".
     const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
     // Índice por nome completo normalizado
     const byFullName = new Map(employees.map((e) => [norm(e.name), e]));
@@ -302,14 +313,24 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
 
       if (match) {
         // Atualiza campos ausentes/novos — nunca sobrescreve dados existentes sem motivo
-        const patch: Record<string, unknown> = {};
+        const patch: {
+          email?: string;
+          birth_date?: string;
+          admission_date?: string;
+          department?: string;
+          job_title?: string;
+          updated_at?: string;
+        } = {};
         if (emp.email && !match.email) patch.email = emp.email;
         if (emp.birth_date && !match.birth_date) patch.birth_date = emp.birth_date;
         if (emp.admission_date && !match.admission_date) patch.admission_date = emp.admission_date;
         if (emp.department) patch.department = emp.department;
         if (emp.job_title) patch.job_title = emp.job_title;
 
-        if (Object.keys(patch).length === 0) { skipped++; continue; }
+        if (Object.keys(patch).length === 0) {
+          skipped++;
+          continue;
+        }
 
         patch.updated_at = new Date().toISOString();
         const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", match.id);
@@ -345,7 +366,9 @@ export const updateOwnProfile = createServerFn({ method: "POST" })
     const { userId } = context as { userId: string };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { email: data.email });
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email: data.email,
+      });
       if (error) throw new Error(error.message);
     }
     const { error } = await supabaseAdmin
@@ -355,3 +378,52 @@ export const updateOwnProfile = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Colaborador do usuário autenticado.
+ * Resolve por `auth_user_id` e cai para `id` (vínculos antigos gravaram só o `id`).
+ * Privacidade: o aniversário sai só como dia e mês — nunca a data completa.
+ */
+export const getOwnEmployee = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context as { userId: string };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const columns =
+      "id, name, email, department, job_title, phone, admission_date, birth_date, photo_url, active";
+
+    let { data } = await supabaseAdmin
+      .from("employees")
+      .select(columns)
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+
+    if (!data) {
+      ({ data } = await supabaseAdmin
+        .from("employees")
+        .select(columns)
+        .eq("id", userId)
+        .maybeSingle());
+    }
+    if (!data) return null;
+
+    const row = data as Record<string, unknown>;
+    const birth = row.birth_date ? new Date(`${row.birth_date as string}T00:00:00`) : null;
+
+    return {
+      id: row.id as string,
+      name: (row.name as string) ?? "",
+      email: (row.email as string | null) ?? null,
+      department: (row.department as string | null) ?? null,
+      job_title: (row.job_title as string | null) ?? null,
+      phone: (row.phone as string | null) ?? null,
+      admission_date: (row.admission_date as string | null) ?? null,
+      birthday_day: birth ? birth.getDate() : null,
+      birthday_month: birth ? birth.getMonth() + 1 : null,
+      photo_url: (row.photo_url as string | null) ?? null,
+      active: (row.active as boolean) ?? true,
+    };
+  });
+
+export type OwnEmployee = Awaited<ReturnType<typeof getOwnEmployee>>;

@@ -18,6 +18,7 @@ import { Route as PortalIndexRouteImport } from './routes/_portal.index'
 import { Route as ColaboradorRecuperarSenhaRouteImport } from './routes/colaborador/recuperar-senha'
 import { Route as ColaboradorConfirmarRouteImport } from './routes/colaborador/confirmar'
 import { Route as PortalVagasRouteImport } from './routes/_portal.vagas'
+import { Route as PortalPerfilRouteImport } from './routes/_portal.perfil'
 import { Route as PortalIntegracaoRouteImport } from './routes/_portal.integracao'
 import { Route as PortalGenteGestaoRouteImport } from './routes/_portal.gente-gestao'
 import { Route as PortalFormulariosRouteImport } from './routes/_portal.formularios'
@@ -86,6 +87,11 @@ const ColaboradorConfirmarRoute = ColaboradorConfirmarRouteImport.update({
 const PortalVagasRoute = PortalVagasRouteImport.update({
   id: '/vagas',
   path: '/vagas',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalPerfilRoute = PortalPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => PortalRoute,
 } as any)
 const PortalIntegracaoRoute = PortalIntegracaoRouteImport.update({
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/formularios': typeof PortalFormulariosRoute
   '/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
   '/integracao': typeof PortalIntegracaoRoute
+  '/perfil': typeof PortalPerfilRoute
   '/vagas': typeof PortalVagasRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/cultura': typeof PortalCulturaRoute
   '/formularios': typeof PortalFormulariosRoute
   '/integracao': typeof PortalIntegracaoRoute
+  '/perfil': typeof PortalPerfilRoute
   '/vagas': typeof PortalVagasRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/_portal/formularios': typeof PortalFormulariosRoute
   '/_portal/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
   '/_portal/integracao': typeof PortalIntegracaoRoute
+  '/_portal/perfil': typeof PortalPerfilRoute
   '/_portal/vagas': typeof PortalVagasRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/formularios'
     | '/gente-gestao'
     | '/integracao'
+    | '/perfil'
     | '/vagas'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/cultura'
     | '/formularios'
     | '/integracao'
+    | '/perfil'
     | '/vagas'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/_portal/formularios'
     | '/_portal/gente-gestao'
     | '/_portal/integracao'
+    | '/_portal/perfil'
     | '/_portal/vagas'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
@@ -506,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/vagas'
       fullPath: '/vagas'
       preLoaderRoute: typeof PortalVagasRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/_portal/perfil': {
+      id: '/_portal/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PortalPerfilRouteImport
       parentRoute: typeof PortalRoute
     }
     '/_portal/integracao': {
@@ -765,6 +784,7 @@ interface PortalRouteChildren {
   PortalFormulariosRoute: typeof PortalFormulariosRoute
   PortalGenteGestaoRoute: typeof PortalGenteGestaoRouteWithChildren
   PortalIntegracaoRoute: typeof PortalIntegracaoRoute
+  PortalPerfilRoute: typeof PortalPerfilRoute
   PortalVagasRoute: typeof PortalVagasRoute
   PortalIndexRoute: typeof PortalIndexRoute
 }
@@ -776,6 +796,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalFormulariosRoute: PortalFormulariosRoute,
   PortalGenteGestaoRoute: PortalGenteGestaoRouteWithChildren,
   PortalIntegracaoRoute: PortalIntegracaoRoute,
+  PortalPerfilRoute: PortalPerfilRoute,
   PortalVagasRoute: PortalVagasRoute,
   PortalIndexRoute: PortalIndexRoute,
 }

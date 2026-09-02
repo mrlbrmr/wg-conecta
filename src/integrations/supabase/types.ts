@@ -44,21 +44,31 @@ export type Database = {
       employees: {
         Row: {
           id: string
+          auth_user_id: string | null
           name: string
-          email: string
+          email: string | null
           department: string | null
           job_title: string | null
+          phone: string | null
+          birth_date: string | null
+          admission_date: string | null
+          photo_url: string | null
           active: boolean
           invited_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
+          id?: string
+          auth_user_id?: string | null
           name: string
-          email: string
+          email?: string | null
           department?: string | null
           job_title?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          admission_date?: string | null
+          photo_url?: string | null
           active?: boolean
           invited_at?: string | null
           created_at?: string
@@ -66,10 +76,15 @@ export type Database = {
         }
         Update: {
           id?: string
+          auth_user_id?: string | null
           name?: string
-          email?: string
+          email?: string | null
           department?: string | null
           job_title?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          admission_date?: string | null
+          photo_url?: string | null
           active?: boolean
           invited_at?: string | null
           created_at?: string

@@ -1,14 +1,24 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef } from "react";
-import { Home, LayoutGrid, Megaphone, Briefcase, Search, PartyPopper, ArrowUpRight } from "lucide-react";
+import {
+  Home,
+  LayoutGrid,
+  Megaphone,
+  Briefcase,
+  Search,
+  CircleUser,
+  ArrowUpRight,
+} from "lucide-react";
 import { WGLogo } from "./wg-logo";
+import { UserAvatar } from "./user-avatar";
+import { useCurrentEmployee } from "@/hooks/use-current-employee";
 
 const NAV = [
   { to: "/", label: "Início", icon: Home },
-  { to: "/gente-gestao", label: "G&G", icon: LayoutGrid },
   { to: "/comunicados", label: "Mural", icon: Megaphone },
+  { to: "/gente-gestao", label: "G&G", icon: LayoutGrid },
   { to: "/vagas", label: "Vagas", icon: Briefcase },
-  { to: "/cultura", label: "Cultura", icon: PartyPopper },
+  { to: "/perfil", label: "Perfil", icon: CircleUser },
 ];
 
 const DESKTOP_NAV = [
@@ -24,6 +34,7 @@ const DESKTOP_NAV = [
 export function PortalLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const mainRef = useRef<HTMLElement>(null);
+  const { data: me } = useCurrentEmployee();
 
   useEffect(() => {
     const el = mainRef.current;
@@ -41,7 +52,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className="min-h-screen bg-background pb-24 lg:pb-0">
       {/* Faixa editorial preta */}
       <div className="bg-ink text-paper">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 md:px-6 text-[10.5px] font-semibold tracking-[0.14em] uppercase">
@@ -56,7 +67,9 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           <Link to="/" className="flex items-center gap-3">
             <WGLogo className="h-11 w-11" variant="black" />
             <div className="hidden sm:block">
-              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Portal do Colaborador</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                Portal do Colaborador
+              </div>
               <div className="text-lg font-black leading-none tracking-tight">Aqui é WG.</div>
             </div>
           </Link>
@@ -78,17 +91,24 @@ export function PortalLayout({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
-          <Link
-            to="/busca"
-            aria-label="Buscar no portal"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-ink bg-surface text-ink transition hover:bg-accent"
-          >
-            <Search className="h-4 w-4" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/busca"
+              aria-label="Buscar no portal"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-ink bg-surface text-ink transition hover:bg-accent"
+            >
+              <Search className="h-4 w-4" />
+            </Link>
+            <Link to="/perfil" aria-label="Meu perfil" title="Meu perfil" className="rounded-full">
+              <UserAvatar name={me?.name} photoUrl={me?.photo_url} size={40} />
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main ref={mainRef} className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10 animate-slide-up">{children}</main>
+      <main ref={mainRef} className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10 animate-slide-up">
+        {children}
+      </main>
 
       <PortalFooter />
       <MobileNav pathname={pathname} />
@@ -105,30 +125,39 @@ function PortalFooter() {
             <div className="flex items-center gap-3">
               <WGLogo className="h-9 w-9" />
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">Portal do Colaborador</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
+                  Portal do Colaborador
+                </div>
                 <div className="text-lg font-black leading-tight">Grupo WG · WG Baterias</div>
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-paper/75">
-              Este é o nosso canto — comunicados, benefícios, documentos e tudo que o dia a dia pede,
-              feito por gente de dentro, pra gente de dentro.
+              Este é o nosso canto — comunicados, benefícios, documentos e tudo que o dia a dia
+              pede, feito por gente de dentro, pra gente de dentro.
             </p>
           </div>
           <div className="text-sm leading-relaxed">
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">Fale com a gente</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
+              Fale com a gente
+            </div>
             <div className="mt-2 flex flex-col gap-1.5">
               {[
                 "julliana.rocha@wgbaterias.com.br",
                 "murilo.bremer@wgbaterias.com.br",
                 "yasmin@wgbaterias.com.br",
-              ].map(email => (
-                <a key={email} href={`mailto:${email}`} className="inline-flex items-center gap-1 font-bold text-paper hover:text-accent transition text-sm">
+              ].map((email) => (
+                <a
+                  key={email}
+                  href={`mailto:${email}`}
+                  className="inline-flex items-center gap-1 font-bold text-paper hover:text-accent transition text-sm"
+                >
                   {email} <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
                 </a>
               ))}
             </div>
             <p className="mt-3 text-xs text-paper/60 max-w-xs">
-              Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.
+              Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários
+              por aqui.
             </p>
           </div>
         </div>
@@ -144,7 +173,7 @@ function PortalFooter() {
 
 function MobileNav({ pathname }: { pathname: string }) {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t-[1.5px] border-ink bg-paper/97 backdrop-blur">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t-[1.5px] border-ink bg-paper/97 backdrop-blur">
       <div className="mx-auto grid max-w-6xl grid-cols-5">
         {NAV.map((n) => {
           const active = pathname === n.to || (n.to !== "/" && pathname.startsWith(n.to));
@@ -153,7 +182,7 @@ function MobileNav({ pathname }: { pathname: string }) {
             <Link
               key={n.to}
               to={n.to}
-              className={`relative flex flex-col items-center gap-1 py-2.5 text-[10.5px] font-bold uppercase tracking-wide transition ${
+              className={`relative flex min-h-11 flex-col items-center justify-center gap-1 py-2.5 text-[9.5px] font-bold uppercase tracking-wide transition ${
                 active ? "text-ink" : "text-muted-foreground"
               }`}
             >

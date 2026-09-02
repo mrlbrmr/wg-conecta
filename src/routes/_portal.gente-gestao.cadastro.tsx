@@ -6,7 +6,6 @@ import { KeyRound, Loader2, Save } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { updateOwnProfile } from "@/lib/employee.functions";
-import { PortalLayout } from "@/components/portal-layout";
 import { PageHeader } from "@/components/page-header";
 import { toast } from "sonner";
 
@@ -59,26 +58,28 @@ function CadastroPage() {
 
   if (profileQuery.isLoading) {
     return (
-      <PortalLayout>
+      <>
         <PageHeader title="Meu Perfil" backTo="/gente-gestao" />
         <div className="max-w-lg space-y-6">
           <Skeleton className="h-28 w-full rounded-xl" />
           <Skeleton className="h-52 w-full rounded-xl" />
           <Skeleton className="h-24 w-full rounded-xl" />
         </div>
-      </PortalLayout>
+      </>
     );
   }
 
   const profile = profileQuery.data;
 
   return (
-    <PortalLayout>
+    <>
       <PageHeader title="Meu Perfil" backTo="/gente-gestao" />
       <div className="max-w-lg space-y-6">
         {(profile?.department || profile?.job_title) && (
           <section className="card-soft p-5 space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Dados cadastrais</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Dados cadastrais
+            </h2>
             {profile.department && (
               <div>
                 <span className="text-xs font-semibold text-muted-foreground">Departamento</span>
@@ -95,9 +96,13 @@ function CadastroPage() {
         )}
 
         <section className="card-soft p-5 space-y-4">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Informações pessoais</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Informações pessoais
+          </h2>
           <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nome</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Nome
+            </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -105,21 +110,29 @@ function CadastroPage() {
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">E-mail</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              E-mail
+            </span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-input bg-surface px-4 py-2.5 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
-            <p className="mt-1 text-xs text-muted-foreground">Ao alterar o e-mail, você receberá uma confirmação no novo endereço.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ao alterar o e-mail, você receberá uma confirmação no novo endereço.
+            </p>
           </label>
           <button
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending || !name.trim() || !email.trim()}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
-            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {saveMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
             Salvar
           </button>
         </section>
@@ -131,7 +144,9 @@ function CadastroPage() {
             </div>
             <div>
               <h2 className="text-sm font-bold">Alterar senha</h2>
-              <p className="text-xs text-muted-foreground">Um link de redefinição será enviado para o seu e-mail.</p>
+              <p className="text-xs text-muted-foreground">
+                Um link de redefinição será enviado para o seu e-mail.
+              </p>
             </div>
           </div>
           <button
@@ -142,6 +157,6 @@ function CadastroPage() {
           </button>
         </section>
       </div>
-    </PortalLayout>
+    </>
   );
 }

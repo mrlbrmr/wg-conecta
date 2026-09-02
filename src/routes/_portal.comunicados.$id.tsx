@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, ArrowUpRight, Calendar, Paperclip, Pin } from "lucide-react";
-import { PortalLayout } from "@/components/portal-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { announcementByIdQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
@@ -18,7 +17,7 @@ function AnnouncementDetail() {
 
   if (q.isLoading) {
     return (
-      <PortalLayout>
+      <>
         <Skeleton className="h-4 w-28 mb-6" />
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8 card-paper overflow-hidden">
@@ -36,29 +35,36 @@ function AnnouncementDetail() {
             <Skeleton className="h-52 w-full rounded-lg" />
           </div>
         </div>
-      </PortalLayout>
+      </>
     );
   }
   if (!a) {
     return (
-      <PortalLayout>
+      <>
         <div className="card-paper p-8">
           <p className="text-sm font-bold">Comunicado não encontrado.</p>
-          <Link to="/comunicados" className="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary">
+          <Link
+            to="/comunicados"
+            className="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary"
+          >
             Voltar ao mural <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-      </PortalLayout>
+      </>
     );
   }
 
   const publishedLabel = a.published_at
-    ? new Date(a.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(a.published_at).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
     : null;
   const attachmentHref = a.attachment_url ? fileUrl(a.attachment_url) : null;
 
   return (
-    <PortalLayout>
+    <>
       {/* Voltar */}
       <Link
         to="/comunicados"
@@ -83,10 +89,14 @@ function AnnouncementDetail() {
                 {a.category ?? "Comunicado"}
               </span>
               {a.important && (
-                <span className="chip-accent"><AlertCircle className="h-3 w-3" /> Importante</span>
+                <span className="chip-accent">
+                  <AlertCircle className="h-3 w-3" /> Importante
+                </span>
               )}
               {a.pinned && (
-                <span className="chip"><Pin className="h-3 w-3" /> Fixado</span>
+                <span className="chip">
+                  <Pin className="h-3 w-3" /> Fixado
+                </span>
               )}
             </div>
 
@@ -139,19 +149,25 @@ function AnnouncementDetail() {
             <dl className="mt-4 space-y-3 text-sm">
               {a.category && (
                 <div className="flex items-baseline justify-between gap-3 border-b border-ink/10 pb-2">
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Categoria</dt>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Categoria
+                  </dt>
                   <dd className="font-bold text-right">{a.category}</dd>
                 </div>
               )}
               {publishedLabel && (
                 <div className="flex items-baseline justify-between gap-3 border-b border-ink/10 pb-2">
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Publicado</dt>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Publicado
+                  </dt>
                   <dd className="font-bold text-right">{publishedLabel}</dd>
                 </div>
               )}
               {a.expires_at && (
                 <div className="flex items-baseline justify-between gap-3 border-b border-ink/10 pb-2">
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Vale até</dt>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Vale até
+                  </dt>
                   <dd className="font-bold text-right">
                     {new Date(a.expires_at).toLocaleDateString("pt-BR")}
                   </dd>
@@ -159,20 +175,25 @@ function AnnouncementDetail() {
               )}
               {a.tags && a.tags.length > 0 && (
                 <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Tags</dt>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                    Tags
+                  </dt>
                   <dd className="flex flex-wrap gap-1.5">
-                    {a.tags.map(t => <span key={t} className="chip">{t}</span>)}
+                    {a.tags.map((t) => (
+                      <span key={t} className="chip">
+                        {t}
+                      </span>
+                    ))}
                   </dd>
                 </div>
               )}
             </dl>
           </div>
 
-          <Link
-            to="/comunicados"
-            className="card-paper card-paper-hover p-5 block group"
-          >
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Mural</div>
+          <Link to="/comunicados" className="card-paper card-paper-hover p-5 block group">
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+              Mural
+            </div>
             <div className="mt-2 text-sm font-black inline-flex items-center gap-2">
               Ver outros comunicados
               <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -192,6 +213,6 @@ function AnnouncementDetail() {
           </section>
         )}
       </article>
-    </PortalLayout>
+    </>
   );
 }

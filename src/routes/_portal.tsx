@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { PortalLayout } from "@/components/portal-layout";
 
 export const Route = createFileRoute("/_portal")({
   ssr: false,
@@ -10,5 +11,9 @@ export const Route = createFileRoute("/_portal")({
     }
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: () => (
+    <PortalLayout>
+      <Outlet />
+    </PortalLayout>
+  ),
 });
