@@ -391,8 +391,9 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
     const { userId } = context as { userId: string };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // String literal única: o PostgREST tipa o retorno a partir dela.
     const columns =
-      "id, name, email, department, job_title, phone, admission_date, birth_date, photo_url, active";
+      "id, name, email, department, job_title, unit, extension, bio, manager_id, buddy_id, admission_date, birth_date, photo_url, active";
 
     let { data } = await supabaseAdmin
       .from("employees")
@@ -418,7 +419,11 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
       email: (row.email as string | null) ?? null,
       department: (row.department as string | null) ?? null,
       job_title: (row.job_title as string | null) ?? null,
-      phone: (row.phone as string | null) ?? null,
+      unit: (row.unit as string | null) ?? null,
+      extension: (row.extension as string | null) ?? null,
+      bio: (row.bio as string | null) ?? null,
+      manager_id: (row.manager_id as string | null) ?? null,
+      buddy_id: (row.buddy_id as string | null) ?? null,
       admission_date: (row.admission_date as string | null) ?? null,
       birthday_day: birth ? birth.getDate() : null,
       birthday_month: birth ? birth.getMonth() + 1 : null,

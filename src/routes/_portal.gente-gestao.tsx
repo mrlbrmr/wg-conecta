@@ -11,7 +11,6 @@ export const GG_LINKS = [
   { to: "/gente-gestao/faq", title: "Dúvidas Frequentes", desc: "Respostas rápidas" },
   { to: "/gente-gestao/ferias", title: "Solicitação de Férias", desc: "Como pedir suas férias" },
   { to: "/gente-gestao/atestados", title: "Atestados", desc: "Como lançar no ponto" },
-  { to: "/gente-gestao/cadastro", title: "Atualização Cadastral", desc: "Mantenha seus dados" },
   { to: "/gente-gestao/holerite", title: "Holerite", desc: "Acesse seu contracheque" },
   { to: "/gente-gestao/politicas", title: "Políticas Internas", desc: "Normas e diretrizes" },
   { to: "/gente-gestao/contatos", title: "Fale com G&G", desc: "Contatos da equipe" },
