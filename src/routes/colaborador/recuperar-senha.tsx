@@ -6,7 +6,13 @@ import { WGLogo } from "@/components/wg-logo";
 import { normalizeSiteUrl } from "@/lib/site-url";
 import { toast } from "sonner";
 
-const SITE_URL = normalizeSiteUrl(import.meta.env.VITE_SITE_URL, window.location.origin);
+// O fallback precisa da guarda de `window`: como ele é argumento, e não mais o
+// lado direito de um `??`, é avaliado mesmo quando VITE_SITE_URL está definida —
+// e este módulo também roda no servidor.
+const SITE_URL = normalizeSiteUrl(
+  import.meta.env.VITE_SITE_URL,
+  typeof window !== "undefined" ? window.location.origin : undefined,
+);
 
 export const Route = createFileRoute("/colaborador/recuperar-senha")({
   head: () => ({ meta: [{ title: "Recuperar senha — Portal WG" }] }),
