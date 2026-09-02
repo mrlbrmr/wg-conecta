@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { normalizeSiteUrl } from "@/lib/site-url";
 import {
   EDUCATION_OPTIONS,
   MARITAL_STATUS_OPTIONS,
@@ -11,7 +12,7 @@ import {
   type ProfileChanges,
 } from "@/lib/profile-fields";
 
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 
 /* ─── Tipos ────────────────────────────────────────────────────────────────── */
 
