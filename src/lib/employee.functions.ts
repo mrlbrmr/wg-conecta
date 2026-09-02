@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizeSiteUrl } from "@/lib/site-url";
 
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
 
 const emailSchema = z.string().email();
@@ -99,7 +100,11 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
         if (!existing) throw new Error(error.message);
         const { error: dbErr } = await supabaseAdmin
           .from("employees")
-          .update({ auth_user_id: existing.id, email: data.email, updated_at: new Date().toISOString() })
+          .update({
+            auth_user_id: existing.id,
+            email: data.email,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", data.employeeId);
         if (dbErr) throw new Error(dbErr.message);
         return { ok: true, linked: true };
@@ -215,7 +220,9 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select("id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url")
+      .select(
+        "id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url",
+      )
       .order("name");
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -273,7 +280,12 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     // Normaliza: minúsculo, sem acentos, espaços comprimidos.
     // "CÉLIO DE BRITTO" e "Celio de Britto" viram "celio de britto".
     const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
     // Índice por nome completo normalizado
     const byFullName = new Map(employees.map((e) => [norm(e.name), e]));
@@ -309,10 +321,16 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         if (emp.department) patch.department = emp.department;
         if (emp.job_title) patch.job_title = emp.job_title;
 
-        if (Object.keys(patch).length === 0) { skipped++; continue; }
+        if (Object.keys(patch).length === 0) {
+          skipped++;
+          continue;
+        }
 
         patch.updated_at = new Date().toISOString();
-        const { error } = await supabaseAdmin.from("employees").update(patch as never).eq("id", match.id);
+        const { error } = await supabaseAdmin
+          .from("employees")
+          .update(patch as never)
+          .eq("id", match.id);
         if (!error) updated++;
       } else {
         // Insere novo colaborador sem conta de acesso
