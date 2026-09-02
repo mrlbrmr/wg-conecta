@@ -85,7 +85,7 @@ function HomePage() {
             </h2>
           </div>
           <Link
-            to="/comunicados"
+            to="/mural"
             className="hidden sm:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider hover:text-primary"
           >
             Mural completo <ArrowUpRight className="h-3.5 w-3.5" />
@@ -153,7 +153,7 @@ function HomePage() {
                       : "Publicado agora"}
                   </div>
                   <Link
-                    to="/comunicados/$id"
+                    to="/mural/$id"
                     params={{ id: featured.id }}
                     className="order-1 sm:order-2 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-accent text-ink px-5 py-3 text-sm font-black uppercase tracking-wider border-[1.5px] border-accent hover:bg-paper hover:border-paper transition"
                   >
@@ -270,7 +270,7 @@ function HomePage() {
 
                   {/* CTA */}
                   <Link
-                    to="/comunicados/$id"
+                    to="/mural/$id"
                     params={{ id: a.id }}
                     className="mt-6 inline-flex w-full sm:w-auto self-stretch sm:self-start items-center justify-center gap-2 rounded-full border-[1.5px] border-ink bg-surface px-4 py-3 text-xs font-black uppercase tracking-wider hover:bg-accent transition"
                   >
@@ -304,7 +304,7 @@ function HomePage() {
         </div>
 
         <Link
-          to="/comunicados"
+          to="/mural"
           className="sm:hidden mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary"
         >
           Ver mural completo <ArrowUpRight className="h-3.5 w-3.5" />

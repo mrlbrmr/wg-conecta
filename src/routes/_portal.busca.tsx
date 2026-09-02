@@ -58,7 +58,7 @@ function BuscaPage() {
           kind: "Comunicado",
           title: a.title,
           description: a.summary ?? undefined,
-          to: `/comunicados/${a.id}`,
+          to: `/mural/${a.id}`,
         }),
     );
     (ben.data ?? []).forEach(

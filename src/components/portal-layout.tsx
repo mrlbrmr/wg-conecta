@@ -15,7 +15,7 @@ import { useCurrentEmployee } from "@/hooks/use-current-employee";
 
 const NAV = [
   { to: "/", label: "Início", icon: Home },
-  { to: "/comunicados", label: "Mural", icon: Megaphone },
+  { to: "/mural", label: "Mural", icon: Megaphone },
   { to: "/gente-gestao", label: "G&G", icon: LayoutGrid },
   { to: "/vagas", label: "Vagas", icon: Briefcase },
   { to: "/perfil", label: "Perfil", icon: CircleUser },
@@ -24,7 +24,7 @@ const NAV = [
 const DESKTOP_NAV = [
   { to: "/", label: "Início" },
   { to: "/gente-gestao", label: "Gente & Gestão" },
-  { to: "/comunicados", label: "Mural" },
+  { to: "/mural", label: "Mural" },
   { to: "/vagas", label: "Vagas internas" },
   { to: "/integracao", label: "Integração" },
   { to: "/formularios", label: "Formulários" },
