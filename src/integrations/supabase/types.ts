@@ -44,21 +44,51 @@ export type Database = {
       employees: {
         Row: {
           id: string
+          auth_user_id: string | null
           name: string
-          email: string
+          email: string | null
           department: string | null
           job_title: string | null
+          phone: string | null
+          birth_date: string | null
+          admission_date: string | null
+          photo_url: string | null
+          marital_status: string | null
+          education_level: string | null
+          dependents: string | null
+          address_zip: string | null
+          address_street: string | null
+          address_number: string | null
+          address_complement: string | null
+          address_district: string | null
+          address_city: string | null
+          address_state: string | null
           active: boolean
           invited_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
+          id?: string
+          auth_user_id?: string | null
           name: string
-          email: string
+          email?: string | null
           department?: string | null
           job_title?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          admission_date?: string | null
+          photo_url?: string | null
+          marital_status?: string | null
+          education_level?: string | null
+          dependents?: string | null
+          address_zip?: string | null
+          address_street?: string | null
+          address_number?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_city?: string | null
+          address_state?: string | null
           active?: boolean
           invited_at?: string | null
           created_at?: string
@@ -66,12 +96,72 @@ export type Database = {
         }
         Update: {
           id?: string
+          auth_user_id?: string | null
           name?: string
-          email?: string
+          email?: string | null
           department?: string | null
           job_title?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          admission_date?: string | null
+          photo_url?: string | null
+          marital_status?: string | null
+          education_level?: string | null
+          dependents?: string | null
+          address_zip?: string | null
+          address_street?: string | null
+          address_number?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_city?: string | null
+          address_state?: string | null
           active?: boolean
           invited_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profile_update_requests: {
+        Row: {
+          id: string
+          employee_id: string
+          auth_user_id: string
+          status: string
+          changes: Json
+          note: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
+          reviewer_note: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          auth_user_id: string
+          status?: string
+          changes?: Json
+          note?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          reviewer_note?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          auth_user_id?: string
+          status?: string
+          changes?: Json
+          note?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          reviewer_note?: string | null
+          reviewed_at?: string | null
           created_at?: string
           updated_at?: string
         }
