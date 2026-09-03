@@ -26,6 +26,15 @@ Regras:
 export const HANDOFF_ANSWER =
   "Essa eu não achei nos materiais que tenho aqui. Vou registrar sua pergunta e o time de Gente & Gestão te responde no portal — normalmente no mesmo dia.\nSe for urgente, fala direto com o G&G.";
 
+/**
+ * Achou o material, mas a resposta não veio (modelo fora do ar, chave ausente,
+ * crédito acabado). Texto diferente do encaminhamento de propósito: dizer "não
+ * achei" quando o problema é do assistente esconde a falha e manda o time de
+ * G&G caçar lacuna de conteúdo que não existe.
+ */
+export const MODEL_DOWN_ANSWER =
+  "Achei o material aqui, mas não consegui montar a resposta agora.\nTenta de novo daqui a pouco — se continuar assim, avisa o G&G que tem coisa quebrada do meu lado.";
+
 /** Monta o bloco de contexto que vai junto da pergunta. */
 export function buildContext(hits: KnowledgeHit[]): string {
   const blocos = hits

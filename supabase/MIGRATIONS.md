@@ -178,3 +178,35 @@ SELECT question, count(*) AS vezes, max(created_at) AS ultima
  ORDER BY vezes DESC, ultima DESC
  LIMIT 20;
 ```
+
+## Baterito: busca com OU — `20260906120000_baterito_busca_ou.sql`
+
+Correção da função criada acima. `websearch_to_tsquery` combina os termos com **AND**: "Como
+tirar o holerite?" virava `'tir' & 'holerit'` e exigia que o documento contivesse as duas coisas.
+Nenhum material de G&G diz "tirar", então a busca voltava vazia para quase tudo e o assistente
+caía no encaminhamento sempre — parecendo que a base não existia.
+
+Agora os lexemas são combinados com `|` e o `ts_rank` ordena: quem casa mais termos sobe.
+
+Para confirmar antes e depois, no SQL Editor:
+
+```sql
+-- Antes da correção isto volta 0 linhas; depois, os documentos de holerite.
+SELECT source, title, url, round(rank::numeric, 4) AS rank
+  FROM public.baterito_search('Como tirar o holerite?', 8);
+```
+
+Se **continuar vazio depois da correção**, o problema é conteúdo: não há nada publicado sobre o
+assunto nas tabelas do portal. Confira o que existe:
+
+```sql
+SELECT 'faq' AS tabela, count(*) FROM public.faq_items WHERE active
+UNION ALL SELECT 'beneficios', count(*) FROM public.benefits WHERE active
+UNION ALL SELECT 'documentos', count(*) FROM public.documents WHERE active
+UNION ALL SELECT 'paginas_gg', count(*) FROM public.gg_pages WHERE active
+UNION ALL SELECT 'vagas', count(*) FROM public.internal_jobs WHERE status <> 'encerrada'
+UNION ALL SELECT 'atalhos', count(*) FROM public.quick_links WHERE active
+UNION ALL SELECT 'formularios', count(*) FROM public.forms WHERE active
+UNION ALL SELECT 'prazos', count(*) FROM public.monthly_deadlines WHERE active
+UNION ALL SELECT 'contatos', count(*) FROM public.contacts WHERE active;
+```

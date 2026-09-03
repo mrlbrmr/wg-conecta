@@ -35,6 +35,18 @@ O Gateway não cobra markup sobre tokens: paga-se o preço de lista do provedor.
 de contexto e ~200 de resposta por pergunta, o custo fica na casa de poucos dólares por mil
 perguntas. Dá para acompanhar e limitar em Budgets, no painel do AI Gateway.
 
+## Quando ele responde a mesma coisa para tudo
+
+As duas falhas possíveis têm textos diferentes de propósito:
+
+| O que aparece na bolha                                             | O que está acontecendo                                                                        |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| "Essa eu não achei nos materiais que tenho aqui…"                  | a busca voltou vazia — falta conteúdo publicado no portal sobre o assunto                     |
+| "Achei o material aqui, mas não consegui montar a resposta agora." | a busca achou, o modelo é que não respondeu — chave ausente, crédito acabado ou provedor fora |
+
+Para o primeiro caso, rode a consulta de conferência de `baterito_search()` em
+`supabase/MIGRATIONS.md`. Para o segundo, comece pelas variáveis de ambiente.
+
 ## Privacidade
 
 - A conversa vive no `localStorage` do navegador, chaveada pelo id do usuário autenticado.
