@@ -59,7 +59,7 @@ supabase db push
 
 Sem a CLI, cole o conteúdo dos arquivos, **na ordem**, no SQL Editor do painel do Supabase.
 
-## Formulários internos — `20260904120000_form_submissions.sql` (pendente)
+## Formulários internos — `20260904120000_form_submissions.sql` (aplicada)
 
 Os três formulários de Gente & Gestão saíram do Google Forms e passaram a ser preenchidos dentro
 do portal. A migration:
@@ -72,23 +72,21 @@ do portal. A migration:
 - cria o bucket privado `request-attachments`, com escrita restrita à pasta do próprio
   colaborador e leitura só para o dono ou o G&G.
 
-Enquanto ela não rodar, `/formularios/<slug>` carrega mas o envio falha — as colunas não existem.
-
 ### Situação conferida em 03/09/2026
 
 Checagem via API contra o projeto que está no `.env` (`wrldlvcrrslzbrwuwdsr`), que **não** é o
-`icllhgvhuzhhlxwlqwtt` citado acima:
+`icllhgvhuzhhlxwlqwtt` citado acima — confirme o project-ref antes de aplicar qualquer coisa,
+porque o desta página está desatualizado:
 
 - `requests`, `request_messages`, `profile_update_requests` e `employees` **existem** — as
   migrations `20260903*` já foram aplicadas neste projeto, ao contrário do que esta página dizia;
-- `requests.payload`, `requests.priority`, `requests.attachment_path` e
-  `employees.registration_number` **não existem** — falta só a migration desta entrega;
+- depois de aplicar esta migration, `requests.payload`, `requests.priority`,
+  `requests.attachment_path` e `employees.registration_number` respondem 200, e os três cartões do
+  catálogo passaram a navegar para `/formularios/<slug>` em vez de abrir link externo;
 - `GET /rest/v1/forms` com a chave publicável devolve `permission denied for function is_admin`:
   a policy de leitura de `forms` chama `app_private.is_admin()` e o role `anon` não tem `EXECUTE`
   nela. É anterior a esta entrega e não aparece na tela, porque o portal exige login — mas vale
   conferir se `authenticated` tem o grant.
-
-Confirme o project-ref antes de aplicar qualquer coisa: o desta página está desatualizado.
 
 ## Depois de aplicar
 
