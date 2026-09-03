@@ -470,11 +470,16 @@ function MonthCard({ employee }: { employee: Employee }) {
 function TeamTab({ employee }: { employee: Employee }) {
   const directory = useQuery(directoryQuery);
   const all = directory.data ?? [];
-  const manager = employee.manager_id ? all.find((e) => e.id === employee.manager_id) : null;
+  // Algumas áreas são divididas entre dois gestores — a planilha do DP traz os
+  // dois, e o segundo vive em `co_manager_id`.
+  const managerIds = [employee.manager_id, employee.co_manager_id].filter(Boolean) as string[];
+  const managers = managerIds
+    .map((id) => all.find((e) => e.id === id))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e));
   const peers = all.filter(
     (e) =>
       e.id !== employee.id &&
-      e.id !== employee.manager_id &&
+      !managerIds.includes(e.id) &&
       employee.department != null &&
       e.department === employee.department,
   );
@@ -483,18 +488,24 @@ function TeamTab({ employee }: { employee: Employee }) {
 
   return (
     <div className="mt-6 grid gap-6">
-      {manager ? (
+      {managers.length > 0 ? (
         <PaperCard tone="ink" className="p-6 md:p-7">
-          <Kicker color="var(--color-accent)">Meu gestor</Kicker>
-          <div className="mt-5 flex flex-wrap items-center gap-5">
-            <UserAvatar name={manager.name} photoUrl={manager.photo_url} size={64} tone="accent" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[22px] font-black tracking-[-0.03em] lg:text-[26px]">
-                {manager.name}
-              </p>
-              <p className="mt-1 text-[15px] text-paper/75">{manager.job_title ?? "Gestão"}</p>
-            </div>
-            {manager.extension && <InkButton variant="accent">Ramal {manager.extension}</InkButton>}
+          <Kicker color="var(--color-accent)">
+            {managers.length > 1 ? "Minha gestão" : "Meu gestor"}
+          </Kicker>
+          <div className="mt-5 flex flex-col gap-5">
+            {managers.map((m) => (
+              <div key={m.id} className="flex flex-wrap items-center gap-5">
+                <UserAvatar name={m.name} photoUrl={m.photo_url} size={64} tone="accent" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[22px] font-black tracking-[-0.03em] lg:text-[26px]">
+                    {m.name}
+                  </p>
+                  <p className="mt-1 text-[15px] text-paper/75">{m.job_title ?? "Gestão"}</p>
+                </div>
+                {m.extension && <InkButton variant="accent">Ramal {m.extension}</InkButton>}
+              </div>
+            ))}
           </div>
         </PaperCard>
       ) : (

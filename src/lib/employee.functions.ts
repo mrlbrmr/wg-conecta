@@ -372,7 +372,7 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
 
     // String literal única: o PostgREST tipa o retorno a partir dela.
     const columns =
-      "id, name, email, department, job_title, unit, extension, bio, manager_id, buddy_id, admission_date, birth_date, photo_url, active";
+      "id, name, email, department, job_title, unit, extension, bio, manager_id, co_manager_id, buddy_id, admission_date, birth_date, photo_url, active";
 
     let { data } = await supabaseAdmin
       .from("employees")
@@ -402,6 +402,7 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
       extension: (row.extension as string | null) ?? null,
       bio: (row.bio as string | null) ?? null,
       manager_id: (row.manager_id as string | null) ?? null,
+      co_manager_id: (row.co_manager_id as string | null) ?? null,
       buddy_id: (row.buddy_id as string | null) ?? null,
       admission_date: (row.admission_date as string | null) ?? null,
       birthday_day: birth ? birth.getDate() : null,

@@ -464,6 +464,7 @@ export type Database = {
           unit: string | null
           extension: string | null
           manager_id: string | null
+          co_manager_id: string | null
           buddy_id: string | null
           id: string
           auth_user_id: string | null
@@ -495,6 +496,7 @@ export type Database = {
           unit?: string | null
           extension?: string | null
           manager_id?: string | null
+          co_manager_id?: string | null
           buddy_id?: string | null
           id?: string
           auth_user_id?: string | null
@@ -526,6 +528,7 @@ export type Database = {
           unit?: string | null
           extension?: string | null
           manager_id?: string | null
+          co_manager_id?: string | null
           buddy_id?: string | null
           id?: string
           auth_user_id?: string | null
@@ -1300,6 +1303,7 @@ export type Database = {
           bio: string | null
           admission_date: string | null
           manager_id: string | null
+          co_manager_id: string | null
           birthday_day: number | null
           birthday_month: number | null
         }
