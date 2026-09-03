@@ -2,17 +2,28 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { userIdFromRequest } from "@/lib/route-auth";
 import { searchKnowledge, sourcesOf } from "@/lib/baterito/knowledge.server";
-import { buildContext, HANDOFF_ANSWER, SYSTEM_PROMPT } from "@/lib/baterito/prompt";
+import {
+  buildContext,
+  HANDOFF_ANSWER,
+  MODEL_DOWN_ANSWER,
+  SYSTEM_PROMPT,
+} from "@/lib/baterito/prompt";
 import { hasPII, maskPII } from "@/lib/baterito/pii";
 import { bateritoDb } from "@/lib/baterito/db.server";
 import type { BateritoSource } from "@/lib/baterito/types";
 
 /**
- * Modelo pela string do AI Gateway. Trocar por um mais barato (por exemplo
- * `anthropic/claude-haiku-4.5`) é mudar esta linha — o Gateway resolve o
- * provedor e cobra o preço de lista dele, sem markup.
+ * Gemini pelo Google AI Studio, no tier gratuito.
+ *
+ * O AI Gateway da Vercel foi descartado: ele exige cartão cadastrado até para
+ * liberar os créditos grátis, e devolvia 403 em toda pergunta.
+ *
+ * Vem de env var para dar para trocar de modelo pelo painel da Vercel, sem
+ * passar por PR — útil porque nem todo modelo do catálogo está disponível no
+ * tier gratuito. Alternativas: `gemini-3.6-flash`, `gemini-3.7-flash`,
+ * `gemini-3.5-flash-lite`.
  */
-const MODEL = "anthropic/claude-sonnet-5";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 /** 30 mensagens por hora por colaborador, como sugere o handoff. */
 const RATE_LIMIT = 30;
@@ -77,9 +88,10 @@ export const Route = createFileRoute("/api/baterito")({
 
         const sources = sourcesOf(hits);
         const { streamText } = await import("ai");
+        const { google } = await import("@ai-sdk/google");
 
         const result = streamText({
-          model: MODEL,
+          model: google(process.env.BATERITO_MODEL ?? DEFAULT_MODEL),
           system: SYSTEM_PROMPT,
           messages: [
             ...history.slice(-HISTORY_TURNS).map((m) => ({
@@ -104,13 +116,18 @@ export const Route = createFileRoute("/api/baterito")({
               console.error("[baterito] stream", err);
             }
 
-            // Sem texto nenhum (modelo fora do ar, crédito acabado): o
-            // colaborador recebe o encaminhamento, não uma bolha vazia.
+            // Sem texto nenhum: modelo fora do ar, chave ausente, crédito
+            // acabado. A base TINHA material, então a falha é do assistente e o
+            // texto precisa dizer isso — mandar o encaminhamento aqui viraria
+            // lacuna de conteúdo falsa no relatório do G&G. Por isso também
+            // não registra: não é lacuna nem resposta. O preço é o rate limit
+            // não contar enquanto o modelo está fora — e aí não há custo de IA
+            // para conter mesmo.
             if (!full.trim()) {
-              controller.enqueue(encoder.encode(sse({ type: "text", value: HANDOFF_ANSWER })));
+              console.error("[baterito] modelo não devolveu texto");
+              controller.enqueue(encoder.encode(sse({ type: "text", value: MODEL_DOWN_ANSWER })));
               controller.enqueue(encoder.encode(sse({ type: "done", sources: [] })));
               controller.close();
-              await log(db, userId, masked, false, []);
               return;
             }
 

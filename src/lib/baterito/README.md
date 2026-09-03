@@ -21,19 +21,41 @@ conteúdo no portal, pelo painel de sempre.
 
 ## Variáveis de ambiente
 
-| Variável                                    | Onde     | Para quê                                                                            |
-| ------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | servidor | validar o token e ler a base                                                        |
-| `AI_GATEWAY_API_KEY`                        | servidor | AI Gateway da Vercel. Em deploys na Vercel o token OIDC do projeto dispensa a chave |
+| Variável                                    | Onde               | Para quê                                                     |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | servidor           | validar o token e ler a base                                 |
+| `GOOGLE_GENERATIVE_AI_API_KEY`              | servidor           | chave da Gemini API, do Google AI Studio                     |
+| `BATERITO_MODEL`                            | servidor, opcional | troca o modelo sem passar por PR. Padrão: `gemini-3.5-flash` |
 
-O modelo está em `MODEL`, no topo do endpoint. É uma string `provedor/modelo` do AI Gateway —
-trocar por um mais barato é mudar essa linha.
+## Provedor e custo
 
-## Custo
+Gemini pelo Google AI Studio, no **tier gratuito**. O AI Gateway da Vercel foi descartado: ele
+exige cartão cadastrado até para liberar os créditos grátis e devolvia 403 em toda pergunta.
 
-O Gateway não cobra markup sobre tokens: paga-se o preço de lista do provedor. Com ~2.000 tokens
-de contexto e ~200 de resposta por pergunta, o custo fica na casa de poucos dólares por mil
-perguntas. Dá para acompanhar e limitar em Budgets, no painel do AI Gateway.
+Duas consequências que valem lembrar:
+
+- **O tier gratuito do Google usa o conteúdo enviado para treinar os modelos, e revisores
+  humanos podem ler entradas e saídas.** Aqui trafegam as perguntas dos colaboradores e trechos
+  dos documentos internos de G&G. Escolha consciente; migrar para o tier pago tira isso.
+- O tier gratuito tem limite de requisições por minuto e por dia. Estourado o limite, a chamada
+  falha e o colaborador vê a mensagem de "não consegui montar a resposta agora" — não a de base
+  vazia.
+
+Nem todo modelo do catálogo está liberado no tier gratuito. Se `gemini-3.5-flash` não estiver,
+troque pela env `BATERITO_MODEL` — `gemini-3.6-flash`, `gemini-3.7-flash` e
+`gemini-3.5-flash-lite` são alternativas.
+
+## Quando ele responde a mesma coisa para tudo
+
+As duas falhas possíveis têm textos diferentes de propósito:
+
+| O que aparece na bolha                                             | O que está acontecendo                                                                        |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| "Essa eu não achei nos materiais que tenho aqui…"                  | a busca voltou vazia — falta conteúdo publicado no portal sobre o assunto                     |
+| "Achei o material aqui, mas não consegui montar a resposta agora." | a busca achou, o modelo é que não respondeu — chave ausente, crédito acabado ou provedor fora |
+
+Para o primeiro caso, rode a consulta de conferência de `baterito_search()` em
+`supabase/MIGRATIONS.md`. Para o segundo, comece pelas variáveis de ambiente.
 
 ## Privacidade
 
