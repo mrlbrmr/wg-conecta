@@ -8,9 +8,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { directoryQuery, type DirectoryEntry } from "@/lib/directory-queries";
 import { publishRecognition } from "@/lib/portal-write.functions";
 import { cn } from "@/lib/utils";
-
-const PRIVACY_NOTE =
-  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
+import { PRIVACY_NOTE } from "@/lib/form-defs";
 
 export interface RecognizeColleagueFormProps {
   /** Colaborador logado — não aparece na busca (ninguém reconhece a si mesmo). */

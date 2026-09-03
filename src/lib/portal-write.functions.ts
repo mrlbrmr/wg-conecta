@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  FORM_META,
+  REQUEST_FORM_SLUGS,
+  priorityOf,
+  renderPayload,
+  schemaFor,
+  titleFor,
+  type RequestFormSlug,
+} from "@/lib/form-defs";
+import { normalizeSiteUrl } from "@/lib/site-url";
+import type { Json } from "@/integrations/supabase/types";
+
+const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 
 /**
  * Escritas do colaborador no portal.
@@ -302,6 +315,133 @@ export const openRequest = createServerFn({ method: "POST" })
       .single();
     fail(error);
     return { ok: true, id: created!.id, protocol: created!.protocol };
+  });
+
+/**
+ * Envio de um formulário interno (Férias, Solicitação Geral).
+ *
+ * O `payload` chega solto e é revalidado aqui com o mesmo schema zod que a tela
+ * usou — a validação do cliente é conveniência, esta é a que vale. Título,
+ * assunto, prazo e prioridade são todos derivados no servidor: o cliente não
+ * escolhe nada disso.
+ *
+ * A Atualização Cadastral não passa por aqui — ela tem fluxo próprio, com diff e
+ * aprovação que aplica no cadastro (`createProfileUpdateRequest`).
+ */
+export const openFormRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    z.object({
+      slug: z.enum(REQUEST_FORM_SLUGS),
+      payload: z.record(z.unknown()),
+      attachment_path: z.string().max(400).nullish(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const slug = data.slug as RequestFormSlug;
+    const parsed = schemaFor(slug).safeParse(data.payload);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      throw new Error(first?.message ?? "Confere os campos do formulário?");
+    }
+    const payload = parsed.data as Record<string, unknown>;
+
+    const db = await admin();
+    const employee_id = await employeeIdOf((context as { userId: string }).userId);
+
+    // O anexo já foi enviado para a pasta do próprio colaborador (a policy de
+    // storage garante isso). Aqui só recusamos um caminho de outra pessoa.
+    const attachment = data.attachment_path?.trim() || null;
+    if (attachment && !attachment.startsWith(`${employee_id}/`)) {
+      throw new Error("Anexo inválido.");
+    }
+
+    const { data: form } = await db
+      .from("forms")
+      .select("id, sla_days, category")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    const meta = FORM_META[slug];
+    const sla = form?.sla_days ?? 3;
+
+    const { data: created, error } = await db
+      .from("requests")
+      .insert({
+        employee_id,
+        form_id: form?.id ?? null,
+        title: titleFor(slug, payload),
+        subject: form?.category ?? meta.category,
+        body: typeof payload.description === "string" ? payload.description : null,
+        payload: payload as Json,
+        priority: priorityOf(slug, payload),
+        attachment_path: attachment,
+        due_date: businessDaysFromNow(sla),
+      })
+      .select("id, protocol")
+      .single();
+    fail(error);
+
+    // A notificação nunca derruba a criação da solicitação.
+    try {
+      const { notifyGG, escapeHtml } = await import("@/lib/notify.server");
+      const rows = renderPayload(slug, payload)
+        .map(
+          (e) =>
+            `<tr><td><strong>${escapeHtml(e.label)}</strong></td><td>${escapeHtml(e.value)}</td></tr>`,
+        )
+        .join("");
+      await notifyGG(
+        `${meta.title} — protocolo ${created!.protocol}`,
+        `<p>Nova solicitação pelo portal.</p><table>${rows}</table>` +
+          (attachment ? `<p>A solicitação tem anexo.</p>` : "") +
+          `<p><a href="${SITE_URL}/admin/solicitacoes">Abrir no painel</a></p>`,
+      );
+    } catch (e) {
+      console.error("[open-form-request] notificação por e-mail falhou", e);
+    }
+
+    return { ok: true, id: created!.id, protocol: created!.protocol };
+  });
+
+/**
+ * URL assinada do anexo, válida por poucos minutos.
+ *
+ * O bucket é privado e o proxy `/api/public/files` não pede login, então a
+ * leitura passa por aqui: quem pode ver é o dono da solicitação ou o G&G.
+ */
+export const getRequestAttachmentUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ request_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const userId = (context as { userId: string }).userId;
+
+    const { data: req } = await db
+      .from("requests")
+      .select("employee_id, attachment_path")
+      .eq("id", data.request_id)
+      .maybeSingle();
+    if (!req?.attachment_path) throw new Error("Essa solicitação não tem anexo.");
+
+    const { data: isAdmin } = await db
+      .from("admin_users")
+      .select("id")
+      .eq("id", userId)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (!isAdmin) {
+      const employee_id = await employeeIdOf(userId);
+      if (req.employee_id !== employee_id) throw new Error("Anexo não encontrado.");
+    }
+
+    const { data: signed, error } = await db.storage
+      .from("request-attachments")
+      .createSignedUrl(req.attachment_path, 300);
+    fail(error);
+
+    return { url: signed!.signedUrl, name: req.attachment_path.split("/").pop() ?? "anexo" };
   });
 
 export const postRequestMessage = createServerFn({ method: "POST" })

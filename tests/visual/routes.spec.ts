@@ -12,6 +12,10 @@ const PUBLIC_ROUTES = [
   { path: "/gente-gestao", name: "gente & gestão" },
   { path: "/cultura", name: "cultura" },
   { path: "/formularios", name: "formulários" },
+  { path: "/formularios/ferias", name: "formulário de férias" },
+  { path: "/formularios/atualizacao-cadastral", name: "atualização cadastral" },
+  { path: "/formularios/solicitacao-geral", name: "solicitação geral G&G" },
+  { path: "/formularios/enviado?protocolo=1001", name: "confirmação de envio" },
   { path: "/integracao", name: "integração" },
 ];
 

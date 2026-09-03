@@ -11,9 +11,7 @@ import { benefitsQuery, contactsQuery, faqQuery } from "@/lib/portal-queries";
 import { deadlinesInMonth, monthlyDeadlinesQuery } from "@/lib/gg-queries";
 import { ownRequestsQuery, REQUEST_STATUS_LABEL, REQUEST_STATUS_TONE } from "@/lib/profile-queries";
 import { formatDate } from "@/lib/tenure";
-
-const PRIVACY_NOTE =
-  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
+import { PRIVACY_NOTE } from "@/lib/form-defs";
 
 export const Route = createFileRoute("/_portal/gente-gestao/")({
   head: () => ({ meta: [{ title: "Gente & Gestão — Portal WG" }] }),
@@ -58,7 +56,11 @@ function ShortcutsSection() {
           const Icon = ICON_MAP[l.icon] ?? Users;
           return (
             <PaperCard key={l.to} hover asChild>
-              <Link to={l.to} className="flex flex-col gap-[5px] p-5">
+              <Link
+                to={l.to}
+                params={"params" in l ? l.params : undefined}
+                className="flex flex-col gap-[5px] p-5"
+              >
                 <IconBubble size={44} className="mb-2">
                   <Icon />
                 </IconBubble>

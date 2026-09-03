@@ -59,6 +59,35 @@ supabase db push
 
 Sem a CLI, cole o conteúdo dos arquivos, **na ordem**, no SQL Editor do painel do Supabase.
 
+## Formulários internos — `20260904120000_form_submissions.sql` (aplicada)
+
+Os três formulários de Gente & Gestão saíram do Google Forms e passaram a ser preenchidos dentro
+do portal. A migration:
+
+- dá `slug` a `forms` (formulário interno) e torna `external_url` opcional; aponta os três
+  registros semeados para `ferias`, `atualizacao-cadastral` e `solicitacao-geral`;
+- acrescenta `payload jsonb`, `priority` e `attachment_path` a `requests`;
+- acrescenta `employees.registration_number` (matrícula) — **fora** do GRANT UPDATE por coluna,
+  porque é dado do DP e fica somente-leitura para o colaborador;
+- cria o bucket privado `request-attachments`, com escrita restrita à pasta do próprio
+  colaborador e leitura só para o dono ou o G&G.
+
+### Situação conferida em 03/09/2026
+
+Checagem via API contra o projeto que está no `.env` (`wrldlvcrrslzbrwuwdsr`), que **não** é o
+`icllhgvhuzhhlxwlqwtt` citado acima — confirme o project-ref antes de aplicar qualquer coisa,
+porque o desta página está desatualizado:
+
+- `requests`, `request_messages`, `profile_update_requests` e `employees` **existem** — as
+  migrations `20260903*` já foram aplicadas neste projeto, ao contrário do que esta página dizia;
+- depois de aplicar esta migration, `requests.payload`, `requests.priority`,
+  `requests.attachment_path` e `employees.registration_number` respondem 200, e os três cartões do
+  catálogo passaram a navegar para `/formularios/<slug>` em vez de abrir link externo;
+- `GET /rest/v1/forms` com a chave publicável devolve `permission denied for function is_admin`:
+  a policy de leitura de `forms` chama `app_private.is_admin()` e o role `anon` não tem `EXECUTE`
+  nela. É anterior a esta entrega e não aparece na tela, porque o portal exige login — mas vale
+  conferir se `authenticated` tem o grant.
+
 ## Depois de aplicar
 
 `src/integrations/supabase/types.ts` é um arquivo **gerado**, mas foi editado à mão porque já

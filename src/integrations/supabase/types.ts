@@ -132,6 +132,9 @@ export type Database = {
         Row: {
           id: string
           protocol: number
+          payload: Json
+          priority: string | null
+          attachment_path: string | null
           employee_id: string
           form_id: string | null
           title: string
@@ -146,6 +149,9 @@ export type Database = {
         Insert: {
           id?: string
           protocol?: number
+          payload?: Json
+          priority?: string | null
+          attachment_path?: string | null
           employee_id: string
           form_id?: string | null
           title: string
@@ -160,6 +166,9 @@ export type Database = {
         Update: {
           id?: string
           protocol?: number
+          payload?: Json
+          priority?: string | null
+          attachment_path?: string | null
           employee_id?: string
           form_id?: string | null
           title?: string
@@ -461,6 +470,7 @@ export type Database = {
       employees: {
         Row: {
           bio: string | null
+          registration_number: string | null
           unit: string | null
           extension: string | null
           manager_id: string | null
@@ -493,6 +503,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          registration_number?: string | null
           unit?: string | null
           extension?: string | null
           manager_id?: string | null
@@ -525,6 +536,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          registration_number?: string | null
           unit?: string | null
           extension?: string | null
           manager_id?: string | null
@@ -926,11 +938,12 @@ export type Database = {
       forms: {
         Row: {
           sla_days: number
+          slug: string | null
           active: boolean
           category: string | null
           created_at: string
           description: string | null
-          external_url: string
+          external_url: string | null
           icon: string | null
           id: string
           order_index: number
@@ -939,11 +952,12 @@ export type Database = {
         }
         Insert: {
           sla_days?: number
+          slug?: string | null
           active?: boolean
           category?: string | null
           created_at?: string
           description?: string | null
-          external_url: string
+          external_url?: string | null
           icon?: string | null
           id?: string
           order_index?: number
@@ -952,11 +966,12 @@ export type Database = {
         }
         Update: {
           sla_days?: number
+          slug?: string | null
           active?: boolean
           category?: string | null
           created_at?: string
           description?: string | null
-          external_url?: string
+          external_url?: string | null
           icon?: string | null
           id?: string
           order_index?: number

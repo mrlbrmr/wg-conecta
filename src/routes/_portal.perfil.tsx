@@ -26,6 +26,7 @@ import { updateOwnBio, updateOwnPhoto } from "@/lib/portal-write.functions";
 import { uploadEmployeePhoto } from "@/lib/storage";
 import { formatDate, formatDayMonth, tenureLabel, MONTHS } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
+import { PRIVACY_NOTE } from "@/lib/form-defs";
 
 const TABS = [
   { id: "visao-geral", label: "Visão geral", short: "Visão geral" },
@@ -35,9 +36,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-const PRIVACY_NOTE =
-  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
 
 export const Route = createFileRoute("/_portal/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — Portal WG" }] }),
@@ -425,7 +423,9 @@ function RecordCard({ employee }: { employee: Employee }) {
         ))}
       </dl>
       <InkButton variant="outline" className="mt-5 w-full" asChild>
-        <Link to="/gente-gestao/cadastro">Atualizar dados cadastrais ↗</Link>
+        <Link to="/formularios/$slug" params={{ slug: "atualizacao-cadastral" }}>
+          Atualizar dados cadastrais ↗
+        </Link>
       </InkButton>
       <p className="mt-4 text-xs leading-[1.6] text-muted-foreground">{PRIVACY_NOTE}</p>
     </PaperCard>
@@ -677,7 +677,8 @@ function RequestsTab() {
                   {REQUEST_STATUS_LABEL[r.status] ?? r.status}
                 </Chip>
                 <Link
-                  to="/formularios"
+                  to="/solicitacoes/$id"
+                  params={{ id: r.id }}
                   className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink hover:text-primary"
                 >
                   Ver conversa ↗

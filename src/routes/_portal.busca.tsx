@@ -118,7 +118,8 @@ function BuscaPage() {
           kind: "Formulário",
           title: f.title,
           description: f.description ?? undefined,
-          href: f.external_url,
+          // Formulário interno abre no portal; o legado ainda aponta pra fora.
+          ...(f.slug ? { to: `/formularios/${f.slug}` } : { href: f.external_url ?? undefined }),
         }),
     );
     (ctc.data ?? []).forEach(

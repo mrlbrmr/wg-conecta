@@ -40,3 +40,34 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
   if (error) throw new Error(error.message);
   return path;
 }
+
+/** Limite do anexo de solicitação — o mesmo número que a tela promete. */
+export const ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+export const ATTACHMENT_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"] as const;
+
+/**
+ * Anexo de uma solicitação de G&G.
+ *
+ * Vai para `request-attachments`, bucket privado — atestado e comprovante não
+ * podem cair no `portal-public`, que é servido sem autenticação por
+ * `/api/public/files`. A policy de storage só aceita escrita dentro da pasta do
+ * próprio colaborador, por isso o caminho começa pelo id dele. A leitura sai por
+ * URL assinada (`getRequestAttachmentUrl`).
+ */
+export async function uploadRequestAttachment(file: File, employeeId: string): Promise<string> {
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!(ATTACHMENT_EXTENSIONS as readonly string[]).includes(ext)) {
+    throw new Error("O anexo precisa ser PDF, JPG ou PNG.");
+  }
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    throw new Error("O anexo passa de 10 MB. Comprime ou manda por e-mail?");
+  }
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${employeeId}/${Date.now()}-${safeName}`;
+  const { error } = await supabase.storage.from("request-attachments").upload(path, file, {
+    upsert: false,
+    contentType: file.type || undefined,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}

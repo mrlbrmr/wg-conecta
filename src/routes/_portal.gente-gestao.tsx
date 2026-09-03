@@ -35,7 +35,8 @@ export const GG_LINKS = [
     icon: "FileText",
   },
   {
-    to: "/gente-gestao/cadastro",
+    to: "/formularios/$slug",
+    params: { slug: "atualizacao-cadastral" },
     title: "Atualização cadastral",
     desc: "Solicite alteração dos seus dados",
     icon: "UserCog",
