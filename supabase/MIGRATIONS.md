@@ -210,3 +210,30 @@ UNION ALL SELECT 'formularios', count(*) FROM public.forms WHERE active
 UNION ALL SELECT 'prazos', count(*) FROM public.monthly_deadlines WHERE active
 UNION ALL SELECT 'contatos', count(*) FROM public.contacts WHERE active;
 ```
+
+## Baterito: corpus com a vida do portal — `20260907120000_baterito_corpus_cultura.sql`
+
+O corpus deixa de ser só documento de G&G e passa a cobrir também comunicados publicados,
+campanhas ativas, eventos de cultura, reconhecimentos e materiais de integração.
+
+Aniversariantes, tempo de casa e novas admissões entram como **documentos agregados** — um por
+assunto, montado na hora com o recorte do mês, e não uma linha por pessoa. A pergunta
+("quem faz aniversário este mês") é temporal, não lexical: busca full-text sobre 135 fichas nunca
+responderia isso, mas um documento cujo título é "Aniversariantes de setembro" responde. De
+quebra, só quem é do mês chega ao modelo, em vez do diretório inteiro.
+
+A origem é `employee_directory`, a view que o portal já usa — sem e-mail, sem telefone, sem data
+de nascimento completa.
+
+Para conferir:
+
+```sql
+SELECT source, title, url FROM public.baterito_search('quais são os aniversariantes do mês', 8);
+SELECT source, title, url FROM public.baterito_search('quem completa tempo de casa', 8);
+SELECT source, title, url FROM public.baterito_search('quem entrou agora na empresa', 8);
+SELECT source, title, url FROM public.baterito_search('quais campanhas estão ativas', 8);
+SELECT source, title, url FROM public.baterito_search('contatos do G&G', 8);
+```
+
+Os agregados só aparecem quando há gente no recorte: se ninguém faz aniversário no mês corrente,
+aquele documento não existe e o assistente encaminha em vez de inventar uma lista vazia.

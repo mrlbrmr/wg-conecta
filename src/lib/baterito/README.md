@@ -8,9 +8,13 @@ FAB + painel de conversa do Portal do Colaborador. O componente mora em
 
 1. `client.ts` (navegador) chama `POST /api/baterito` com o bearer da sessão Supabase.
 2. `src/routes/api/baterito.ts` valida o token, aplica o rate limit, mascara PII e busca a base.
-3. `knowledge.server.ts` chama `baterito_search()` — busca full-text sobre o conteúdo que o time
-   de G&G já publica pelo painel (`faq_items`, `benefits`, `documents`, `gg_pages`,
-   `internal_jobs`, `quick_links`, `forms`, `monthly_deadlines`, `contacts`).
+3. `knowledge.server.ts` chama `baterito_search()` — busca full-text sobre o que o portal
+   publica: documentos de G&G (`faq_items`, `benefits`, `documents`, `gg_pages`,
+   `internal_jobs`, `quick_links`, `forms`, `monthly_deadlines`, `contacts`) e a vida do
+   portal (`announcements`, `campaigns`, `culture_events`, `recognitions`,
+   `onboarding_materials`), mais três documentos agregados montados na hora a partir de
+   `employee_directory`: aniversariantes do mês, tempo de casa do mês e novas admissões dos
+   últimos 60 dias.
 4. O modelo recebe só esses trechos e o prompt de `prompt.ts`. Sem trecho, não há chamada ao
    modelo: o assistente encaminha para o G&G e registra a lacuna.
 5. A resposta volta como SSE (`{type:"text"}` por pedaço, `{type:"done"}` com as fontes) e a
@@ -35,8 +39,12 @@ exige cartão cadastrado até para liberar os créditos grátis e devolvia 403 e
 Duas consequências que valem lembrar:
 
 - **O tier gratuito do Google usa o conteúdo enviado para treinar os modelos, e revisores
-  humanos podem ler entradas e saídas.** Aqui trafegam as perguntas dos colaboradores e trechos
-  dos documentos internos de G&G. Escolha consciente; migrar para o tier pago tira isso.
+  humanos podem ler entradas e saídas.** Aqui trafegam as perguntas dos colaboradores, trechos
+  dos documentos internos de G&G e — desde que o corpus passou a cobrir a vida do portal —
+  **nomes de colaboradores** com dia de aniversário, data de admissão, cargo e unidade, além dos
+  contatos de G&G. É o mesmo conjunto que a view `employee_directory` já expõe a qualquer
+  colaborador logado, mas aqui ele sai da empresa. Escolha consciente; migrar para o tier pago
+  tira o treinamento e a revisão humana.
 - O tier gratuito tem limite de requisições por minuto e por dia. Estourado o limite, a chamada
   falha e o colaborador vê a mensagem de "não consegui montar a resposta agora" — não a de base
   vazia.
