@@ -28,6 +28,7 @@
   --color-surface-muted: var(--surface-muted);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
+  --color-wg-green: var(--wg-green);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -107,6 +108,12 @@
 
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.2 0.05 80);
+
+  /* Verde folha da marca — fundo do avatar do Baterito nas bolhas do assistente */
+  --wg-green: #90cb46;
+
+  /* Altura da nav inferior do mobile (medida: 59,25px) — o FAB se apoia nela */
+  --portal-mobile-nav: 3.7rem;
 
   /* Grade de pontos do fundo de papel */
   --paper-dot: oklch(0.18 0 0 / 0.035);
@@ -400,18 +407,84 @@
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
+/* ── Assistente Baterito ───────────────────────────────────────────── */
+/* Entrada única do assistente: fade + subida. Nunca escala, nunca bounce. */
+@keyframes bat-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Os três pontos do "digitando" */
+@keyframes bat-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+/* O Baterito "andando" enquanto pensa */
+@keyframes bat-step {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+
+/* Sem `fill-mode`: o fim da entrada já é o estado natural do elemento. */
+@utility animate-bat-in {
+  animation: bat-in var(--bat-in-duration, 260ms) var(--ease-standard);
+}
+
+@utility animate-bat-dot {
+  animation: bat-dot 900ms infinite;
+}
+
+@utility animate-bat-step {
+  animation: bat-step 700ms ease-in-out infinite;
+}
+
+/* Grade de pontos do papel, usada no log de mensagens do painel */
+@utility bg-paper-dots {
+  background-image: radial-gradient(var(--paper-dot) 1px, transparent 1px);
+  background-size: var(--paper-dot-size) var(--paper-dot-size);
+}
+
 /* ── Movimento reduzido ────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-slide-up,
   .animate-content-in,
-  .animate-shimmer {
+  .animate-shimmer,
+  .animate-bat-in,
+  .animate-bat-dot,
+  .animate-bat-step {
     animation: none;
   }
   .card-paper,
   .card-paper-hover:hover,
   .btn-ink:hover,
   .btn-accent:hover {
+    transform: none;
+    transition: none;
+  }
+  /* Assistente: o hover ainda muda de cor, mas não desloca nem cresce a sombra */
+  [data-bat-lift],
+  [data-bat-lift]:hover {
     transform: none;
     transition: none;
   }

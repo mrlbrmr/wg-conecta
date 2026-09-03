@@ -12,6 +12,7 @@ import {
 import { WGLogo } from "./wg-logo";
 import { UserAvatar } from "./user-avatar";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
+import { BateritoLauncher } from "./baterito/baterito-launcher";
 
 const NAV = [
   { to: "/", label: "Início", icon: Home },
@@ -112,6 +113,8 @@ export function PortalLayout({ children }: { children: ReactNode }) {
 
       <PortalFooter />
       <MobileNav pathname={pathname} />
+      {/* Assistente: mora no layout do portal, então nunca aparece no painel admin. */}
+      <BateritoLauncher />
     </div>
   );
 }
