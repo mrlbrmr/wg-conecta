@@ -1,6 +1,6 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
-As 11 migrations com prefixo `20260903*` **ainda não foram aplicadas**. Elas foram escritas no
+As 12 migrations com prefixo `20260903*` **ainda não foram aplicadas**. Elas foram escritas no
 ambiente de desenvolvimento, que não tem a CLI do Supabase nem a `SUPABASE_SERVICE_ROLE_KEY`.
 Enquanto não rodarem, as telas novas (`/perfil`, `/mural`, `/cultura`) carregam o layout mas não
 encontram as tabelas.
@@ -48,6 +48,7 @@ Os arquivos são idempotentes e devem rodar na ordem do nome:
 | `20260903120800_audit_log.sql` | log de auditoria do painel |
 | `20260903120900_storage_employee_photos.sql` | colaborador escreve em `employee-photos/<id>` |
 | `20260903121000_portal_reads.sql` | leitura de `contacts` para autenticados |
+| `20260903121100_employees_co_manager.sql` | `co_manager_id` (segundo gestor) + view atualizada |
 
 Com a CLI:
 
@@ -76,3 +77,22 @@ Formulários funcionando, cadastre pelo painel:
 - alguns itens em **Trilhas de integração** (`onboarding_checklist_items`);
 - `sla_days` nos formulários existentes;
 - algumas linhas em **Prazos do mês** (`monthly_deadlines`).
+
+## Gestões — `supabase/gestoes.sql`
+
+Script gerado da planilha `Empregados.xlsx` do DP (abas Empregados e PJ, só quem está ATIVO):
+135 colaboradores, 30 deles com dois gestores diretos.
+
+Rode **depois** das migrations e **depois de cadastrar IGOR ASTORI** como colaborador — ele é
+gestor direto de 23 pessoas mas não aparece em nenhuma aba da planilha.
+
+O script tem três blocos. O **BLOCO 1 só confere** e lista quem não casou por nome; resolva o que
+aparecer antes de seguir. O BLOCO 2 grava, e só para quem casou dos dois lados. O BLOCO 3 mostra o
+resultado e a hierarquia inteira.
+
+O casamento é por nome normalizado (minúsculo, sem acento, espaços comprimidos). A planilha usa
+nome curto para o gestor ("ALINE POPENDA") e nome completo para o colaborador; a resolução para
+nome completo já foi feita na geração do script — 18 dos 19 gestores resolveram sem ambiguidade.
+
+A coluna `GESTÃO` da planilha (Igor Astori, Paulo Scachetti, Aline Popenda, Katiane Andreata) é um
+segundo nível acima do gestor direto e **não** foi cadastrada.
