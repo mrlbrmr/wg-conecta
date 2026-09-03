@@ -13,11 +13,17 @@ import { bateritoDb } from "@/lib/baterito/db.server";
 import type { BateritoSource } from "@/lib/baterito/types";
 
 /**
- * Modelo pela string do AI Gateway. Trocar por um mais barato (por exemplo
- * `anthropic/claude-haiku-4.5`) é mudar esta linha — o Gateway resolve o
- * provedor e cobra o preço de lista dele, sem markup.
+ * Gemini pelo Google AI Studio, no tier gratuito.
+ *
+ * O AI Gateway da Vercel foi descartado: ele exige cartão cadastrado até para
+ * liberar os créditos grátis, e devolvia 403 em toda pergunta.
+ *
+ * Vem de env var para dar para trocar de modelo pelo painel da Vercel, sem
+ * passar por PR — útil porque nem todo modelo do catálogo está disponível no
+ * tier gratuito. Alternativas: `gemini-3.6-flash`, `gemini-3.7-flash`,
+ * `gemini-3.5-flash-lite`.
  */
-const MODEL = "anthropic/claude-sonnet-5";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 /** 30 mensagens por hora por colaborador, como sugere o handoff. */
 const RATE_LIMIT = 30;
@@ -82,9 +88,10 @@ export const Route = createFileRoute("/api/baterito")({
 
         const sources = sourcesOf(hits);
         const { streamText } = await import("ai");
+        const { google } = await import("@ai-sdk/google");
 
         const result = streamText({
-          model: MODEL,
+          model: google(process.env.BATERITO_MODEL ?? DEFAULT_MODEL),
           system: SYSTEM_PROMPT,
           messages: [
             ...history.slice(-HISTORY_TURNS).map((m) => ({
