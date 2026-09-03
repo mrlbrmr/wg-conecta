@@ -17,7 +17,10 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       name: z.string().min(2).max(120),
       email: emailSchema,
       department: z.string().max(120).optional(),
+      unit: z.string().max(120).optional(),
       job_title: z.string().max(120).optional(),
+      manager_id: z.string().uuid().nullish(),
+      co_manager_id: z.string().uuid().nullish(),
       phone: z.string().max(30).optional(),
       birth_date: z.string().optional(),
       admission_date: z.string().optional(),
@@ -36,7 +39,10 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       name: data.name,
       email: data.email,
       department: data.department ?? null,
+      unit: data.unit ?? null,
       job_title: data.job_title ?? null,
+      manager_id: data.manager_id ?? null,
+      co_manager_id: data.co_manager_id ?? null,
       phone: data.phone ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
@@ -54,7 +60,10 @@ export const addEmployee = createServerFn({ method: "POST" })
       name: z.string().min(2).max(120),
       email: emailSchema.optional(),
       department: z.string().max(120).optional(),
+      unit: z.string().max(120).optional(),
       job_title: z.string().max(120).optional(),
+      manager_id: z.string().uuid().nullish(),
+      co_manager_id: z.string().uuid().nullish(),
       phone: z.string().max(30).optional(),
       birth_date: z.string().optional(),
       admission_date: z.string().optional(),
@@ -68,7 +77,10 @@ export const addEmployee = createServerFn({ method: "POST" })
       name: data.name,
       email: data.email ?? null,
       department: data.department ?? null,
+      unit: data.unit ?? null,
       job_title: data.job_title ?? null,
+      manager_id: data.manager_id ?? null,
+      co_manager_id: data.co_manager_id ?? null,
       phone: data.phone ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
@@ -170,7 +182,10 @@ export const updateEmployee = createServerFn({ method: "POST" })
       name: z.string().min(2).max(120).optional(),
       email: emailSchema.optional(),
       department: z.string().max(120).nullish(),
+      unit: z.string().max(120).nullish(),
       job_title: z.string().max(120).nullish(),
+      manager_id: z.string().uuid().nullish(),
+      co_manager_id: z.string().uuid().nullish(),
       phone: z.string().max(30).nullish(),
       birth_date: z.string().nullish(),
       admission_date: z.string().nullish(),
@@ -204,7 +219,10 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.name !== undefined && { name: data.name }),
       ...(data.email !== undefined && { email: data.email }),
       ...(data.department !== undefined && { department: data.department }),
+      ...(data.unit !== undefined && { unit: data.unit }),
       ...(data.job_title !== undefined && { job_title: data.job_title }),
+      ...(data.manager_id !== undefined && { manager_id: data.manager_id }),
+      ...(data.co_manager_id !== undefined && { co_manager_id: data.co_manager_id }),
       ...(data.phone !== undefined && { phone: data.phone }),
       ...(data.birth_date !== undefined && { birth_date: data.birth_date }),
       ...(data.admission_date !== undefined && { admission_date: data.admission_date }),
@@ -222,7 +240,7 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { data, error } = await supabaseAdmin
       .from("employees")
       .select(
-        "id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url",
+        "id, auth_user_id, name, email, department, unit, job_title, manager_id, co_manager_id, phone, birth_date, admission_date, active, invited_at, created_at, photo_url",
       )
       .order("name");
     if (error) throw new Error(error.message);
@@ -251,6 +269,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           name: z.string().min(2).max(120),
           email: z.string().email().optional(),
           department: z.string().max(120).optional(),
+          unit: z.string().max(120).optional(),
           job_title: z.string().max(120).optional(),
           admission_date: z.string().optional(),
           birth_date: z.string().optional(),
@@ -265,7 +284,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     // Carrega colaboradores existentes
     const { data: existing } = await supabaseAdmin
       .from("employees")
-      .select("id, name, email, birth_date, admission_date, department, job_title");
+      .select("id, name, email, birth_date, admission_date, department, unit, job_title");
 
     type Emp = {
       id: string;
@@ -274,6 +293,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
       birth_date: string | null;
       admission_date: string | null;
       department: string | null;
+      unit: string | null;
       job_title: string | null;
     };
     const employees = (existing ?? []) as Emp[];
@@ -320,6 +340,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           birth_date?: string;
           admission_date?: string;
           department?: string;
+          unit?: string;
           job_title?: string;
           updated_at?: string;
         } = {};
@@ -327,6 +348,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         if (emp.birth_date && !match.birth_date) patch.birth_date = emp.birth_date;
         if (emp.admission_date && !match.admission_date) patch.admission_date = emp.admission_date;
         if (emp.department) patch.department = emp.department;
+        if (emp.unit) patch.unit = emp.unit;
         if (emp.job_title) patch.job_title = emp.job_title;
 
         if (Object.keys(patch).length === 0) {
@@ -347,6 +369,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           name: emp.name,
           email: emp.email ?? null,
           department: emp.department ?? null,
+          unit: emp.unit ?? null,
           job_title: emp.job_title ?? null,
           birth_date: emp.birth_date ?? null,
           admission_date: emp.admission_date ?? null,

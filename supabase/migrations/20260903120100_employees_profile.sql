@@ -7,7 +7,7 @@ ALTER TABLE public.employees
   ADD COLUMN IF NOT EXISTS manager_id UUID REFERENCES public.employees(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS buddy_id   UUID REFERENCES public.employees(id) ON DELETE SET NULL;
 
-COMMENT ON COLUMN public.employees.unit      IS 'Unidade (Matriz SJP, Curitiba, Joinville…). department = área.';
+COMMENT ON COLUMN public.employees.unit      IS 'Filial: SJP, RJ, SP, LDA, MGÁ, SBC, SUM. O setor fica em department.';
 COMMENT ON COLUMN public.employees.extension IS 'Ramal interno. Telefone pessoal não aparece no portal.';
 COMMENT ON COLUMN public.employees.buddy_id  IS 'Padrinho de integração.';
 

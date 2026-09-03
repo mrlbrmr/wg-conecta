@@ -38,7 +38,7 @@ Os arquivos são idempotentes e devem rodar na ordem do nome:
 | Arquivo | O que faz |
 |---|---|
 | `20260903120000_roles_hardening.sql` | derruba o trigger de admin automático; cria `app_private.current_employee_id()` |
-| `20260903120100_employees_profile.sql` | `bio`, `unit`, `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
+| `20260903120100_employees_profile.sql` | `bio`, `unit` (filial), `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
 | `20260903120200_peer_recognitions.sql` | reconhecimento entre colegas |
 | `20260903120300_mural_interactions.sql` | leituras, reações e comentários; `lead`/`author_*`/`headline`; CHECK no status |
 | `20260903120400_requests.sql` | `requests` + `request_messages` + `forms.sla_days` |
@@ -77,6 +77,18 @@ Formulários funcionando, cadastre pelo painel:
 - alguns itens em **Trilhas de integração** (`onboarding_checklist_items`);
 - `sla_days` nos formulários existentes;
 - algumas linhas em **Prazos do mês** (`monthly_deadlines`).
+
+## Filial e Setor — `supabase/filial-setor.sql`
+
+Até aqui a coluna `department` guardava a **filial**: a importação de planilha mapeava "Filial"
+para ela e o formulário do admin chamava o campo de "Filial / Departamento". Agora são duas:
+
+- `unit` = **Filial** — SJP, RJ, SP, LDA, MGÁ, SBC, SUM
+- `department` = **Setor** — Varejo, Comercial Externo, Gente & Gestão, T.I…
+
+O script tem quatro blocos: confere, preserva (copia a filial que já está em `department` para
+`unit`, para quem não está na planilha), grava filial e setor dos 135 ativos, e mostra a
+distribuição. Rode antes de `gestoes.sql`.
 
 ## Gestões — `supabase/gestoes.sql`
 
