@@ -16,6 +16,7 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       email: emailSchema,
       department: z.string().max(120).optional(),
       job_title: z.string().max(120).optional(),
+      unit: z.string().max(120).optional(),
       phone: z.string().max(30).optional(),
       birth_date: z.string().optional(),
       admission_date: z.string().optional(),
@@ -35,6 +36,7 @@ export const inviteEmployee = createServerFn({ method: "POST" })
       email: data.email,
       department: data.department ?? null,
       job_title: data.job_title ?? null,
+      ...(data.unit !== undefined && { unit: data.unit }),
       phone: data.phone ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
@@ -53,6 +55,7 @@ export const addEmployee = createServerFn({ method: "POST" })
       email: emailSchema.optional(),
       department: z.string().max(120).optional(),
       job_title: z.string().max(120).optional(),
+      unit: z.string().max(120).optional(),
       phone: z.string().max(30).optional(),
       birth_date: z.string().optional(),
       admission_date: z.string().optional(),
@@ -67,6 +70,7 @@ export const addEmployee = createServerFn({ method: "POST" })
       email: data.email ?? null,
       department: data.department ?? null,
       job_title: data.job_title ?? null,
+      ...(data.unit !== undefined && { unit: data.unit }),
       phone: data.phone ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
@@ -165,6 +169,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       email: emailSchema.optional(),
       department: z.string().max(120).nullish(),
       job_title: z.string().max(120).nullish(),
+      unit: z.string().max(120).nullish(),
       phone: z.string().max(30).nullish(),
       birth_date: z.string().nullish(),
       admission_date: z.string().nullish(),
@@ -199,6 +204,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.email !== undefined && { email: data.email }),
       ...(data.department !== undefined && { department: data.department }),
       ...(data.job_title !== undefined && { job_title: data.job_title }),
+      ...(data.unit !== undefined && { unit: data.unit }),
       ...(data.phone !== undefined && { phone: data.phone }),
       ...(data.birth_date !== undefined && { birth_date: data.birth_date }),
       ...(data.admission_date !== undefined && { admission_date: data.admission_date }),
@@ -209,16 +215,42 @@ export const updateEmployee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const EMPLOYEE_COLUMNS =
+  "id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url";
+
 export const listEmployees = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select("id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url")
+      .select(`${EMPLOYEE_COLUMNS}, unit`)
       .order("name");
+
+    // A coluna unit veio na migration 20260903120000. Se ela ainda não rodou,
+    // o portal continua funcionando sem o campo em vez de quebrar inteiro.
+    if (error?.code === "42703") {
+      const fallback = await supabaseAdmin.from("employees").select(EMPLOYEE_COLUMNS).order("name");
+      if (fallback.error) throw new Error(fallback.error.message);
+      return (fallback.data ?? []).map((e) => ({ ...e, unit: null }));
+    }
+
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+export const deleteEmployee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ id: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Remove só o registro do diretório. A conta de acesso (auth.users), quando
+    // existe, é desfeita separadamente em Usuários admin — apagar aqui seria
+    // destrutivo demais para uma ação de linha de tabela.
+    const { error } = await supabaseAdmin.from("employees").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
@@ -244,6 +276,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           email: z.string().email().optional(),
           department: z.string().max(120).optional(),
           job_title: z.string().max(120).optional(),
+          unit: z.string().max(120).optional(),
           admission_date: z.string().optional(),
           birth_date: z.string().optional(),
         }),
@@ -302,12 +335,21 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
 
       if (match) {
         // Atualiza campos ausentes/novos — nunca sobrescreve dados existentes sem motivo
-        const patch: Record<string, unknown> = {};
+        const patch: {
+          email?: string;
+          birth_date?: string;
+          admission_date?: string;
+          department?: string;
+          job_title?: string;
+          unit?: string;
+          updated_at?: string;
+        } = {};
         if (emp.email && !match.email) patch.email = emp.email;
         if (emp.birth_date && !match.birth_date) patch.birth_date = emp.birth_date;
         if (emp.admission_date && !match.admission_date) patch.admission_date = emp.admission_date;
         if (emp.department) patch.department = emp.department;
         if (emp.job_title) patch.job_title = emp.job_title;
+        if (emp.unit) patch.unit = emp.unit;
 
         if (Object.keys(patch).length === 0) { skipped++; continue; }
 
@@ -322,6 +364,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           email: emp.email ?? null,
           department: emp.department ?? null,
           job_title: emp.job_title ?? null,
+          ...(emp.unit !== undefined && { unit: emp.unit }),
           birth_date: emp.birth_date ?? null,
           admission_date: emp.admission_date ?? null,
           active: true,
