@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { directoryQuery } from "@/lib/directory-queries";
+import { pendingProfileRequestsQuery } from "@/lib/admin-queries";
 import { formatDate } from "@/lib/tenure";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -64,6 +65,7 @@ function Dashboard() {
   });
 
   const directory = useQuery(directoryQuery);
+  const pendingProfile = useQuery(pendingProfileRequestsQuery);
   const activity = useQuery({
     queryKey: ["admin-activity"],
     queryFn: async () =>
@@ -95,11 +97,18 @@ function Dashboard() {
 
   const attention = [
     {
+      label: "Atualização cadastral pendente",
+      detail: "Colaboradores esperando a revisão do G&G",
+      value: pendingProfile.data ?? 0,
+      to: "/admin/solicitacoes" as const,
+      params: undefined,
+    },
+    {
       label: "Solicitações fora do prazo",
       detail: "Vencidas e ainda sem resposta",
       value: stats.data?.lateRequests ?? 0,
       to: "/admin/recurso/$key" as const,
-      params: { key: "solicitacoes" },
+      params: { key: "solicitacoes-portal" },
     },
     {
       label: "Reconhecimentos aguardando",
@@ -113,7 +122,7 @@ function Dashboard() {
       detail: "Em análise ou já respondidas",
       value: stats.data?.openRequests ?? 0,
       to: "/admin/recurso/$key" as const,
-      params: { key: "solicitacoes" },
+      params: { key: "solicitacoes-portal" },
     },
   ];
 
@@ -147,7 +156,7 @@ function Dashboard() {
               <li key={a.label} className="border-b border-paper/15 last:border-b-0">
                 <Link
                   to={a.to}
-                  params={a.params}
+                  {...(a.params ? { params: a.params } : {})}
                   className="flex items-center justify-between gap-4 py-3.5"
                 >
                   <span className="min-w-0">

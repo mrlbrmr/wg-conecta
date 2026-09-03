@@ -44,6 +44,7 @@ import { Route as PortalGenteGestaoAtestadosRouteImport } from './routes/_portal
 import { Route as PortalComunicadosArquivoRouteImport } from './routes/_portal.comunicados.arquivo'
 import { Route as PortalComunicadosIdRouteImport } from './routes/_portal.comunicados.$id'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
+import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedAdminColaboradoresRouteImport } from './routes/_authenticated/admin.colaboradores'
 import { Route as ApiPublicFilesSplatRouteImport } from './routes/api/public/files/$'
@@ -232,6 +233,12 @@ const AuthenticatedAdminUsuariosRoute =
     path: '/usuarios',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSolicitacoesRoute =
+  AuthenticatedAdminSolicitacoesRouteImport.update({
+    id: '/solicitacoes',
+    path: '/solicitacoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminConfiguracoesRoute =
   AuthenticatedAdminConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -274,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
@@ -309,6 +317,7 @@ export interface FileRoutesByTo {
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
@@ -351,6 +360,7 @@ export interface FileRoutesById {
   '/_portal/': typeof PortalIndexRoute
   '/_authenticated/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_portal/comunicados/$id': typeof PortalComunicadosIdRoute
   '/_portal/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
+    | '/admin/solicitacoes'
     | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
+    | '/admin/solicitacoes'
     | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
@@ -468,6 +480,7 @@ export interface FileRouteTypes {
     | '/_portal/'
     | '/_authenticated/admin/colaboradores'
     | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/solicitacoes'
     | '/_authenticated/admin/usuarios'
     | '/_portal/comunicados/$id'
     | '/_portal/comunicados/arquivo'
@@ -747,6 +760,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/solicitacoes': {
+      id: '/_authenticated/admin/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/admin/solicitacoes'
+      preLoaderRoute: typeof AuthenticatedAdminSolicitacoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/configuracoes': {
       id: '/_authenticated/admin/configuracoes'
       path: '/configuracoes'
@@ -781,6 +801,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminColaboradoresRoute: typeof AuthenticatedAdminColaboradoresRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminRecursoKeyRoute: typeof AuthenticatedAdminRecursoKeyRoute
@@ -789,6 +810,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminColaboradoresRoute: AuthenticatedAdminColaboradoresRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminRecursoKeyRoute: AuthenticatedAdminRecursoKeyRoute,

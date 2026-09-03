@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireAdmin } from "@/integrations/supabase/require-admin";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { normalizeSiteUrl } from "@/lib/site-url";
 
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
 
 const emailSchema = z.string().email();
@@ -152,10 +153,10 @@ export const triggerEmployeePasswordReset = createServerFn({ method: "POST" })
   .validator(z.object({ email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: data.email,
-      options: { redirectTo: CONFIRM_URL },
+    // auth.admin.generateLink() apenas GERA o link e o devolve na resposta — não
+    // envia e-mail. resetPasswordForEmail é o método que faz o GoTrue disparar.
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+      redirectTo: CONFIRM_URL,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -334,7 +335,10 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         }
 
         patch.updated_at = new Date().toISOString();
-        const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", match.id);
+        const { error } = await supabaseAdmin
+          .from("employees")
+          .update(patch as never)
+          .eq("id", match.id);
         if (!error) updated++;
       } else {
         // Insere novo colaborador sem conta de acesso
@@ -353,31 +357,6 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     }
 
     return { ok: true, updated, inserted, skipped };
-  });
-
-export const updateOwnProfile = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator(
-    z.object({
-      name: z.string().min(2).max(120),
-      email: emailSchema,
-    }),
-  )
-  .handler(async ({ data, context }) => {
-    const { userId } = context as { userId: string };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        email: data.email,
-      });
-      if (error) throw new Error(error.message);
-    }
-    const { error } = await supabaseAdmin
-      .from("employees")
-      .update({ name: data.name, email: data.email, updated_at: new Date().toISOString() })
-      .eq("auth_user_id", userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
 
 /**

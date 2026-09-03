@@ -35,9 +35,9 @@ export const GG_LINKS = [
     icon: "FileText",
   },
   {
-    to: "/perfil",
-    title: "Meus dados",
-    desc: "Foto, bio, ramal e ficha",
+    to: "/gente-gestao/cadastro",
+    title: "Atualização cadastral",
+    desc: "Solicite alteração dos seus dados",
     icon: "UserCog",
   },
   {

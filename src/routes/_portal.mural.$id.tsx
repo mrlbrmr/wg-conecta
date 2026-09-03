@@ -31,7 +31,7 @@ import { formatDate } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
 
 const PRIVACY_NOTE =
-  "Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.";
+  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
 
 export const Route = createFileRoute("/_portal/mural/$id")({
   head: () => ({ meta: [{ title: "Comunicado — Portal WG" }] }),

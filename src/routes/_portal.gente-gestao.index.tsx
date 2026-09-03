@@ -13,7 +13,7 @@ import { ownRequestsQuery, REQUEST_STATUS_LABEL, REQUEST_STATUS_TONE } from "@/l
 import { formatDate } from "@/lib/tenure";
 
 const PRIVACY_NOTE =
-  "Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.";
+  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
 
 export const Route = createFileRoute("/_portal/gente-gestao/")({
   head: () => ({ meta: [{ title: "Gente & Gestão — Portal WG" }] }),

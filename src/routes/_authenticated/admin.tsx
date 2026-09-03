@@ -1,8 +1,10 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { RESOURCES, SIDEBAR_EXTRA, findResource } from "@/lib/admin-resources";
+import { EXTRA_KEYS, RESOURCES, SIDEBAR_EXTRA, findResource } from "@/lib/admin-resources";
+import { pendingProfileRequestsQuery } from "@/lib/admin-queries";
 import { WGLogo } from "@/components/wg-logo";
 import { AdminSearchContext } from "@/components/admin-search";
 import { cn } from "@/lib/utils";
@@ -18,31 +20,9 @@ type NavItem = {
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  to?: string;
+  badge?: number;
 };
-
-function buildSections(): Map<string, NavItem[]> {
-  const sections = new Map<string, NavItem[]>();
-  sections.set("Início", [{ key: "", label: "Dashboard", icon: LayoutDashboard }]);
-  for (const r of RESOURCES) {
-    const s = r.section ?? "Outros";
-    sections.set(s, [...(sections.get(s) ?? []), { key: r.key, label: r.label, icon: r.icon }]);
-  }
-  for (const x of SIDEBAR_EXTRA) {
-    sections.set(x.section, [
-      ...(sections.get(x.section) ?? []),
-      { key: x.key, label: x.label, icon: x.icon },
-    ]);
-  }
-  return sections;
-}
-
-function hrefFor(key: string) {
-  if (key === "") return "/admin" as const;
-  if (key === "usuarios") return "/admin/usuarios" as const;
-  if (key === "colaboradores") return "/admin/colaboradores" as const;
-  if (key === "configuracoes") return "/admin/configuracoes" as const;
-  return null;
-}
 
 function AdminLayout() {
   const navigate = useNavigate();
@@ -51,6 +31,7 @@ function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [term, setTerm] = useState("");
+  const pending = useQuery(pendingProfileRequestsQuery);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -84,7 +65,25 @@ function AdminLayout() {
     navigate({ to: "/auth" });
   };
 
-  const sections = buildSections();
+  const sections = new Map<string, NavItem[]>();
+  sections.set("Início", [{ key: "", label: "Dashboard", icon: LayoutDashboard, to: "/admin" }]);
+  for (const r of RESOURCES) {
+    const s = r.section ?? "Outros";
+    sections.set(s, [...(sections.get(s) ?? []), { key: r.key, label: r.label, icon: r.icon }]);
+  }
+  for (const x of SIDEBAR_EXTRA) {
+    sections.set(x.section, [
+      ...(sections.get(x.section) ?? []),
+      {
+        key: x.key,
+        label: x.label,
+        icon: x.icon,
+        to: x.to,
+        badge: x.key === "solicitacoes" ? pending.data : undefined,
+      },
+    ]);
+  }
+
   const breadcrumb = breadcrumbFor(pathname);
 
   return (
@@ -121,12 +120,13 @@ function AdminLayout() {
                 )}
                 <div className="flex flex-col gap-0.5">
                   {items.map((item) => {
-                    const direct = hrefFor(item.key);
-                    const active = direct
-                      ? item.key === ""
+                    const isResource = item.key !== "" && !EXTRA_KEYS.has(item.key);
+                    const active =
+                      item.key === ""
                         ? pathname === "/admin"
-                        : pathname.endsWith(`/${item.key}`)
-                      : pathname.endsWith(`/recurso/${item.key}`);
+                        : isResource
+                          ? pathname.endsWith(`/recurso/${item.key}`)
+                          : pathname.endsWith(`/${item.key}`);
 
                     const className = cn(
                       "relative flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors",
@@ -152,13 +152,24 @@ function AdminLayout() {
                           )}
                         />
                         {!collapsed && <span className="truncate">{item.label}</span>}
+                        {item.badge ? (
+                          <span
+                            className={cn(
+                              "ml-auto grid min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[10px] font-black tabular-nums text-ink",
+                              collapsed && "absolute right-1.5 top-1.5 ml-0",
+                            )}
+                          >
+                            {item.badge}
+                          </span>
+                        ) : null}
                       </>
                     );
 
-                    return direct ? (
+                    return isResource ? (
                       <Link
-                        key={item.key || "dashboard"}
-                        to={direct}
+                        key={item.key}
+                        to="/admin/recurso/$key"
+                        params={{ key: item.key }}
                         title={collapsed ? item.label : undefined}
                         className={className}
                       >
@@ -166,9 +177,8 @@ function AdminLayout() {
                       </Link>
                     ) : (
                       <Link
-                        key={item.key}
-                        to="/admin/recurso/$key"
-                        params={{ key: item.key }}
+                        key={item.key || "dashboard"}
+                        to={item.to ?? "/admin"}
                         title={collapsed ? item.label : undefined}
                         className={className}
                       >

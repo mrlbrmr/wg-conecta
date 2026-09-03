@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAdmin } from "@/integrations/supabase/require-admin";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const emailSchema = z.string().email();

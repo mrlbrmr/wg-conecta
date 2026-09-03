@@ -463,7 +463,7 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "solicitacoes",
+    key: "solicitacoes-portal",
     label: "Solicitações",
     labelSingular: "Solicitação",
     icon: Inbox,
@@ -659,13 +659,45 @@ export const RESOURCES: ResourceDef[] = [
 export function findResource(key: string) {
   return RESOURCES.find((r) => r.key === key);
 }
-export const SIDEBAR_EXTRA = [
-  { key: "colaboradores", label: "Colaboradores", icon: UserCheck, section: "Configurações" },
-  { key: "usuarios", label: "Usuários admin", icon: Users, section: "Configurações" },
+
+export interface SidebarExtraDef {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  section: string;
+  to: string;
+}
+
+export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
+  {
+    key: "solicitacoes",
+    label: "Atualização cadastral",
+    icon: Inbox,
+    section: "Gente & Gestão",
+    to: "/admin/solicitacoes",
+  },
+  {
+    key: "colaboradores",
+    label: "Colaboradores",
+    icon: UserCheck,
+    section: "Configurações",
+    to: "/admin/colaboradores",
+  },
+  {
+    key: "usuarios",
+    label: "Usuários admin",
+    icon: Users,
+    section: "Configurações",
+    to: "/admin/usuarios",
+  },
   {
     key: "configuracoes",
     label: "Configurações gerais",
     icon: Building2,
     section: "Configurações",
+    to: "/admin/configuracoes",
   },
 ];
+
+// Derivado do array acima — evita a lista hardcoded que existia em admin.tsx
+export const EXTRA_KEYS = new Set(SIDEBAR_EXTRA.map((x) => x.key));

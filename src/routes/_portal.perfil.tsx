@@ -37,7 +37,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 const PRIVACY_NOTE =
-  "Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.";
+  "Uso interno. Não compartilhe CPF, documentos ou dados bancários por aqui — dados cadastrais só pelo canal de Atualização Cadastral.";
 
 export const Route = createFileRoute("/_portal/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — Portal WG" }] }),
@@ -425,7 +425,7 @@ function RecordCard({ employee }: { employee: Employee }) {
         ))}
       </dl>
       <InkButton variant="outline" className="mt-5 w-full" asChild>
-        <Link to="/formularios">Atualizar dados de contato</Link>
+        <Link to="/gente-gestao/cadastro">Atualizar dados cadastrais ↗</Link>
       </InkButton>
       <p className="mt-4 text-xs leading-[1.6] text-muted-foreground">{PRIVACY_NOTE}</p>
     </PaperCard>

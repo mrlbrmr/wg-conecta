@@ -12,6 +12,26 @@ export const Route = createFileRoute("/colaborador/confirmar")({
   component: ConfirmarPage,
 });
 
+const INVALID_LINK = "Link inválido ou expirado. Solicite um novo acesso ao Gente & Gestão.";
+
+const parseHash = (hash: string) => new URLSearchParams(hash.replace(/^#/, ""));
+
+// Capturado na carga do módulo porque o supabase-js apaga o fragmento ao criar
+// o client (detectSessionInUrl) — numa entrada direta pelo link do e-mail, a
+// informação já teria sumido quando o efeito rodasse.
+const INITIAL_HASH = parseHash(typeof window !== "undefined" ? window.location.hash : "");
+
+const HASH_KEYS = ["access_token", "error", "error_description"] as const;
+
+/**
+ * O fragmento vale pelo que estiver disponível: numa navegação client-side o
+ * capturado na carga do módulo está obsoleto, e o vivo é quem tem a resposta.
+ */
+function readHash(): URLSearchParams {
+  const live = parseHash(typeof window !== "undefined" ? window.location.hash : "");
+  return HASH_KEYS.some((k) => live.get(k)) ? live : INITIAL_HASH;
+}
+
 function ConfirmarPage() {
   const { code } = Route.useSearch();
   const navigate = useNavigate();
@@ -22,14 +42,54 @@ function ConfirmarPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!code) {
-      setError("Link inválido ou expirado. Solicite um novo acesso ao Gente & Gestão.");
+    let settled = false;
+    const finish = (ok: boolean, message?: string) => {
+      if (settled) return;
+      settled = true;
+      if (ok) setExchanged(true);
+      else setError(message ?? INVALID_LINK);
+    };
+
+    const hash = readHash();
+
+    // O GoTrue devolve o erro no fragmento quando o link já foi usado ou venceu.
+    const hashError = hash.get("error_description") ?? hash.get("error");
+    if (hashError) {
+      finish(false, `${INVALID_LINK} (${hashError})`);
       return;
     }
-    supabase.auth.exchangeCodeForSession(code).then(({ error: e }) => {
-      if (e) setError("Link inválido ou expirado. Solicite um novo acesso ao Gente & Gestão.");
-      else setExchanged(true);
+
+    // Nem código (PKCE) nem token no fragmento (implícito): não há o que validar.
+    if (!code && !hash.get("access_token")) {
+      finish(false);
+      return;
+    }
+
+    // Fluxo implícito: o supabase-js consome o #access_token sozinho
+    // (detectSessionInUrl) de forma assíncrona — a sessão chega por aqui.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) finish(true);
     });
+
+    void (async () => {
+      // Fluxo PKCE: só quando o link traz ?code= (exige que o pedido tenha
+      // partido deste mesmo navegador, o que não vale para convite nem para
+      // reset disparado pelo painel admin).
+      if (code) {
+        const { error: e } = await supabase.auth.exchangeCodeForSession(code);
+        finish(!e);
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      if (data.session) finish(true);
+    })();
+
+    const timeout = setTimeout(() => finish(false), 8000);
+    return () => {
+      settled = true;
+      clearTimeout(timeout);
+      sub.subscription.unsubscribe();
+    };
   }, [code]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -74,7 +134,9 @@ function ConfirmarPage() {
                 Crie uma senha segura (mínimo 8 caracteres) para acessar o portal.
               </p>
               <label className="block">
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Nova senha</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  Nova senha
+                </span>
                 <div className="mt-2 relative">
                   <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
                   <input
@@ -90,7 +152,9 @@ function ConfirmarPage() {
                 </div>
               </label>
               <label className="block">
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Confirmar senha</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  Confirmar senha
+                </span>
                 <div className="mt-2 relative">
                   <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
                   <input
@@ -109,7 +173,11 @@ function ConfirmarPage() {
                 disabled={loading || !password || !confirm}
                 className="w-full btn-ink py-3.5 disabled:opacity-50"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
                 Salvar e entrar
               </button>
             </form>

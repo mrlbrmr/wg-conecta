@@ -1,13 +1,13 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
-As 11 migrations com prefixo `20260902*` **ainda não foram aplicadas**. Elas foram escritas no
+As 11 migrations com prefixo `20260903*` **ainda não foram aplicadas**. Elas foram escritas no
 ambiente de desenvolvimento, que não tem a CLI do Supabase nem a `SUPABASE_SERVICE_ROLE_KEY`.
 Enquanto não rodarem, as telas novas (`/perfil`, `/mural`, `/cultura`) carregam o layout mas não
 encontram as tabelas.
 
 ## Antes de aplicar: conferir quem é admin
 
-A migration `20260902120000_roles_hardening.sql` derruba o trigger `on_auth_user_created_admin`,
+A migration `20260903120000_roles_hardening.sql` derruba o trigger `on_auth_user_created_admin`,
 que inseria **toda** nova linha de `auth.users` em `admin_users` com `active = true`. Como
 `app_private.is_admin()` é exatamente "existe em `admin_users` e está ativo", todo colaborador
 convidado para o portal virou admin.
@@ -30,21 +30,24 @@ UPDATE public.admin_users SET active = false WHERE email IN ( ... );
 
 ## Ordem de aplicação
 
+As duas migrations `20260902*` vieram do fluxo de atualização cadastral e rodam antes. As desta
+entrega foram renumeradas para `20260903*` justamente para não disputar prefixo com elas.
+
 Os arquivos são idempotentes e devem rodar na ordem do nome:
 
 | Arquivo | O que faz |
 |---|---|
-| `20260902120000_roles_hardening.sql` | derruba o trigger de admin automático; cria `app_private.current_employee_id()` |
-| `20260902120100_employees_profile.sql` | `bio`, `unit`, `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
-| `20260902120200_peer_recognitions.sql` | reconhecimento entre colegas |
-| `20260902120300_mural_interactions.sql` | leituras, reações e comentários; `lead`/`author_*`/`headline`; CHECK no status |
-| `20260902120400_requests.sql` | `requests` + `request_messages` + `forms.sla_days` |
-| `20260902120500_onboarding.sql` | checklist, progresso e materiais vistos |
-| `20260902120600_culture.sql` | fotos, calendário e "dar parabéns" |
-| `20260902120700_gg_vagas.sql` | prazos do mês, benefícios em destaque, campos da vaga |
-| `20260902120800_audit_log.sql` | log de auditoria do painel |
-| `20260902120900_storage_employee_photos.sql` | colaborador escreve em `employee-photos/<id>` |
-| `20260902121000_portal_reads.sql` | leitura de `contacts` para autenticados |
+| `20260903120000_roles_hardening.sql` | derruba o trigger de admin automático; cria `app_private.current_employee_id()` |
+| `20260903120100_employees_profile.sql` | `bio`, `unit`, `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
+| `20260903120200_peer_recognitions.sql` | reconhecimento entre colegas |
+| `20260903120300_mural_interactions.sql` | leituras, reações e comentários; `lead`/`author_*`/`headline`; CHECK no status |
+| `20260903120400_requests.sql` | `requests` + `request_messages` + `forms.sla_days` |
+| `20260903120500_onboarding.sql` | checklist, progresso e materiais vistos |
+| `20260903120600_culture.sql` | fotos, calendário e "dar parabéns" |
+| `20260903120700_gg_vagas.sql` | prazos do mês, benefícios em destaque, campos da vaga |
+| `20260903120800_audit_log.sql` | log de auditoria do painel |
+| `20260903120900_storage_employee_photos.sql` | colaborador escreve em `employee-photos/<id>` |
+| `20260903121000_portal_reads.sql` | leitura de `contacts` para autenticados |
 
 Com a CLI:
 
