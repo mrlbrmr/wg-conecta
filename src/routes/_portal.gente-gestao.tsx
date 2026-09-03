@@ -1,21 +1,67 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { PortalLayout } from "@/components/portal-layout";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_portal/gente-gestao")({
-  component: () => <PortalLayout><Outlet /></PortalLayout>,
+  component: () => <Outlet />,
 });
 
-// Re-export navigation link list for the hub page usage
+/**
+ * Atalhos de Gente & Gestão. A chave `icon` é resolvida pelo `ICON_MAP`
+ * (`src/lib/icon-map.ts`) — antes os ícones vinham de um array paralelo
+ * indexado por posição, que quebrava a cada item inserido no meio.
+ */
 export const GG_LINKS = [
-  { to: "/gente-gestao/beneficios", title: "Benefícios", desc: "Wellhub, Starbem e mais" },
-  { to: "/gente-gestao/documentos", title: "Documentos", desc: "Políticas e arquivos" },
-  { to: "/gente-gestao/faq", title: "Dúvidas Frequentes", desc: "Respostas rápidas" },
-  { to: "/gente-gestao/ferias", title: "Solicitação de Férias", desc: "Como pedir suas férias" },
-  { to: "/gente-gestao/atestados", title: "Atestados", desc: "Como lançar no ponto" },
-  { to: "/gente-gestao/cadastro", title: "Atualização Cadastral", desc: "Solicite alteração dos seus dados" },
-  { to: "/gente-gestao/holerite", title: "Holerite", desc: "Acesse seu contracheque" },
-  { to: "/gente-gestao/politicas", title: "Políticas Internas", desc: "Normas e diretrizes" },
-  { to: "/gente-gestao/contatos", title: "Fale com G&G", desc: "Contatos da equipe" },
+  {
+    to: "/gente-gestao/holerite",
+    title: "Holerite",
+    desc: "Acesse seu contracheque",
+    icon: "CreditCard",
+  },
+  {
+    to: "/gente-gestao/beneficios",
+    title: "Benefícios",
+    desc: "Wellhub, Starbem e mais",
+    icon: "Gift",
+  },
+  {
+    to: "/gente-gestao/ferias",
+    title: "Férias",
+    desc: "Como programar as suas",
+    icon: "Calendar",
+  },
+  {
+    to: "/gente-gestao/atestados",
+    title: "Atestados",
+    desc: "Como lançar no ponto",
+    icon: "FileText",
+  },
+  {
+    to: "/gente-gestao/cadastro",
+    title: "Atualização cadastral",
+    desc: "Solicite alteração dos seus dados",
+    icon: "UserCog",
+  },
+  {
+    to: "/gente-gestao/politicas",
+    title: "Políticas",
+    desc: "Normas e diretrizes",
+    icon: "BookOpen",
+  },
+  {
+    to: "/gente-gestao/documentos",
+    title: "Documentos",
+    desc: "Arquivos e formulários",
+    icon: "FolderOpen",
+  },
+  {
+    to: "/gente-gestao/faq",
+    title: "Dúvidas frequentes",
+    desc: "Respostas rápidas",
+    icon: "HelpCircle",
+  },
+  {
+    to: "/gente-gestao/contatos",
+    title: "Fale com G&G",
+    desc: "Contatos da equipe",
+    icon: "Users",
+  },
 ] as const;
-
-export const _linkForHub = Link; // silence unused import if any

@@ -104,7 +104,7 @@ export function TempoDeCasaAdmin() {
   });
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-black tracking-tight text-black">Tempo de Casa</h1>
         <p className="text-sm text-gray-700">

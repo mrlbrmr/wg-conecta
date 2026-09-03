@@ -1,16 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const emailSchema = z.string().email();
 
 export const createAdminUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({
-    name: z.string().min(2).max(120),
-    email: emailSchema,
-    password: z.string().min(8).max(200),
-  }).parse(data))
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        name: z.string().min(2).max(120),
+        email: emailSchema,
+        password: z.string().min(8).max(200),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
@@ -23,24 +28,33 @@ export const createAdminUser = createServerFn({ method: "POST" })
     // trigger cria admin_users, mas garantimos o nome:
     if (created.user) {
       await supabaseAdmin.from("admin_users").upsert({
-        id: created.user.id, name: data.name, email: data.email, active: true,
+        id: created.user.id,
+        name: data.name,
+        email: data.email,
+        active: true,
       });
     }
     return { ok: true, id: created.user?.id };
   });
 
 export const updateAdminUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({
-    id: z.string().uuid(),
-    name: z.string().min(2).max(120).optional(),
-    email: emailSchema.optional(),
-    active: z.boolean().optional(),
-  }).parse(data))
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().min(2).max(120).optional(),
+        email: emailSchema.optional(),
+        active: z.boolean().optional(),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { email: data.email });
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+        email: data.email,
+      });
       if (error) throw new Error(error.message);
     }
     const patch: { updated_at: string; name?: string; email?: string; active?: boolean } = {
@@ -55,20 +69,26 @@ export const updateAdminUser = createServerFn({ method: "POST" })
   });
 
 export const resetAdminPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({
-    id: z.string().uuid(),
-    password: z.string().min(8).max(200),
-  }).parse(data))
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        password: z.string().min(8).max(200),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: data.password });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+      password: data.password,
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const deleteAdminUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -76,4 +96,23 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("admin_users").delete().eq("id", data.id);
     return { ok: true };
+  });
+
+/**
+ * Diz se o usuário autenticado é admin, sem lançar erro.
+ * Serve para o gate de rota do painel: hoje qualquer usuário logado chega em
+ * `/admin` e o bloqueio é só o RLS — as telas aparecem vazias em vez de negar.
+ */
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context as { userId: string };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("admin_users")
+      .select("id")
+      .eq("id", userId)
+      .eq("active", true)
+      .maybeSingle();
+    return { isAdmin: Boolean(data) };
   });

@@ -177,7 +177,7 @@ function ColaboradoresPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
+    <div>
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-black">Colaboradores</h1>
