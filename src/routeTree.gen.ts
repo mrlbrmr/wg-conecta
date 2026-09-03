@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as PortalIndexRouteImport } from './routes/_portal.index'
 import { Route as ColaboradorRecuperarSenhaRouteImport } from './routes/colaborador/recuperar-senha'
 import { Route as ColaboradorConfirmarRouteImport } from './routes/colaborador/confirmar'
+import { Route as ApiBateritoRouteImport } from './routes/api/baterito'
 import { Route as PortalVagasRouteImport } from './routes/_portal.vagas'
 import { Route as PortalPerfilRouteImport } from './routes/_portal.perfil'
 import { Route as PortalMuralRouteImport } from './routes/_portal.mural'
@@ -86,6 +87,11 @@ const ColaboradorRecuperarSenhaRoute =
 const ColaboradorConfirmarRoute = ColaboradorConfirmarRouteImport.update({
   id: '/colaborador/confirmar',
   path: '/colaborador/confirmar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBateritoRoute = ApiBateritoRouteImport.update({
+  id: '/api/baterito',
+  path: '/api/baterito',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortalVagasRoute = PortalVagasRouteImport.update({
@@ -302,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/mural': typeof PortalMuralRouteWithChildren
   '/perfil': typeof PortalPerfilRoute
   '/vagas': typeof PortalVagasRoute
+  '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/integracao': typeof PortalIntegracaoRoute
   '/perfil': typeof PortalPerfilRoute
   '/vagas': typeof PortalVagasRoute
+  '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
@@ -387,6 +395,7 @@ export interface FileRoutesById {
   '/_portal/mural': typeof PortalMuralRouteWithChildren
   '/_portal/perfil': typeof PortalPerfilRoute
   '/_portal/vagas': typeof PortalVagasRoute
+  '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/_portal/': typeof PortalIndexRoute
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
     | '/mural'
     | '/perfil'
     | '/vagas'
+    | '/api/baterito'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/integracao'
     | '/perfil'
     | '/vagas'
+    | '/api/baterito'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/_portal/mural'
     | '/_portal/perfil'
     | '/_portal/vagas'
+    | '/api/baterito'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
     | '/_portal/'
@@ -555,6 +567,7 @@ export interface RootRouteChildren {
   PortalRoute: typeof PortalRouteWithChildren
   AuthRoute: typeof AuthRoute
   GateRoute: typeof GateRoute
+  ApiBateritoRoute: typeof ApiBateritoRoute
   ColaboradorConfirmarRoute: typeof ColaboradorConfirmarRoute
   ColaboradorRecuperarSenhaRoute: typeof ColaboradorRecuperarSenhaRoute
   ApiPublicFilesSplatRoute: typeof ApiPublicFilesSplatRoute
@@ -609,6 +622,13 @@ declare module '@tanstack/react-router' {
       path: '/colaborador/confirmar'
       fullPath: '/colaborador/confirmar'
       preLoaderRoute: typeof ColaboradorConfirmarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/baterito': {
+      id: '/api/baterito'
+      path: '/api/baterito'
+      fullPath: '/api/baterito'
+      preLoaderRoute: typeof ApiBateritoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_portal/vagas': {
@@ -1016,6 +1036,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalRoute: PortalRouteWithChildren,
   AuthRoute: AuthRoute,
   GateRoute: GateRoute,
+  ApiBateritoRoute: ApiBateritoRoute,
   ColaboradorConfirmarRoute: ColaboradorConfirmarRoute,
   ColaboradorRecuperarSenhaRoute: ColaboradorRecuperarSenhaRoute,
   ApiPublicFilesSplatRoute: ApiPublicFilesSplatRoute,

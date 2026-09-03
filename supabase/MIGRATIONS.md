@@ -35,20 +35,20 @@ entrega foram renumeradas para `20260903*` justamente para não disputar prefixo
 
 Os arquivos são idempotentes e devem rodar na ordem do nome:
 
-| Arquivo | O que faz |
-|---|---|
-| `20260903120000_roles_hardening.sql` | derruba o trigger de admin automático; cria `app_private.current_employee_id()` |
-| `20260903120100_employees_profile.sql` | `bio`, `unit`, `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
-| `20260903120200_peer_recognitions.sql` | reconhecimento entre colegas |
-| `20260903120300_mural_interactions.sql` | leituras, reações e comentários; `lead`/`author_*`/`headline`; CHECK no status |
-| `20260903120400_requests.sql` | `requests` + `request_messages` + `forms.sla_days` |
-| `20260903120500_onboarding.sql` | checklist, progresso e materiais vistos |
-| `20260903120600_culture.sql` | fotos, calendário e "dar parabéns" |
-| `20260903120700_gg_vagas.sql` | prazos do mês, benefícios em destaque, campos da vaga |
-| `20260903120800_audit_log.sql` | log de auditoria do painel |
-| `20260903120900_storage_employee_photos.sql` | colaborador escreve em `employee-photos/<id>` |
-| `20260903121000_portal_reads.sql` | leitura de `contacts` para autenticados |
-| `20260903121100_employees_co_manager.sql` | `co_manager_id` (segundo gestor) + view atualizada |
+| Arquivo                                      | O que faz                                                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `20260903120000_roles_hardening.sql`         | derruba o trigger de admin automático; cria `app_private.current_employee_id()`                    |
+| `20260903120100_employees_profile.sql`       | `bio`, `unit`, `extension`, `manager_id`, `buddy_id`; UPDATE por coluna; view `employee_directory` |
+| `20260903120200_peer_recognitions.sql`       | reconhecimento entre colegas                                                                       |
+| `20260903120300_mural_interactions.sql`      | leituras, reações e comentários; `lead`/`author_*`/`headline`; CHECK no status                     |
+| `20260903120400_requests.sql`                | `requests` + `request_messages` + `forms.sla_days`                                                 |
+| `20260903120500_onboarding.sql`              | checklist, progresso e materiais vistos                                                            |
+| `20260903120600_culture.sql`                 | fotos, calendário e "dar parabéns"                                                                 |
+| `20260903120700_gg_vagas.sql`                | prazos do mês, benefícios em destaque, campos da vaga                                              |
+| `20260903120800_audit_log.sql`               | log de auditoria do painel                                                                         |
+| `20260903120900_storage_employee_photos.sql` | colaborador escreve em `employee-photos/<id>`                                                      |
+| `20260903121000_portal_reads.sql`            | leitura de `contacts` para autenticados                                                            |
+| `20260903121100_employees_co_manager.sql`    | `co_manager_id` (segundo gestor) + view atualizada                                                 |
 
 Com a CLI:
 
@@ -125,3 +125,56 @@ nome completo já foi feita na geração do script — 18 dos 19 gestores resolv
 
 A coluna `GESTÃO` da planilha (Igor Astori, Paulo Scachetti, Aline Popenda, Katiane Andreata) é um
 segundo nível acima do gestor direto e **não** foi cadastrada.
+
+## Assistente Baterito — `20260905120000_baterito.sql` (aplicada)
+
+Aplicada em 03/09/2026. Cria a função `baterito_search()` (busca full-text no conteúdo já
+publicado do portal) e a tabela `baterito_queries` (rate limit + lista de perguntas que a base
+não respondeu). Depende da extensão `unaccent`, criada pela própria migration no schema
+`extensions`.
+
+**Pendente: regenerar os tipos.** Enquanto isso não acontece, `src/lib/baterito/db.server.ts` é a
+ponte que mantém o TypeScript compilando — o `Database` gerado ainda não conhece a tabela nem a
+função. Use o project-ref do `.env` (`wrldlvcrrslzbrwuwdsr`), não o das seções acima:
+
+```bash
+supabase gen types typescript --project-id wrldlvcrrslzbrwuwdsr > src/integrations/supabase/types.ts
+```
+
+Aí `db.server.ts` pode sair e as duas chamadas voltam a usar `supabaseAdmin` direto.
+
+### Conferir a busca
+
+O assistente só responde o que a base cobre. Vale rodar antes de liberar para o time:
+
+```sql
+SELECT source, title, url, round(rank::numeric, 4) AS rank
+  FROM public.baterito_search('quantos dias de ferias eu tenho', 8);
+```
+
+Se vier vazio para as perguntas mais comuns (férias, convênio, holerite, vagas), o problema é
+falta de conteúdo publicado — não da função. É esse o trabalho que `baterito_queries` mede.
+
+### Retenção
+
+O handoff pede 90 dias de retenção. Não há job agendado: se o projeto tiver `pg_cron`, agende
+
+```sql
+SELECT cron.schedule('baterito-retencao', '0 4 * * *',
+  $$DELETE FROM public.baterito_queries WHERE created_at < now() - interval '90 days'$$);
+```
+
+Sem `pg_cron`, rode o `DELETE` manualmente de tempos em tempos.
+
+### Lacunas de conteúdo
+
+A consulta que interessa ao time de G&G:
+
+```sql
+SELECT question, count(*) AS vezes, max(created_at) AS ultima
+  FROM public.baterito_queries
+ WHERE NOT answered AND created_at > now() - interval '30 days'
+ GROUP BY question
+ ORDER BY vezes DESC, ultima DESC
+ LIMIT 20;
+```
