@@ -1,15 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
+import { normalizeSiteUrl } from "@/lib/site-url";
 
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
 
 const emailSchema = z.string().email();
 
 // Cria convite + insere novo colaborador (sem registro prévio no diretório)
 export const inviteEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       name: z.string().min(2).max(120),
@@ -48,7 +50,7 @@ export const inviteEmployee = createServerFn({ method: "POST" })
 
 // Cadastra colaborador no diretório sem enviar convite (email opcional)
 export const addEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       name: z.string().min(2).max(120),
@@ -83,7 +85,7 @@ export const addEmployee = createServerFn({ method: "POST" })
 // Dá acesso ao portal para colaborador do diretório.
 // Se o e-mail já tiver conta no Auth, vincula direto (sem novo convite).
 export const inviteExistingEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ employeeId: z.string().uuid(), email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -103,7 +105,11 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
         if (!existing) throw new Error(error.message);
         const { error: dbErr } = await supabaseAdmin
           .from("employees")
-          .update({ auth_user_id: existing.id, email: data.email, updated_at: new Date().toISOString() })
+          .update({
+            auth_user_id: existing.id,
+            email: data.email,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", data.employeeId);
         if (dbErr) throw new Error(dbErr.message);
         return { ok: true, linked: true };
@@ -125,7 +131,7 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
   });
 
 export const resendEmployeeInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ employeeId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -147,21 +153,21 @@ export const resendEmployeeInvite = createServerFn({ method: "POST" })
   });
 
 export const triggerEmployeePasswordReset = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ email: emailSchema }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: data.email,
-      options: { redirectTo: CONFIRM_URL },
+    // auth.admin.generateLink() apenas GERA o link e o devolve na resposta — não
+    // envia e-mail. resetPasswordForEmail é o método que faz o GoTrue disparar.
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+      redirectTo: CONFIRM_URL,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const updateEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       id: z.string().uuid(),
@@ -216,31 +222,22 @@ export const updateEmployee = createServerFn({ method: "POST" })
   });
 
 const EMPLOYEE_COLUMNS =
-  "id, auth_user_id, name, email, department, job_title, phone, birth_date, admission_date, active, invited_at, created_at, photo_url";
+  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, admission_date, active, invited_at, created_at, photo_url";
 
 export const listEmployees = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("employees")
-      .select(`${EMPLOYEE_COLUMNS}, unit`)
+      .select(EMPLOYEE_COLUMNS)
       .order("name");
-
-    // A coluna unit veio na migration 20260903120000. Se ela ainda não rodou,
-    // o portal continua funcionando sem o campo em vez de quebrar inteiro.
-    if (error?.code === "42703") {
-      const fallback = await supabaseAdmin.from("employees").select(EMPLOYEE_COLUMNS).order("name");
-      if (fallback.error) throw new Error(fallback.error.message);
-      return (fallback.data ?? []).map((e) => ({ ...e, unit: null }));
-    }
-
     if (error) throw new Error(error.message);
     return data ?? [];
   });
 
 export const deleteEmployee = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -254,7 +251,7 @@ export const deleteEmployee = createServerFn({ method: "POST" })
   });
 
 export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(z.object({ id: z.string().uuid(), photo_url: z.string().url() }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -267,7 +264,7 @@ export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
   });
 
 export const bulkImportEmployees = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .validator(
     z.object({
       employees: z.array(
@@ -306,7 +303,12 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     // Normaliza: minúsculo, sem acentos, espaços comprimidos.
     // "CÉLIO DE BRITTO" e "Celio de Britto" viram "celio de britto".
     const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
     // Índice por nome completo normalizado
     const byFullName = new Map(employees.map((e) => [norm(e.name), e]));
@@ -351,10 +353,16 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         if (emp.job_title) patch.job_title = emp.job_title;
         if (emp.unit) patch.unit = emp.unit;
 
-        if (Object.keys(patch).length === 0) { skipped++; continue; }
+        if (Object.keys(patch).length === 0) {
+          skipped++;
+          continue;
+        }
 
         patch.updated_at = new Date().toISOString();
-        const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", match.id);
+        const { error } = await supabaseAdmin
+          .from("employees")
+          .update(patch as never)
+          .eq("id", match.id);
         if (!error) updated++;
       } else {
         // Insere novo colaborador sem conta de acesso
@@ -376,25 +384,57 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     return { ok: true, updated, inserted, skipped };
   });
 
-export const updateOwnProfile = createServerFn({ method: "POST" })
+/**
+ * Colaborador do usuário autenticado.
+ * Resolve por `auth_user_id` e cai para `id` (vínculos antigos gravaram só o `id`).
+ * Privacidade: o aniversário sai só como dia e mês — nunca a data completa.
+ */
+export const getOwnEmployee = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator(
-    z.object({
-      name: z.string().min(2).max(120),
-      email: emailSchema,
-    }),
-  )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     const { userId } = context as { userId: string };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (data.email) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { email: data.email });
-      if (error) throw new Error(error.message);
-    }
-    const { error } = await supabaseAdmin
+
+    // String literal única: o PostgREST tipa o retorno a partir dela.
+    const columns =
+      "id, name, email, department, job_title, unit, extension, bio, manager_id, co_manager_id, buddy_id, admission_date, birth_date, photo_url, active";
+
+    let { data } = await supabaseAdmin
       .from("employees")
-      .update({ name: data.name, email: data.email, updated_at: new Date().toISOString() })
-      .eq("auth_user_id", userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+      .select(columns)
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+
+    if (!data) {
+      ({ data } = await supabaseAdmin
+        .from("employees")
+        .select(columns)
+        .eq("id", userId)
+        .maybeSingle());
+    }
+    if (!data) return null;
+
+    const row = data as Record<string, unknown>;
+    const birth = row.birth_date ? new Date(`${row.birth_date as string}T00:00:00`) : null;
+
+    return {
+      id: row.id as string,
+      name: (row.name as string) ?? "",
+      email: (row.email as string | null) ?? null,
+      department: (row.department as string | null) ?? null,
+      job_title: (row.job_title as string | null) ?? null,
+      unit: (row.unit as string | null) ?? null,
+      extension: (row.extension as string | null) ?? null,
+      bio: (row.bio as string | null) ?? null,
+      manager_id: (row.manager_id as string | null) ?? null,
+      co_manager_id: (row.co_manager_id as string | null) ?? null,
+      buddy_id: (row.buddy_id as string | null) ?? null,
+      admission_date: (row.admission_date as string | null) ?? null,
+      birthday_day: birth ? birth.getDate() : null,
+      birthday_month: birth ? birth.getMonth() + 1 : null,
+      photo_url: (row.photo_url as string | null) ?? null,
+      active: (row.active as boolean) ?? true,
+    };
   });
+
+export type OwnEmployee = Awaited<ReturnType<typeof getOwnEmployee>>;

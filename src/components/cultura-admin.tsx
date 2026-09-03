@@ -2,22 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Award, Cake, Loader2, Pencil, Search, Trash2, Upload, Users, X } from "lucide-react";
+import { Award, Cake, Loader2, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { deleteEmployee, listEmployees, updateEmployee } from "@/lib/employee.functions";
+import { MONTHS, formatDate, parseISODate, tenureFrom, tenureLabel } from "@/lib/tenure";
+import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
+import { UserAvatar } from "@/components/user-avatar";
+import { useAdminSearch } from "@/components/admin-search";
 import {
-  MONTHS,
-  birthdayLabel,
-  calcTenure,
-  daysUntilBirthday,
-  formatDateBR,
-  initials,
-  isAnniversaryMonth,
-  monthOf,
-  tenureLabel,
-  today,
-  type Tenure,
-} from "@/lib/tenure";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 /* ─── Tipos ─────────────────────────────────────────────────────────────────── */
 
@@ -39,60 +41,82 @@ type Employee = {
 
 type Person = {
   emp: Employee;
-  name: string;
   roleLine: string;
   unit: string;
   admission: string;
-  /** Dias até o próximo aniversário — usado na aba de aniversários. */
+  /** Dias até o próximo aniversário. */
   days: number;
   birthMonth: number;
-  tenure: Tenure;
+  years: number;
+  totalMonths: number;
   anniversaryMonth: boolean;
 };
 
-type Row = Person & {
-  metric: string;
-  badge: string;
-  badgeClass: string;
-};
-
+type Row = Person & { metric: string; badge: string; badgeTone: "accent" | "soft" };
 type Group = { title: string; count: string; rows: Row[] };
 
 const ALL_DEPTS = "Todos os departamentos";
 const ALL_UNITS = "Todas as unidades";
 
-/* ─── Classes compartilhadas ────────────────────────────────────────────────── */
+const MONTHS_SHORT = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
 
-// Pessoa | Unidade | Admissão | Métrica | Ações — Unidade e Admissão colapsam
-// para dentro da célula Pessoa abaixo de lg.
-const GRID =
-  "grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-x-0 " +
-  "lg:grid-cols-[minmax(240px,1fr)_168px_132px_200px_84px]";
+/** Mesma trilha do resto do painel: registro largo, colunas fixas, ações à direita. */
+const GRID = "grid grid-cols-[1fr_150px_120px_190px_150px] items-center gap-4";
 
-const PILL =
-  "h-[38px] rounded-full border-[1.5px] border-ink/25 bg-white text-[13px] text-ink " +
-  "outline-none transition-colors focus:border-ink focus-visible:ring-1 focus-visible:ring-ring";
+const SELECT =
+  "h-[38px] rounded-full border-[1.5px] border-ink bg-surface px-3.5 text-[13px] font-bold " +
+  "outline-none transition-colors hover:bg-accent-soft focus-visible:ring-1 focus-visible:ring-ring";
 
 const FIELD =
-  "w-full rounded-lg border-[1.5px] border-ink/25 bg-white px-3 py-2 text-sm text-ink " +
-  "outline-none transition-colors focus:border-ink focus-visible:ring-1 focus-visible:ring-ring";
+  "w-full rounded-lg border-[1.5px] border-ink/25 bg-surface px-3 py-2 text-sm outline-none " +
+  "transition-colors focus:border-ink focus-visible:ring-1 focus-visible:ring-ring";
+
+/* ─── Datas específicas desta tela ──────────────────────────────────────────── */
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Dias até a próxima ocorrência de dia/mês. 0 = hoje. */
+function daysUntil(iso: string): number {
+  const t = startOfToday();
+  const d = parseISODate(iso);
+  let next = new Date(t.getFullYear(), d.getMonth(), d.getDate());
+  if (next < t) next = new Date(t.getFullYear() + 1, d.getMonth(), d.getDate());
+  return Math.round((next.getTime() - t.getTime()) / 86400000);
+}
+
+/** "3 de set" — o ano do nascimento nunca aparece. */
+function birthdayLabel(iso: string): string {
+  const d = parseISODate(iso);
+  return `${d.getDate()} de ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
+function monthOf(iso: string): number {
+  return parseISODate(iso).getMonth();
+}
 
 /* ─── Tela ──────────────────────────────────────────────────────────────────── */
 
 export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { term: rawTerm } = useAdminSearch();
   const doList = useServerFn(listEmployees);
   const doUpdate = useServerFn(updateEmployee);
   const doDelete = useServerFn(deleteEmployee);
 
-  const [search, setSearch] = useState("");
   const [dept, setDept] = useState(ALL_DEPTS);
   const [unit, setUnit] = useState(ALL_UNITS);
   const [sortKey, setSortKey] = useState<SortKey>("metric");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editing, setEditing] = useState<Employee | null>(null);
-  const [removing, setRemoving] = useState<Employee | null>(null);
+  const [confirming, setConfirming] = useState<Employee | null>(null);
 
   // Trocar de aba reseta a ordenação para a métrica da aba, ascendente.
   useEffect(() => {
@@ -105,35 +129,45 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
 
   const mUpdate = useMutation({
     mutationFn: (p: Parameters<typeof doUpdate>[0]["data"]) => doUpdate({ data: p }),
-    onSuccess: () => { toast.success("Cadastro atualizado."); invalidate(); setEditing(null); },
+    onSuccess: () => {
+      toast.success("Cadastro atualizado.");
+      invalidate();
+      setEditing(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const mDelete = useMutation({
     mutationFn: (id: string) => doDelete({ data: { id } }),
-    onSuccess: () => { toast.success("Colaborador removido do diretório."); invalidate(); setRemoving(null); },
+    onSuccess: () => {
+      toast.success("Colaborador removido do diretório.");
+      invalidate();
+      setConfirming(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const employees = useMemo(() => (q.data ?? []) as Employee[], [q.data]);
 
-  /* ── Base da aba: ativos com a data que a aba precisa ── */
+  /* Base da aba: ativos com a data que a aba precisa. */
   const base = useMemo<Person[]>(() => {
     const dateKey = tab === "birth" ? "birth_date" : "admission_date";
+    const month = new Date().getMonth();
     return employees
       .filter((e) => e.active && e[dateKey])
       .map((e) => {
-        const admission = e.admission_date;
+        const adm = e.admission_date;
+        const t = adm ? tenureFrom(adm) : { years: 0, months: 0 };
         return {
           emp: e,
-          name: e.name,
           roleLine: [e.job_title, e.department].filter(Boolean).join(" · "),
           unit: e.unit ?? "—",
-          admission: admission ? formatDateBR(admission) : "—",
-          days: e.birth_date ? daysUntilBirthday(e.birth_date) : Number.MAX_SAFE_INTEGER,
+          admission: adm ? formatDate(adm) : "—",
+          days: e.birth_date ? daysUntil(e.birth_date) : Number.MAX_SAFE_INTEGER,
           birthMonth: e.birth_date ? monthOf(e.birth_date) : 0,
-          tenure: admission ? calcTenure(admission) : { years: 0, months: 0, total: 0 },
-          anniversaryMonth: admission ? isAnniversaryMonth(admission) : false,
+          years: t.years,
+          totalMonths: t.years * 12 + t.months,
+          anniversaryMonth: adm ? monthOf(adm) === month : false,
         };
       });
   }, [employees, tab]);
@@ -148,33 +182,39 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
     return [ALL_UNITS, ...[...set].sort((a, b) => a.localeCompare(b, "pt-BR"))];
   }, [base]);
 
-  const term = search.trim().toLowerCase();
+  const term = rawTerm.trim().toLowerCase();
   // Trocar de aba muda as opções disponíveis; um filtro órfão volta para "todos".
   const activeDept = deptOptions.includes(dept) ? dept : ALL_DEPTS;
   const activeUnit = unitOptions.includes(unit) ? unit : ALL_UNITS;
-  const hasFilters = term !== "" || activeDept !== ALL_DEPTS || activeUnit !== ALL_UNITS;
+  const hasFilters = activeDept !== ALL_DEPTS || activeUnit !== ALL_UNITS;
 
   const rows = useMemo(() => {
     const filtered = base.filter(
       (p) =>
-        (!term || p.name.toLowerCase().includes(term)) &&
+        (!term || p.emp.name.toLowerCase().includes(term)) &&
         (activeDept === ALL_DEPTS || p.emp.department === activeDept) &&
         (activeUnit === ALL_UNITS || p.emp.unit === activeUnit),
     );
     const sign = sortDir === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      if (sortKey === "name") return sign * a.name.localeCompare(b.name, "pt-BR");
+      if (sortKey === "name") return sign * a.emp.name.localeCompare(b.emp.name, "pt-BR");
       // Aniversário: asc = mais próximo primeiro. Tempo de casa: asc = mais antigo primeiro.
-      return tab === "birth" ? sign * (a.days - b.days) : -sign * (a.tenure.total - b.tenure.total);
+      return tab === "birth" ? sign * (a.days - b.days) : -sign * (a.totalMonths - b.totalMonths);
     });
   }, [base, term, activeDept, activeUnit, sortKey, sortDir, tab]);
 
-  const groups = useMemo(() => buildGroups(rows, tab, sortKey, sortDir), [rows, tab, sortKey, sortDir]);
+  const groups = useMemo(
+    () => buildGroups(rows, tab, sortKey, sortDir),
+    [rows, tab, sortKey, sortDir],
+  );
   const stats = useMemo(() => buildStats(employees), [employees]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   }
 
   function goToTab(next: CulturaTab) {
@@ -185,267 +225,254 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
     });
   }
 
-  function clearFilters() {
-    setSearch("");
-    setDept(ALL_DEPTS);
-    setUnit(ALL_UNITS);
-  }
-
   const metricHeader = tab === "birth" ? "Aniversário" : "Tempo de casa";
   const nameMark = sortKey === "name" ? (sortDir === "asc" ? "↑" : "↓") : "↕";
   const metricMark = sortKey === "metric" ? (sortDir === "asc" ? "↑" : "↓") : "↕";
 
   return (
-    <div
-      className="-m-4 min-h-[calc(100vh-4rem)] bg-paper px-6 pt-10 pb-[72px] md:-m-8"
-      style={{
-        backgroundImage: "radial-gradient(oklch(0.18 0 0 / 0.035) 1px, transparent 1px)",
-        backgroundSize: "22px 22px",
-      }}
-    >
-      <div className="mx-auto max-w-6xl">
-        {/* ── Cabeçalho ── */}
-        <div className="mb-[22px] flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-[620px]">
-            <div className="mb-2 text-[11px] font-extrabold tracking-[0.18em] text-primary uppercase">
-              Painel · Cultura
-            </div>
-            <h1 className="mb-2 text-[40px] leading-[1.02] font-black tracking-[-0.04em] text-ink">
-              Aniversários e tempo de casa.
-            </h1>
-            <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
-              Colaboradores ativos, com cargo, unidade e datas. Cadastro individual e importação
-              continuam na tela de{" "}
-              <Link to="/admin/colaboradores" className="font-bold text-primary hover:text-primary/80">
-                Colaboradores
-              </Link>
-              .
-            </p>
-          </div>
-          <Link
-            to="/admin/colaboradores"
-            className="inline-flex h-[42px] items-center gap-2 rounded-full border-[1.5px] border-ink bg-white px-[18px] text-[13px] font-extrabold text-ink shadow-paper transition-[transform,box-shadow] duration-[120ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-x-px hover:-translate-y-px hover:shadow-elevated"
-          >
+    <div>
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b-[1.5px] border-ink pb-5">
+        <div>
+          <Kicker>Cultura</Kicker>
+          <h1 className="mt-3 text-[28px] leading-[1.02] font-black tracking-[-0.045em] sm:text-[34px] lg:text-[42px]">
+            Aniversários e tempo de casa.
+          </h1>
+          <p className="mt-3 max-w-[60ch] text-[15.5px] leading-[1.7] text-muted-foreground">
+            Colaboradores ativos, com cargo, unidade e datas. Cadastro individual e importação
+            continuam na tela de{" "}
+            <Link to="/admin/colaboradores" className="font-bold text-primary hover:underline">
+              Colaboradores
+            </Link>
+            .
+          </p>
+        </div>
+        <InkButton asChild variant="outline">
+          <Link to="/admin/colaboradores">
             <Upload className="h-4 w-4" /> Importar planilha
           </Link>
-        </div>
+        </InkButton>
+      </header>
 
-        {/* ── Faixa de indicadores ── */}
-        <div className="mb-[22px] grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded-lg border-[1.5px] border-ink bg-surface px-4 py-3.5 shadow-paper">
-              <div className="text-[10px] font-extrabold tracking-[0.16em] text-muted-foreground uppercase">
-                {s.label}
-              </div>
-              <div className="mt-1.5 flex items-baseline gap-2">
-                <span className="text-[30px] font-black tracking-[-0.04em] text-ink tabular-nums">{s.value}</span>
-                <span className="text-xs text-muted-foreground">{s.note}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Indicadores — sempre sobre todos os ativos, nunca sobre o filtro. */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((s) => (
+          <KpiCard key={s.label} size="sm" label={s.label} value={s.value} note={s.note} />
+        ))}
+      </div>
 
-        {/* ── Abas ── */}
-        <div className="relative z-[2] -mb-[1.5px] flex gap-2">
-          <TabButton active={tab === "birth"} onClick={() => goToTab("birth")} icon={Cake} label="Aniversariantes" />
-          <TabButton active={tab === "tenure"} onClick={() => goToTab("tenure")} icon={Award} label="Tempo de casa" />
-        </div>
+      {/* Abas */}
+      <div className="relative z-[2] mt-7 -mb-[1.5px] flex gap-2">
+        <TabButton
+          active={tab === "birth"}
+          onClick={() => goToTab("birth")}
+          icon={Cake}
+          label="Aniversariantes"
+        />
+        <TabButton
+          active={tab === "tenure"}
+          onClick={() => goToTab("tenure")}
+          icon={Award}
+          label="Tempo de casa"
+        />
+      </div>
 
-        {/* ── Cartão da tabela ── */}
-        <div className="overflow-hidden rounded-tr-lg rounded-b-lg border-[1.5px] border-ink bg-surface shadow-paper">
-          {/* Barra de filtros */}
-          <div className="flex flex-wrap items-center gap-2.5 border-b-[1.5px] border-ink bg-white px-4 py-3.5">
-            <div className="relative max-w-[340px] flex-[1_1_260px]">
-              <Search className="pointer-events-none absolute top-[11px] left-3 h-4 w-4 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome…"
-                aria-label="Buscar por nome"
-                className={`${PILL} w-full pr-3 pl-9`}
-              />
-            </div>
-            <select
-              value={activeDept}
-              onChange={(e) => setDept(e.target.value)}
-              aria-label="Filtrar por departamento"
-              className={`${PILL} cursor-pointer px-3.5 font-semibold`}
+      <div className="overflow-hidden rounded-tr-lg rounded-b-lg border-[1.5px] border-ink bg-surface shadow-paper">
+        {/* Filtros */}
+        <div className="flex flex-wrap items-center gap-3 border-b-[1.5px] border-ink px-[22px] py-3.5">
+          <select
+            value={activeDept}
+            onChange={(e) => setDept(e.target.value)}
+            aria-label="Filtrar por departamento"
+            className={SELECT}
+          >
+            {deptOptions.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+          <select
+            value={activeUnit}
+            onChange={(e) => setUnit(e.target.value)}
+            aria-label="Filtrar por unidade"
+            className={SELECT}
+          >
+            {unitOptions.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setDept(ALL_DEPTS);
+                setUnit(ALL_UNITS);
+              }}
+              className="text-[13px] font-extrabold text-primary underline underline-offset-[3px]"
             >
-              {deptOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <select
-              value={activeUnit}
-              onChange={(e) => setUnit(e.target.value)}
-              aria-label="Filtrar por unidade"
-              className={`${PILL} cursor-pointer px-3.5 font-semibold`}
-            >
-              {unitOptions.map((u) => <option key={u} value={u}>{u}</option>)}
-            </select>
-            {hasFilters && (
+              Limpar filtros
+            </button>
+          )}
+          <span className="ml-auto text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase tabular-nums">
+            {rows.length} {rows.length === 1 ? "pessoa" : "pessoas"}
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[860px]">
+            {/* Cabeçalho de colunas */}
+            <div className={cn(GRID, "bg-ink px-[22px] py-[13px]")}>
               <button
                 type="button"
-                onClick={clearFilters}
-                className="h-[38px] px-3.5 text-[13px] font-extrabold text-primary underline underline-offset-[3px]"
+                onClick={() => toggleSort("name")}
+                className="inline-flex items-center gap-1.5 text-left text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase"
               >
-                Limpar filtros
+                Pessoa <span className="text-accent">{nameMark}</span>
               </button>
-            )}
-            <span className="ml-auto text-xs font-bold text-muted-foreground tabular-nums">
-              {plural(rows.length, "pessoa", "pessoas")}
-            </span>
-          </div>
+              <span className="text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase">
+                Unidade
+              </span>
+              <span className="text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase">
+                Admissão
+              </span>
+              <button
+                type="button"
+                onClick={() => toggleSort("metric")}
+                className="inline-flex items-center gap-1.5 text-left text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase"
+              >
+                {metricHeader} <span className="text-accent">{metricMark}</span>
+              </button>
+              <span className="text-right text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase">
+                Ações
+              </span>
+            </div>
 
-          {/* Cabeçalho de colunas */}
-          <div className={`${GRID} border-b-[1.5px] border-ink/20 bg-ink/5 px-[18px] py-2.5 text-[10px] font-extrabold tracking-[0.14em] text-muted-foreground uppercase`}>
-            <button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1.5 text-left">
-              Pessoa <span className="text-primary">{nameMark}</span>
-            </button>
-            <span className="hidden lg:block">Unidade</span>
-            <span className="hidden lg:block">Admissão</span>
-            <button type="button" onClick={() => toggleSort("metric")} className="inline-flex items-center gap-1.5 text-left">
-              {metricHeader} <span className="text-primary">{metricMark}</span>
-            </button>
-            <span className="text-right">Ações</span>
-          </div>
-
-          {/* Corpo */}
-          {q.isLoading && <SkeletonRows />}
-
-          {!q.isLoading && groups.map((g, gi) => (
-            <div
-              key={g.title || "todos"}
-              className="animate-slide-up motion-reduce:animate-none"
-              style={{ animationDelay: `${gi * 45}ms` }}
-            >
-              {g.title && (
-                <div className="flex items-center gap-2.5 bg-ink px-[18px] py-2.5 text-paper">
-                  <span className="text-[10px] font-extrabold tracking-[0.18em] uppercase">{g.title}</span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  <span className="text-[11px] text-paper/70 tabular-nums">{g.count}</span>
-                </div>
-              )}
-              {g.rows.map((r) => (
-                <div
-                  key={r.emp.id}
-                  className={`${GRID} border-b border-ink/[0.14] px-[18px] py-[11px] transition-colors duration-[120ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[#F5F2E9]`}
-                >
-                  {/* Pessoa */}
-                  <div className="flex min-w-0 items-center gap-3">
-                    {r.emp.photo_url ? (
-                      <img src={r.emp.photo_url} alt="" className="h-[38px] w-[38px] shrink-0 rounded-full object-cover object-top" />
-                    ) : (
-                      <span className="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-ink text-xs font-black text-accent">
-                        {initials(r.name)}
+            {q.isLoading ? (
+              <SkeletonRows />
+            ) : rows.length === 0 ? (
+              <div className="px-[22px] py-10">
+                <p className="text-xl font-black tracking-tight">
+                  {base.length === 0
+                    ? tab === "birth"
+                      ? "Nenhum colaborador ativo com data de nascimento."
+                      : "Nenhum colaborador ativo com data de admissão."
+                    : "Nenhum resultado para esses filtros."}
+                </p>
+                <p className="mt-2 text-[15px] leading-[1.65] text-muted-foreground">
+                  {base.length === 0
+                    ? "Cadastre ou importe as datas na tela de Colaboradores."
+                    : "Tente outro nome, ou limpe os filtros para ver o time inteiro."}
+                </p>
+              </div>
+            ) : (
+              groups.map((g) => (
+                <div key={g.title || "todos"}>
+                  {g.title && (
+                    <div className="flex items-center gap-2.5 border-t border-border bg-surface-muted px-[22px] py-2.5">
+                      <span className="text-[10px] font-extrabold tracking-[0.18em] uppercase">
+                        {g.title}
                       </span>
-                    )}
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-extrabold tracking-[-0.015em] text-ink">{r.name}</div>
-                      {r.roleLine && <div className="truncate text-xs text-muted-foreground">{r.roleLine}</div>}
-                      <div className="truncate text-xs text-muted-foreground lg:hidden">
-                        {r.unit} · admissão {r.admission}
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                      <span className="text-[11px] text-muted-foreground tabular-nums">{g.count}</span>
+                    </div>
+                  )}
+                  {g.rows.map((r) => (
+                    <div key={r.emp.id} className={cn(GRID, "border-t border-border px-[22px] py-4")}>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <UserAvatar name={r.emp.name} photoUrl={r.emp.photo_url} size={40} />
+                        <div className="min-w-0">
+                          <p className="truncate text-[16.5px] font-extrabold tracking-[-0.02em]">
+                            {r.emp.name}
+                          </p>
+                          {r.roleLine && (
+                            <p className="truncate text-xs text-muted-foreground">{r.roleLine}</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="truncate text-[13px] font-bold text-muted-foreground">
+                        {r.unit}
+                      </span>
+                      <span className="text-[13px] font-bold text-muted-foreground tabular-nums">
+                        {r.admission}
+                      </span>
+                      <span className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="text-[13.5px] font-bold tabular-nums">{r.metric}</span>
+                        {r.badge && <Chip tone={r.badgeTone}>{r.badge}</Chip>}
+                      </span>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditing(r.emp)}
+                          className="text-[11px] font-extrabold tracking-[0.1em] text-ink uppercase hover:text-primary"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirming(r.emp)}
+                          aria-label={`Excluir ${r.emp.name}`}
+                          className="grid h-7 w-7 place-items-center rounded-lg border border-border text-destructive transition hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <span className="hidden truncate text-[12.5px] text-muted-foreground lg:block">{r.unit}</span>
-                  <span className="hidden text-[12.5px] text-muted-foreground tabular-nums lg:block">{r.admission}</span>
-                  {/* Métrica */}
-                  <span className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-bold text-ink tabular-nums">{r.metric}</span>
-                    {r.badge && (
-                      <span className={`inline-flex items-center rounded-full px-2 pt-0.5 pb-[3px] text-[10.5px] font-extrabold whitespace-nowrap text-ink ${r.badgeClass}`}>
-                        {r.badge}
-                      </span>
-                    )}
-                  </span>
-                  {/* Ações */}
-                  <span className="flex justify-end gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setEditing(r.emp)}
-                      title={`Editar ${r.name}`}
-                      aria-label={`Editar ${r.name}`}
-                      className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg border-[1.5px] border-ink/25 bg-white text-ink transition-colors hover:border-ink hover:bg-accent"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRemoving(r.emp)}
-                      title={`Excluir ${r.name}`}
-                      aria-label={`Excluir ${r.name}`}
-                      className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg border-[1.5px] border-ink/25 bg-white text-ink transition-colors hover:border-ink hover:bg-ink hover:text-paper"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ))}
-
-          {!q.isLoading && rows.length === 0 && (
-            <div className="px-6 py-14 text-center">
-              <span className="mb-3.5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-ink text-accent">
-                <Users className="h-5 w-5" />
-              </span>
-              <div className="text-base font-black tracking-[-0.02em] text-ink">
-                {base.length === 0
-                  ? tab === "birth"
-                    ? "Nenhum colaborador ativo com data de nascimento."
-                    : "Nenhum colaborador ativo com data de admissão."
-                  : "Nenhum resultado para esses filtros."}
-              </div>
-              <div className="mt-1 text-[13px] text-muted-foreground">
-                {base.length === 0
-                  ? "Cadastre ou importe as datas na tela de Colaboradores."
-                  : "Tente outro nome, ou limpe os filtros para ver o time inteiro."}
-              </div>
-            </div>
-          )}
-
-          {/* Rodapé */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t-[1.5px] border-ink bg-white px-[18px] py-3">
-            <span className="text-[11.5px] text-muted-foreground">
-              Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por aqui.
-            </span>
-            <span className="text-[11.5px] font-bold text-muted-foreground tabular-nums">
-              {rows.length} de {base.length} colaboradores ativos
-            </span>
+              ))
+            )}
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t-[1.5px] border-ink px-[22px] py-3">
+          <span className="text-[11.5px] text-muted-foreground">
+            Uso interno. Nada de CPF, telefone pessoal, endereço, documentos ou dados bancários por
+            aqui.
+          </span>
+          <span className="text-[11.5px] font-bold text-muted-foreground tabular-nums">
+            {rows.length} de {base.length} colaboradores ativos
+          </span>
         </div>
       </div>
 
       {editing && (
-        <EditModal
+        <EditDialog
           employee={editing}
           loading={mUpdate.isPending}
-          onCancel={() => setEditing(null)}
+          onClose={() => setEditing(null)}
           onSubmit={(v) => mUpdate.mutate({ id: editing.id, ...v })}
         />
       )}
 
-      {removing && (
-        <ConfirmModal
-          title="Excluir colaborador"
-          loading={mDelete.isPending}
-          onCancel={() => setRemoving(null)}
-          onConfirm={() => mDelete.mutate(removing.id)}
-        >
-          <p className="text-sm text-muted-foreground">
-            <strong className="font-bold text-ink">{removing.name}</strong> sai do diretório junto com
-            cargo, unidade e datas. A ação não tem volta — para tirar alguém das listas sem apagar o
-            cadastro, desative o colaborador em Colaboradores.
-          </p>
-        </ConfirmModal>
-      )}
+      <AlertDialog open={confirming !== null} onOpenChange={(v) => !v && setConfirming(null)}>
+        <AlertDialogContent className="border-[1.5px] border-ink bg-paper shadow-elevated">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[22px] font-black tracking-[-0.03em]">
+              Excluir “{confirming?.name}”?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-[1.65]">
+              Sai do diretório junto com cargo, unidade e datas, e não dá pra desfazer. Para tirar
+              alguém das listas sem apagar o cadastro, desative o colaborador em Colaboradores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirming && mDelete.mutate(confirming.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 /* ─── Agrupamento e indicadores ─────────────────────────────────────────────── */
-
-const BADGE_STRONG = "bg-accent border border-ink";
-const BADGE_SOFT = "bg-accent/25 border border-primary/45";
 
 function toRow(p: Person, tab: CulturaTab): Row {
   if (tab === "birth") {
@@ -454,15 +481,15 @@ function toRow(p: Person, tab: CulturaTab): Row {
       ...p,
       metric: p.emp.birth_date ? birthdayLabel(p.emp.birth_date) : "—",
       badge,
-      badgeClass: p.days === 0 ? BADGE_STRONG : BADGE_SOFT,
+      badgeTone: p.days === 0 ? "accent" : "soft",
     };
   }
-  const milestone = p.tenure.years >= 5 && p.tenure.years % 5 === 0 && p.anniversaryMonth;
+  const milestone = p.years >= 5 && p.years % 5 === 0 && p.anniversaryMonth;
   return {
     ...p,
-    metric: tenureLabel(p.tenure),
-    badge: milestone ? `${p.tenure.years} anos este mês` : p.anniversaryMonth ? "aniversário WG" : "",
-    badgeClass: milestone ? BADGE_STRONG : BADGE_SOFT,
+    metric: p.emp.admission_date ? tenureLabel(p.emp.admission_date, "") : "—",
+    badge: milestone ? `${p.years} anos este mês` : p.anniversaryMonth ? "aniversário WG" : "",
+    badgeTone: milestone ? "accent" : "soft",
   };
 }
 
@@ -478,6 +505,10 @@ function bucketOf(years: number) {
   return BUCKETS.find((b) => years >= b.min)!;
 }
 
+function plural(n: number) {
+  return `${n} ${n === 1 ? "pessoa" : "pessoas"}`;
+}
+
 function buildGroups(rows: Person[], tab: CulturaTab, sortKey: SortKey, sortDir: SortDir): Group[] {
   // Ordenar por nome desliga o agrupamento e mostra uma lista contínua.
   if (sortKey !== "metric") {
@@ -491,23 +522,20 @@ function buildGroups(rows: Person[], tab: CulturaTab, sortKey: SortKey, sortDir:
       list.push(p);
       byMonth.set(p.birthMonth, list);
     }
-    const current = today().getMonth();
+    const current = new Date().getMonth();
     return [...byMonth.entries()].map(([m, list]) => ({
       title: MONTHS[m] + (m === current ? " · este mês" : ""),
-      count: plural(list.length, "pessoa", "pessoas"),
+      count: plural(list.length),
       rows: list.map((p) => toRow(p, tab)),
     }));
   }
 
+  // Ascendente = mais antigo primeiro, então as faixas começam em "20 anos ou mais".
   const order = sortDir === "asc" ? BUCKETS : [...BUCKETS].reverse();
   return order
     .map((b) => {
-      const list = rows.filter((p) => bucketOf(p.tenure.years) === b);
-      return {
-        title: b.title,
-        count: plural(list.length, "pessoa", "pessoas"),
-        rows: list.map((p) => toRow(p, tab)),
-      };
+      const list = rows.filter((p) => bucketOf(p.years) === b);
+      return { title: b.title, count: plural(list.length), rows: list.map((p) => toRow(p, tab)) };
     })
     .filter((g) => g.rows.length > 0);
 }
@@ -515,29 +543,32 @@ function buildGroups(rows: Person[], tab: CulturaTab, sortKey: SortKey, sortDir:
 type Stat = { label: string; value: string; note: string };
 
 function buildStats(employees: Employee[]): Stat[] {
-  const t = today();
+  const month = new Date().getMonth();
   const active = employees.filter((e) => e.active);
   const withBirth = active.filter((e) => e.birth_date);
   const withAdmission = active.filter((e) => e.admission_date);
 
-  const birthThisMonth = withBirth.filter((e) => monthOf(e.birth_date!) === t.getMonth());
-  const next7 = withBirth.filter((e) => daysUntilBirthday(e.birth_date!) <= 7);
+  const birthThisMonth = withBirth.filter((e) => monthOf(e.birth_date!) === month);
+  const next7 = withBirth.filter((e) => daysUntil(e.birth_date!) <= 7);
 
-  const anniversaries = withAdmission.filter((e) => isAnniversaryMonth(e.admission_date!));
+  const anniversaries = withAdmission.filter((e) => monthOf(e.admission_date!) === month);
   const milestones = anniversaries.filter((e) => {
-    const y = calcTenure(e.admission_date!).years;
+    const y = tenureFrom(e.admission_date!).years;
     return y >= 5 && y % 5 === 0;
   });
 
   const avgYears = withAdmission.length
-    ? withAdmission.reduce((s, e) => s + calcTenure(e.admission_date!).total, 0) / withAdmission.length / 12
+    ? withAdmission.reduce((s, e) => {
+        const t = tenureFrom(e.admission_date!);
+        return s + t.years * 12 + t.months;
+      }, 0) /
+      withAdmission.length /
+      12
     : 0;
-
-  const withAnyDate = active.filter((e) => e.birth_date || e.admission_date);
 
   return [
     {
-      label: `Aniversariantes · ${MONTHS[t.getMonth()]}`,
+      label: `Aniversariantes · ${MONTHS[month]}`,
       value: String(birthThisMonth.length),
       note: `${next7.length} nos próximos 7 dias`,
     },
@@ -553,20 +584,19 @@ function buildStats(employees: Employee[]): Stat[] {
     },
     {
       label: "Colaboradores ativos",
-      value: String(withAnyDate.length),
+      value: String(active.filter((e) => e.birth_date || e.admission_date).length),
       note: "com datas cadastradas",
     },
   ];
 }
 
-function plural(n: number, one: string, many: string) {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
 /* ─── Peças da interface ────────────────────────────────────────────────────── */
 
 function TabButton({
-  active, onClick, icon: Icon, label,
+  active,
+  onClick,
+  icon: Icon,
+  label,
 }: {
   active: boolean;
   onClick: () => void;
@@ -578,9 +608,10 @@ function TabButton({
       type="button"
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center gap-2 rounded-t-lg border-[1.5px] border-ink px-5 pt-[11px] pb-[13px] text-[13px] font-extrabold tracking-[-0.01em] text-ink ${
-        active ? "border-b-surface bg-surface" : "bg-ink/[0.06]"
-      }`}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-t-lg border-[1.5px] border-ink px-5 pt-[11px] pb-[13px] text-[13px] font-extrabold tracking-[-0.01em]",
+        active ? "border-b-surface bg-surface" : "bg-ink/[0.06] hover:bg-accent-soft",
+      )}
     >
       <Icon className="h-4 w-4" /> {label}
     </button>
@@ -591,50 +622,20 @@ function SkeletonRows() {
   return (
     <div aria-busy="true" aria-label="Carregando colaboradores">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className={`${GRID} border-b border-ink/[0.14] px-[18px] py-[11px]`}>
+        <div key={i} className={cn(GRID, "border-t border-border px-[22px] py-4")}>
           <div className="flex items-center gap-3">
-            <div className="h-[38px] w-[38px] shrink-0 rounded-full bg-ink/10" />
+            <div className="h-10 w-10 shrink-0 rounded-full bg-ink/10" />
             <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="h-3.5 w-40 max-w-full rounded bg-ink/10" />
+              <div className="h-4 w-44 max-w-full rounded bg-ink/10" />
               <div className="h-3 w-28 max-w-full rounded bg-ink/[0.07]" />
             </div>
           </div>
-          <div className="hidden h-3 w-24 rounded bg-ink/[0.07] lg:block" />
-          <div className="hidden h-3 w-20 rounded bg-ink/[0.07] lg:block" />
-          <div className="h-3.5 w-24 rounded bg-ink/10" />
-          <div className="h-[30px] w-[66px] justify-self-end rounded-lg bg-ink/[0.07]" />
+          <div className="h-3 w-24 rounded bg-ink/[0.07]" />
+          <div className="h-3 w-20 rounded bg-ink/[0.07]" />
+          <div className="h-4 w-28 rounded bg-ink/10" />
+          <div className="h-7 w-20 justify-self-end rounded-lg bg-ink/[0.07]" />
         </div>
       ))}
-    </div>
-  );
-}
-
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 backdrop-blur-sm md:items-center md:p-6"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[95vh] w-full max-w-lg flex-col rounded-t-2xl border-[1.5px] border-ink bg-surface shadow-elevated md:rounded-2xl"
-      >
-        <div className="flex items-center justify-between border-b-[1.5px] border-ink px-6 py-4">
-          <h2 className="text-base font-black tracking-[-0.02em] text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-ink/5 hover:text-ink"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
-      </div>
     </div>
   );
 }
@@ -648,12 +649,15 @@ type EditValues = {
   admission_date: string | null;
 };
 
-function EditModal({
-  employee, loading, onCancel, onSubmit,
+function EditDialog({
+  employee,
+  loading,
+  onClose,
+  onSubmit,
 }: {
   employee: Employee;
   loading: boolean;
-  onCancel: () => void;
+  onClose: () => void;
   onSubmit: (v: EditValues) => void;
 }) {
   const [name, setName] = useState(employee.name);
@@ -664,105 +668,120 @@ function EditModal({
   const [admissionDate, setAdmissionDate] = useState(employee.admission_date ?? "");
 
   return (
-    <Modal title={`Editar — ${employee.name}`} onClose={onCancel}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit({
-            name,
-            job_title: jobTitle || null,
-            department: department || null,
-            unit: unit || null,
-            birth_date: birthDate || null,
-            admission_date: admissionDate || null,
-          });
-        }}
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-[3px] md:items-center md:p-6"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="animate-content-in max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-t-lg border-[1.5px] border-ink bg-paper shadow-elevated md:rounded-lg"
       >
-        <div className="grid grid-cols-1 gap-4 px-6 pt-5 pb-2 md:grid-cols-2">
-          <Field label="Nome completo" className="md:col-span-2">
-            <input required value={name} onChange={(e) => setName(e.target.value)} className={FIELD} />
-          </Field>
-          <Field label="Cargo">
-            <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={FIELD} />
-          </Field>
-          <Field label="Departamento">
-            <input value={department} onChange={(e) => setDepartment(e.target.value)} className={FIELD} />
-          </Field>
-          <Field label="Unidade">
-            <input
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="Matriz SJP, CD Sorocaba…"
-              className={FIELD}
-            />
-          </Field>
-          <Field label="Data de nascimento">
-            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={FIELD} />
-          </Field>
-          <Field label="Data de admissão">
-            <input type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} className={FIELD} />
-          </Field>
-        </div>
-        <p className="px-6 pb-4 text-xs text-muted-foreground">
-          E-mail, telefone e acesso ao portal continuam em Colaboradores.
-        </p>
-        <div className="flex justify-end gap-2 border-t-[1.5px] border-ink px-6 py-4">
+        <div className="flex items-start justify-between gap-4 border-b-[1.5px] border-ink px-6 py-5">
+          <div>
+            <p className="text-[10px] font-extrabold tracking-[0.18em] text-primary uppercase">
+              Cultura
+            </p>
+            <h2 className="mt-1 text-[22px] font-black tracking-[-0.03em]">Editar colaborador</h2>
+          </div>
           <button
             type="button"
-            onClick={onCancel}
-            className="rounded-full border-[1.5px] border-ink/25 bg-white px-4 py-2 text-[13px] font-extrabold text-ink hover:border-ink"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] border-[1.5px] border-ink bg-surface transition hover:bg-accent"
           >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-accent px-4 py-2 text-[13px] font-extrabold text-ink shadow-paper disabled:opacity-60"
-          >
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Salvar
+            <X className="h-4 w-4" />
           </button>
         </div>
-      </form>
-    </Modal>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit({
+              name,
+              job_title: jobTitle || null,
+              department: department || null,
+              unit: unit || null,
+              birth_date: birthDate || null,
+              admission_date: admissionDate || null,
+            });
+          }}
+        >
+          <div className="grid grid-cols-1 gap-4 px-6 pt-5 pb-2 md:grid-cols-2">
+            <Field label="Nome completo" className="md:col-span-2">
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={FIELD}
+              />
+            </Field>
+            <Field label="Cargo">
+              <input
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className={FIELD}
+              />
+            </Field>
+            <Field label="Departamento">
+              <input
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className={FIELD}
+              />
+            </Field>
+            <Field label="Unidade">
+              <input
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="Matriz SJP, CD Sorocaba…"
+                className={FIELD}
+              />
+            </Field>
+            <Field label="Data de nascimento">
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className={FIELD}
+              />
+            </Field>
+            <Field label="Data de admissão">
+              <input
+                type="date"
+                value={admissionDate}
+                onChange={(e) => setAdmissionDate(e.target.value)}
+                className={FIELD}
+              />
+            </Field>
+          </div>
+          <p className="px-6 pb-4 text-xs text-muted-foreground">
+            E-mail, telefone e acesso ao portal continuam em Colaboradores.
+          </p>
+          <div className="flex justify-end gap-2 border-t-[1.5px] border-ink px-6 py-4">
+            <InkButton variant="outline" onClick={onClose}>
+              Cancelar
+            </InkButton>
+            <InkButton type="submit" disabled={loading}>
+              {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Salvar
+            </InkButton>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
-function ConfirmModal({
-  title, children, loading, onCancel, onConfirm,
+function Field({
+  label,
+  className,
+  children,
 }: {
-  title: string;
+  label: string;
+  className?: string;
   children: React.ReactNode;
-  loading: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
 }) {
   return (
-    <Modal title={title} onClose={onCancel}>
-      <div className="px-6 py-5">{children}</div>
-      <div className="flex justify-end gap-2 border-t-[1.5px] border-ink px-6 py-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-full border-[1.5px] border-ink/25 bg-white px-4 py-2 text-[13px] font-extrabold text-ink hover:border-ink"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-destructive px-4 py-2 text-[13px] font-extrabold text-destructive-foreground shadow-paper disabled:opacity-60"
-        >
-          {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Excluir
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
-function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
-  return (
-    <label className={`block ${className ?? ""}`}>
+    <label className={cn("block", className)}>
       <span className="mb-1.5 block text-[11px] font-extrabold tracking-[0.1em] text-muted-foreground uppercase">
         {label}
       </span>

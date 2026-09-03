@@ -25,33 +25,8 @@ import {
   updateEmployeePhotoUrl,
 } from "@/lib/employee.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { avatarColor, fmtDate, initials } from "@/lib/employee-ui";
 import { toast } from "sonner";
-
-/* ─── Avatar ────────────────────────────────────────────────────────────────── */
-
-const AVATAR_COLORS = [
-  "bg-blue-100 text-blue-700",
-  "bg-purple-100 text-purple-700",
-  "bg-pink-100 text-pink-700",
-  "bg-amber-100 text-amber-700",
-  "bg-teal-100 text-teal-700",
-  "bg-indigo-100 text-indigo-700",
-  "bg-rose-100 text-rose-700",
-  "bg-emerald-100 text-emerald-700",
-];
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts.length === 1
-    ? parts[0].slice(0, 2).toUpperCase()
-    : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function avatarColor(name: string): string {
-  let h = 0;
-  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xff;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
 
 type Employee = {
   id: string;
@@ -85,14 +60,6 @@ export const Route = createFileRoute("/_authenticated/admin/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores — Portal WG" }] }),
   component: ColaboradoresPage,
 });
-
-// dd/mm/yyyy ou dd/mm para datas ISO
-function fmtDate(iso: string | null, mode: "dd/mm" | "dd/mm/yyyy" = "dd/mm/yyyy") {
-  if (!iso) return null;
-  const [y, m, d] = iso.split("-");
-  if (!d || !m) return null;
-  return mode === "dd/mm" ? `${d}/${m}` : `${d}/${m}/${y}`;
-}
 
 // Título em português: mantém artigos/preposições minúsculas
 function toTitleCase(str: string) {
@@ -211,7 +178,7 @@ function ColaboradoresPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
+    <div>
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-black">Colaboradores</h1>

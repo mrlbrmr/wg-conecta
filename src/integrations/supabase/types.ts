@@ -14,6 +14,423 @@ export type Database = {
   }
   public: {
     Tables: {
+      peer_recognitions: {
+        Row: {
+          id: string
+          to_employee_id: string
+          from_employee_id: string | null
+          message: string
+          highlight: boolean
+          status: string
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          to_employee_id: string
+          from_employee_id?: string | null
+          message: string
+          highlight?: boolean
+          status?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          to_employee_id?: string
+          from_employee_id?: string | null
+          message?: string
+          highlight?: boolean
+          status?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      announcement_reads: {
+        Row: {
+          id: string
+          announcement_id: string
+          employee_id: string
+          read_at: string
+        }
+        Insert: {
+          id?: string
+          announcement_id: string
+          employee_id: string
+          read_at?: string
+        }
+        Update: {
+          id?: string
+          announcement_id?: string
+          employee_id?: string
+          read_at?: string
+        }
+        Relationships: []
+      }
+      announcement_reactions: {
+        Row: {
+          id: string
+          announcement_id: string
+          employee_id: string
+          reaction: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          announcement_id: string
+          employee_id: string
+          reaction: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          announcement_id?: string
+          employee_id?: string
+          reaction?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      announcement_comments: {
+        Row: {
+          id: string
+          announcement_id: string
+          author_id: string | null
+          body: string
+          official: boolean
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          announcement_id: string
+          author_id?: string | null
+          body: string
+          official?: boolean
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          announcement_id?: string
+          author_id?: string | null
+          body?: string
+          official?: boolean
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      requests: {
+        Row: {
+          id: string
+          protocol: number
+          employee_id: string
+          form_id: string | null
+          title: string
+          subject: string | null
+          body: string | null
+          status: string
+          assignee_id: string | null
+          due_date: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          protocol?: number
+          employee_id: string
+          form_id?: string | null
+          title: string
+          subject?: string | null
+          body?: string | null
+          status?: string
+          assignee_id?: string | null
+          due_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          protocol?: number
+          employee_id?: string
+          form_id?: string | null
+          title?: string
+          subject?: string | null
+          body?: string | null
+          status?: string
+          assignee_id?: string | null
+          due_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      request_messages: {
+        Row: {
+          id: string
+          request_id: string
+          author_id: string | null
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          author_id?: string | null
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          author_id?: string | null
+          body?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      onboarding_checklist_items: {
+        Row: {
+          id: string
+          title: string
+          detail: string | null
+          stage: string
+          deadline_label: string | null
+          order_index: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          detail?: string | null
+          stage?: string
+          deadline_label?: string | null
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          detail?: string | null
+          stage?: string
+          deadline_label?: string | null
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onboarding_progress: {
+        Row: {
+          id: string
+          employee_id: string
+          item_id: string
+          done_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          item_id: string
+          done_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          item_id?: string
+          done_at?: string
+        }
+        Relationships: []
+      }
+      material_views: {
+        Row: {
+          id: string
+          employee_id: string
+          material_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          material_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          material_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
+      culture_photos: {
+        Row: {
+          id: string
+          image_url: string
+          title: string
+          event_date: string | null
+          unit: string | null
+          order_index: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          image_url: string
+          title: string
+          event_date?: string | null
+          unit?: string | null
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          image_url?: string
+          title?: string
+          event_date?: string | null
+          unit?: string | null
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      culture_events: {
+        Row: {
+          id: string
+          title: string
+          detail: string | null
+          event_date: string
+          event_type: string
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          detail?: string | null
+          event_date: string
+          event_type?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          detail?: string | null
+          event_date?: string
+          event_type?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anniversary_congrats: {
+        Row: {
+          id: string
+          from_employee_id: string
+          to_employee_id: string
+          year: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          from_employee_id: string
+          to_employee_id: string
+          year: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          from_employee_id?: string
+          to_employee_id?: string
+          year?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      monthly_deadlines: {
+        Row: {
+          id: string
+          label: string
+          due_date: string
+          order_index: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          label: string
+          due_date: string
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          label?: string
+          due_date?: string
+          order_index?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          id: string
+          actor_id: string | null
+          actor_label: string | null
+          action: string
+          resource: string
+          resource_id: string | null
+          summary: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          action: string
+          resource: string
+          resource_id?: string | null
+          summary?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          action?: string
+          resource?: string
+          resource_id?: string | null
+          summary?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           active: boolean
@@ -43,51 +460,96 @@ export type Database = {
       }
       employees: {
         Row: {
+          bio: string | null
+          unit: string | null
+          extension: string | null
+          manager_id: string | null
+          co_manager_id: string | null
+          buddy_id: string | null
           id: string
           auth_user_id: string | null
           name: string
           email: string | null
           department: string | null
           job_title: string | null
-          unit: string | null
           phone: string | null
           birth_date: string | null
           admission_date: string | null
           photo_url: string | null
+          marital_status: string | null
+          education_level: string | null
+          dependents: string | null
+          address_zip: string | null
+          address_street: string | null
+          address_number: string | null
+          address_complement: string | null
+          address_district: string | null
+          address_city: string | null
+          address_state: string | null
           active: boolean
           invited_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
+          bio?: string | null
+          unit?: string | null
+          extension?: string | null
+          manager_id?: string | null
+          co_manager_id?: string | null
+          buddy_id?: string | null
+          id?: string
           auth_user_id?: string | null
           name: string
           email?: string | null
           department?: string | null
           job_title?: string | null
-          unit?: string | null
           phone?: string | null
           birth_date?: string | null
           admission_date?: string | null
           photo_url?: string | null
+          marital_status?: string | null
+          education_level?: string | null
+          dependents?: string | null
+          address_zip?: string | null
+          address_street?: string | null
+          address_number?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_city?: string | null
+          address_state?: string | null
           active?: boolean
           invited_at?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
+          bio?: string | null
+          unit?: string | null
+          extension?: string | null
+          manager_id?: string | null
+          co_manager_id?: string | null
+          buddy_id?: string | null
           id?: string
           auth_user_id?: string | null
           name?: string
           email?: string | null
           department?: string | null
           job_title?: string | null
-          unit?: string | null
           phone?: string | null
           birth_date?: string | null
           admission_date?: string | null
           photo_url?: string | null
+          marital_status?: string | null
+          education_level?: string | null
+          dependents?: string | null
+          address_zip?: string | null
+          address_street?: string | null
+          address_number?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_city?: string | null
+          address_state?: string | null
           active?: boolean
           invited_at?: string | null
           created_at?: string
@@ -95,8 +557,57 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_update_requests: {
+        Row: {
+          id: string
+          employee_id: string
+          auth_user_id: string
+          status: string
+          changes: Json
+          note: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
+          reviewer_note: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          auth_user_id: string
+          status?: string
+          changes?: Json
+          note?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          reviewer_note?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          auth_user_id?: string
+          status?: string
+          changes?: Json
+          note?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          reviewer_note?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
+          lead: string | null
+          author_name: string | null
+          author_role: string | null
+          headline: boolean
           attachment_url: string | null
           category: string | null
           content: string | null
@@ -114,6 +625,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          lead?: string | null
+          author_name?: string | null
+          author_role?: string | null
+          headline?: boolean
           attachment_url?: string | null
           category?: string | null
           content?: string | null
@@ -131,6 +646,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          lead?: string | null
+          author_name?: string | null
+          author_role?: string | null
+          headline?: boolean
           attachment_url?: string | null
           category?: string | null
           content?: string | null
@@ -151,6 +670,9 @@ export type Database = {
       }
       benefits: {
         Row: {
+          featured: boolean
+          next_date: string | null
+          badge: string | null
           active: boolean
           attachment_url: string | null
           created_at: string
@@ -166,6 +688,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          featured?: boolean
+          next_date?: string | null
+          badge?: string | null
           active?: boolean
           attachment_url?: string | null
           created_at?: string
@@ -181,6 +706,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          featured?: boolean
+          next_date?: string | null
+          badge?: string | null
           active?: boolean
           attachment_url?: string | null
           created_at?: string
@@ -397,6 +925,7 @@ export type Database = {
       }
       forms: {
         Row: {
+          sla_days: number
           active: boolean
           category: string | null
           created_at: string
@@ -409,6 +938,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          sla_days?: number
           active?: boolean
           category?: string | null
           created_at?: string
@@ -421,6 +951,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          sla_days?: number
           active?: boolean
           category?: string | null
           created_at?: string
@@ -472,6 +1003,10 @@ export type Database = {
       }
       internal_jobs: {
         Row: {
+          unit: string | null
+          applications_deadline: string | null
+          owner: string | null
+          applicants_count: number
           created_at: string
           external_url: string | null
           id: string
@@ -486,6 +1021,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          unit?: string | null
+          applications_deadline?: string | null
+          owner?: string | null
+          applicants_count?: number
           created_at?: string
           external_url?: string | null
           id?: string
@@ -500,6 +1039,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          unit?: string | null
+          applications_deadline?: string | null
+          owner?: string | null
+          applicants_count?: number
           created_at?: string
           external_url?: string | null
           id?: string
@@ -517,6 +1060,9 @@ export type Database = {
       }
       onboarding_materials: {
         Row: {
+          duration_label: string | null
+          material_type: string | null
+          required: boolean
           active: boolean
           attachment_url: string | null
           category: string | null
@@ -531,6 +1077,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          duration_label?: string | null
+          material_type?: string | null
+          required?: boolean
           active?: boolean
           attachment_url?: string | null
           category?: string | null
@@ -545,6 +1094,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          duration_label?: string | null
+          material_type?: string | null
+          required?: boolean
           active?: boolean
           attachment_url?: string | null
           category?: string | null
@@ -739,7 +1291,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employee_directory: {
+        Row: {
+          id: string
+          name: string
+          job_title: string | null
+          department: string | null
+          unit: string | null
+          extension: string | null
+          photo_url: string | null
+          bio: string | null
+          admission_date: string | null
+          manager_id: string | null
+          co_manager_id: string | null
+          birthday_day: number | null
+          birthday_month: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

@@ -3,9 +3,10 @@ import { useState } from "react";
 import { ArrowLeft, Loader2, Mail, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { WGLogo } from "@/components/wg-logo";
+import { normalizeSiteUrl } from "@/lib/site-url";
 import { toast } from "sonner";
 
-const SITE_URL = (import.meta.env.VITE_SITE_URL ?? window.location.origin).replace(/\/$/, "");
+const SITE_URL = normalizeSiteUrl(import.meta.env.VITE_SITE_URL, window.location.origin);
 
 export const Route = createFileRoute("/colaborador/recuperar-senha")({
   head: () => ({ meta: [{ title: "Recuperar senha — Portal WG" }] }),
@@ -20,10 +21,13 @@ function RecuperarSenhaPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${SITE_URL}/colaborador/confirmar`,
     });
     setLoading(false);
+    // Sem isto, uma recusa do Supabase (limite de envio, SMTP, redirect não
+    // autorizado) aparecia como sucesso e o e-mail simplesmente nunca chegava.
+    if (error) return toast.error(error.message);
     setSent(true);
     toast.success("E-mail enviado! Verifique sua caixa de entrada.");
   };
@@ -49,13 +53,16 @@ function RecuperarSenhaPage() {
               </div>
               <p className="text-sm font-semibold">Verifique seu e-mail</p>
               <p className="text-xs text-muted-foreground">
-                Se o endereço <strong>{email}</strong> estiver cadastrado, você receberá o link em breve.
+                Se o endereço <strong>{email}</strong> estiver cadastrado, você receberá o link em
+                breve.
               </p>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               <label className="block">
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">E-mail</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  E-mail
+                </span>
                 <div className="mt-2 relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
                   <input
@@ -74,7 +81,11 @@ function RecuperarSenhaPage() {
                 disabled={loading || !email.trim()}
                 className="w-full btn-ink py-3.5 disabled:opacity-50"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
                 Enviar link de recuperação
               </button>
             </form>
@@ -82,7 +93,10 @@ function RecuperarSenhaPage() {
         </div>
 
         <div className="mt-5 text-center">
-          <Link to="/gate" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-ink">
+          <Link
+            to="/gate"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-ink"
+          >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar ao login
           </Link>
