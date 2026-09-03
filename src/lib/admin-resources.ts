@@ -463,41 +463,6 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "solicitacoes-portal",
-    label: "Solicitações",
-    labelSingular: "Solicitação",
-    icon: Inbox,
-    table: "requests",
-    orderBy: { column: "created_at", ascending: false },
-    section: "Portal",
-    actionLabel: "Exportar do mês ↗",
-    note: "Fila de tudo que o time pediu — formulários e solicitações livres caem aqui.",
-    rule: "Solicitação sem resposta em 3 dias úteis precisa subir para a coordenação. Formulários com anexo de documento pessoal vencem em 30 dias e são apagados automaticamente.",
-    displayColumns: [
-      { key: "title", label: "Solicitação" },
-      { key: "status", label: "Status" },
-      { key: "subject", label: "Assunto" },
-      { key: "due_date", label: "Prazo" },
-    ],
-    fields: [
-      { key: "title", label: "Título", type: "text", required: true },
-      { key: "subject", label: "Assunto", type: "text" },
-      { key: "body", label: "Descrição", type: "textarea" },
-      {
-        key: "status",
-        label: "Status",
-        type: "select",
-        required: true,
-        options: [
-          { value: "em_analise", label: "Em análise" },
-          { value: "respondida", label: "Respondida" },
-          { value: "concluida", label: "Concluída" },
-        ],
-      },
-      { key: "due_date", label: "Prazo", type: "date" },
-    ],
-  },
-  {
     key: "trilha-integracao",
     label: "Trilhas de integração",
     labelSingular: "Item da trilha",
@@ -671,7 +636,7 @@ export interface SidebarExtraDef {
 export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
   {
     key: "solicitacoes",
-    label: "Atualização cadastral",
+    label: "Solicitações",
     icon: Inbox,
     section: "Gente & Gestão",
     to: "/admin/solicitacoes",

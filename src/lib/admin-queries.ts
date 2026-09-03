@@ -21,3 +21,23 @@ export const pendingProfileRequestsQuery = queryOptions({
   staleTime: 30_000,
   refetchInterval: 60_000,
 });
+
+/**
+ * Contador de solicitações de formulário ainda abertas.
+ *
+ * Mesma ideia: a RLS de `requests` só devolve as próprias para o colaborador,
+ * então esse número é a fila do G&G apenas para quem é admin.
+ */
+export const openRequestsQuery = queryOptions({
+  queryKey: ["open-requests-count"],
+  queryFn: async (): Promise<number> => {
+    const { count, error } = await supabase
+      .from("requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "em_analise");
+    if (error) return 0;
+    return count ?? 0;
+  },
+  staleTime: 30_000,
+  refetchInterval: 60_000,
+});

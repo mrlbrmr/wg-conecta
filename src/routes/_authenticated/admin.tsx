@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EXTRA_KEYS, RESOURCES, SIDEBAR_EXTRA, findResource } from "@/lib/admin-resources";
-import { pendingProfileRequestsQuery } from "@/lib/admin-queries";
+import { openRequestsQuery, pendingProfileRequestsQuery } from "@/lib/admin-queries";
 import { WGLogo } from "@/components/wg-logo";
 import { AdminSearchContext } from "@/components/admin-search";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,10 @@ function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [term, setTerm] = useState("");
-  const pending = useQuery(pendingProfileRequestsQuery);
+  const pendingProfile = useQuery(pendingProfileRequestsQuery);
+  const openRequests = useQuery(openRequestsQuery);
+  // O badge conta as duas filas de /admin/solicitacoes.
+  const pendingTotal = (pendingProfile.data ?? 0) + (openRequests.data ?? 0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -79,7 +82,7 @@ function AdminLayout() {
         label: x.label,
         icon: x.icon,
         to: x.to,
-        badge: x.key === "solicitacoes" ? pending.data : undefined,
+        badge: x.key === "solicitacoes" ? pendingTotal : undefined,
       },
     ]);
   }

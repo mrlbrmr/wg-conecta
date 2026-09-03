@@ -102,13 +102,15 @@ function Dashboard() {
       value: pendingProfile.data ?? 0,
       to: "/admin/solicitacoes" as const,
       params: undefined,
+      search: { fila: "cadastral" as const },
     },
     {
       label: "Solicitações fora do prazo",
       detail: "Vencidas e ainda sem resposta",
       value: stats.data?.lateRequests ?? 0,
-      to: "/admin/recurso/$key" as const,
-      params: { key: "solicitacoes-portal" },
+      to: "/admin/solicitacoes" as const,
+      params: undefined,
+      search: { fila: "formularios" as const },
     },
     {
       label: "Reconhecimentos aguardando",
@@ -121,8 +123,9 @@ function Dashboard() {
       label: "Solicitações abertas",
       detail: "Em análise ou já respondidas",
       value: stats.data?.openRequests ?? 0,
-      to: "/admin/recurso/$key" as const,
-      params: { key: "solicitacoes-portal" },
+      to: "/admin/solicitacoes" as const,
+      params: undefined,
+      search: { fila: "formularios" as const },
     },
   ];
 
@@ -157,6 +160,7 @@ function Dashboard() {
                 <Link
                   to={a.to}
                   {...(a.params ? { params: a.params } : {})}
+                  {...("search" in a && a.search ? { search: a.search } : {})}
                   className="flex items-center justify-between gap-4 py-3.5"
                 >
                   <span className="min-w-0">

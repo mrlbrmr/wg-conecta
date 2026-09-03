@@ -3,8 +3,18 @@ import { PageHeader } from "@/components/page-header";
 import { ggPageQuery } from "@/lib/portal-queries";
 import { fileUrl } from "@/lib/storage";
 import { ExternalLink, Download } from "lucide-react";
+import type { ReactNode } from "react";
 
-export function GGPageView({ pageKey, defaultTitle }: { pageKey: string; defaultTitle: string }) {
+/** `action`: chamada para o formulário da página, quando houver um. */
+export function GGPageView({
+  pageKey,
+  defaultTitle,
+  action,
+}: {
+  pageKey: string;
+  defaultTitle: string;
+  action?: ReactNode;
+}) {
   const q = useQuery(ggPageQuery(pageKey));
   const p = q.data;
   return (
@@ -16,7 +26,8 @@ export function GGPageView({ pageKey, defaultTitle }: { pageKey: string; default
         ) : (
           <p className="text-sm text-muted-foreground">Conteúdo em preparação. Fale com Gente &amp; Gestão em caso de dúvidas.</p>
         )}
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {action}
           {p?.external_url && (
             <a href={p.external_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-95">
               Acessar <ExternalLink className="h-3.5 w-3.5" />

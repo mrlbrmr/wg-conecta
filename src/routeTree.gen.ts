@@ -28,8 +28,10 @@ import { Route as PortalBuscaRouteImport } from './routes/_portal.busca'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as PortalMuralIndexRouteImport } from './routes/_portal.mural.index'
 import { Route as PortalGenteGestaoIndexRouteImport } from './routes/_portal.gente-gestao.index'
+import { Route as PortalFormulariosIndexRouteImport } from './routes/_portal.formularios.index'
 import { Route as PortalComunicadosIndexRouteImport } from './routes/_portal.comunicados.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as PortalSolicitacoesIdRouteImport } from './routes/_portal.solicitacoes.$id'
 import { Route as PortalMuralArquivoRouteImport } from './routes/_portal.mural.arquivo'
 import { Route as PortalMuralIdRouteImport } from './routes/_portal.mural.$id'
 import { Route as PortalGenteGestaoPoliticasRouteImport } from './routes/_portal.gente-gestao.politicas'
@@ -41,6 +43,8 @@ import { Route as PortalGenteGestaoContatosRouteImport } from './routes/_portal.
 import { Route as PortalGenteGestaoCadastroRouteImport } from './routes/_portal.gente-gestao.cadastro'
 import { Route as PortalGenteGestaoBeneficiosRouteImport } from './routes/_portal.gente-gestao.beneficios'
 import { Route as PortalGenteGestaoAtestadosRouteImport } from './routes/_portal.gente-gestao.atestados'
+import { Route as PortalFormulariosEnviadoRouteImport } from './routes/_portal.formularios.enviado'
+import { Route as PortalFormulariosSlugRouteImport } from './routes/_portal.formularios.$slug'
 import { Route as PortalComunicadosArquivoRouteImport } from './routes/_portal.comunicados.arquivo'
 import { Route as PortalComunicadosIdRouteImport } from './routes/_portal.comunicados.$id'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
@@ -144,6 +148,11 @@ const PortalGenteGestaoIndexRoute = PortalGenteGestaoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PortalGenteGestaoRoute,
 } as any)
+const PortalFormulariosIndexRoute = PortalFormulariosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalFormulariosRoute,
+} as any)
 const PortalComunicadosIndexRoute = PortalComunicadosIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -153,6 +162,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const PortalSolicitacoesIdRoute = PortalSolicitacoesIdRouteImport.update({
+  id: '/solicitacoes/$id',
+  path: '/solicitacoes/$id',
+  getParentRoute: () => PortalRoute,
 } as any)
 const PortalMuralArquivoRoute = PortalMuralArquivoRouteImport.update({
   id: '/arquivo',
@@ -216,6 +230,17 @@ const PortalGenteGestaoAtestadosRoute =
     path: '/atestados',
     getParentRoute: () => PortalGenteGestaoRoute,
   } as any)
+const PortalFormulariosEnviadoRoute =
+  PortalFormulariosEnviadoRouteImport.update({
+    id: '/enviado',
+    path: '/enviado',
+    getParentRoute: () => PortalFormulariosRoute,
+  } as any)
+const PortalFormulariosSlugRoute = PortalFormulariosSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PortalFormulariosRoute,
+} as any)
 const PortalComunicadosArquivoRoute =
   PortalComunicadosArquivoRouteImport.update({
     id: '/arquivo',
@@ -271,7 +296,7 @@ export interface FileRoutesByFullPath {
   '/busca': typeof PortalBuscaRoute
   '/comunicados': typeof PortalComunicadosRouteWithChildren
   '/cultura': typeof PortalCulturaRoute
-  '/formularios': typeof PortalFormulariosRoute
+  '/formularios': typeof PortalFormulariosRouteWithChildren
   '/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
   '/integracao': typeof PortalIntegracaoRoute
   '/mural': typeof PortalMuralRouteWithChildren
@@ -285,6 +310,8 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/formularios/$slug': typeof PortalFormulariosSlugRoute
+  '/formularios/enviado': typeof PortalFormulariosEnviadoRoute
   '/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
   '/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
   '/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
@@ -296,8 +323,10 @@ export interface FileRoutesByFullPath {
   '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/mural/$id': typeof PortalMuralIdRoute
   '/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/comunicados/': typeof PortalComunicadosIndexRoute
+  '/formularios/': typeof PortalFormulariosIndexRoute
   '/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/mural/': typeof PortalMuralIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
@@ -309,7 +338,6 @@ export interface FileRoutesByTo {
   '/gate': typeof GateRoute
   '/busca': typeof PortalBuscaRoute
   '/cultura': typeof PortalCulturaRoute
-  '/formularios': typeof PortalFormulariosRoute
   '/integracao': typeof PortalIntegracaoRoute
   '/perfil': typeof PortalPerfilRoute
   '/vagas': typeof PortalVagasRoute
@@ -321,6 +349,8 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/formularios/$slug': typeof PortalFormulariosSlugRoute
+  '/formularios/enviado': typeof PortalFormulariosEnviadoRoute
   '/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
   '/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
   '/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
@@ -332,8 +362,10 @@ export interface FileRoutesByTo {
   '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/mural/$id': typeof PortalMuralIdRoute
   '/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/comunicados': typeof PortalComunicadosIndexRoute
+  '/formularios': typeof PortalFormulariosIndexRoute
   '/gente-gestao': typeof PortalGenteGestaoIndexRoute
   '/mural': typeof PortalMuralIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
@@ -349,7 +381,7 @@ export interface FileRoutesById {
   '/_portal/busca': typeof PortalBuscaRoute
   '/_portal/comunicados': typeof PortalComunicadosRouteWithChildren
   '/_portal/cultura': typeof PortalCulturaRoute
-  '/_portal/formularios': typeof PortalFormulariosRoute
+  '/_portal/formularios': typeof PortalFormulariosRouteWithChildren
   '/_portal/gente-gestao': typeof PortalGenteGestaoRouteWithChildren
   '/_portal/integracao': typeof PortalIntegracaoRoute
   '/_portal/mural': typeof PortalMuralRouteWithChildren
@@ -364,6 +396,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_portal/comunicados/$id': typeof PortalComunicadosIdRoute
   '/_portal/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
+  '/_portal/formularios/$slug': typeof PortalFormulariosSlugRoute
+  '/_portal/formularios/enviado': typeof PortalFormulariosEnviadoRoute
   '/_portal/gente-gestao/atestados': typeof PortalGenteGestaoAtestadosRoute
   '/_portal/gente-gestao/beneficios': typeof PortalGenteGestaoBeneficiosRoute
   '/_portal/gente-gestao/cadastro': typeof PortalGenteGestaoCadastroRoute
@@ -375,8 +409,10 @@ export interface FileRoutesById {
   '/_portal/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/_portal/mural/$id': typeof PortalMuralIdRoute
   '/_portal/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/_portal/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_portal/comunicados/': typeof PortalComunicadosIndexRoute
+  '/_portal/formularios/': typeof PortalFormulariosIndexRoute
   '/_portal/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/_portal/mural/': typeof PortalMuralIndexRoute
   '/_authenticated/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
@@ -406,6 +442,8 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
+    | '/formularios/$slug'
+    | '/formularios/enviado'
     | '/gente-gestao/atestados'
     | '/gente-gestao/beneficios'
     | '/gente-gestao/cadastro'
@@ -417,8 +455,10 @@ export interface FileRouteTypes {
     | '/gente-gestao/politicas'
     | '/mural/$id'
     | '/mural/arquivo'
+    | '/solicitacoes/$id'
     | '/admin/'
     | '/comunicados/'
+    | '/formularios/'
     | '/gente-gestao/'
     | '/mural/'
     | '/admin/recurso/$key'
@@ -430,7 +470,6 @@ export interface FileRouteTypes {
     | '/gate'
     | '/busca'
     | '/cultura'
-    | '/formularios'
     | '/integracao'
     | '/perfil'
     | '/vagas'
@@ -442,6 +481,8 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
+    | '/formularios/$slug'
+    | '/formularios/enviado'
     | '/gente-gestao/atestados'
     | '/gente-gestao/beneficios'
     | '/gente-gestao/cadastro'
@@ -453,8 +494,10 @@ export interface FileRouteTypes {
     | '/gente-gestao/politicas'
     | '/mural/$id'
     | '/mural/arquivo'
+    | '/solicitacoes/$id'
     | '/admin'
     | '/comunicados'
+    | '/formularios'
     | '/gente-gestao'
     | '/mural'
     | '/admin/recurso/$key'
@@ -484,6 +527,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/_portal/comunicados/$id'
     | '/_portal/comunicados/arquivo'
+    | '/_portal/formularios/$slug'
+    | '/_portal/formularios/enviado'
     | '/_portal/gente-gestao/atestados'
     | '/_portal/gente-gestao/beneficios'
     | '/_portal/gente-gestao/cadastro'
@@ -495,8 +540,10 @@ export interface FileRouteTypes {
     | '/_portal/gente-gestao/politicas'
     | '/_portal/mural/$id'
     | '/_portal/mural/arquivo'
+    | '/_portal/solicitacoes/$id'
     | '/_authenticated/admin/'
     | '/_portal/comunicados/'
+    | '/_portal/formularios/'
     | '/_portal/gente-gestao/'
     | '/_portal/mural/'
     | '/_authenticated/admin/recurso/$key'
@@ -648,6 +695,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalGenteGestaoIndexRouteImport
       parentRoute: typeof PortalGenteGestaoRoute
     }
+    '/_portal/formularios/': {
+      id: '/_portal/formularios/'
+      path: '/'
+      fullPath: '/formularios/'
+      preLoaderRoute: typeof PortalFormulariosIndexRouteImport
+      parentRoute: typeof PortalFormulariosRoute
+    }
     '/_portal/comunicados/': {
       id: '/_portal/comunicados/'
       path: '/'
@@ -661,6 +715,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_portal/solicitacoes/$id': {
+      id: '/_portal/solicitacoes/$id'
+      path: '/solicitacoes/$id'
+      fullPath: '/solicitacoes/$id'
+      preLoaderRoute: typeof PortalSolicitacoesIdRouteImport
+      parentRoute: typeof PortalRoute
     }
     '/_portal/mural/arquivo': {
       id: '/_portal/mural/arquivo'
@@ -738,6 +799,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/gente-gestao/atestados'
       preLoaderRoute: typeof PortalGenteGestaoAtestadosRouteImport
       parentRoute: typeof PortalGenteGestaoRoute
+    }
+    '/_portal/formularios/enviado': {
+      id: '/_portal/formularios/enviado'
+      path: '/enviado'
+      fullPath: '/formularios/enviado'
+      preLoaderRoute: typeof PortalFormulariosEnviadoRouteImport
+      parentRoute: typeof PortalFormulariosRoute
+    }
+    '/_portal/formularios/$slug': {
+      id: '/_portal/formularios/$slug'
+      path: '/$slug'
+      fullPath: '/formularios/$slug'
+      preLoaderRoute: typeof PortalFormulariosSlugRouteImport
+      parentRoute: typeof PortalFormulariosRoute
     }
     '/_portal/comunicados/arquivo': {
       id: '/_portal/comunicados/arquivo'
@@ -845,6 +920,21 @@ const PortalComunicadosRouteChildren: PortalComunicadosRouteChildren = {
 const PortalComunicadosRouteWithChildren =
   PortalComunicadosRoute._addFileChildren(PortalComunicadosRouteChildren)
 
+interface PortalFormulariosRouteChildren {
+  PortalFormulariosSlugRoute: typeof PortalFormulariosSlugRoute
+  PortalFormulariosEnviadoRoute: typeof PortalFormulariosEnviadoRoute
+  PortalFormulariosIndexRoute: typeof PortalFormulariosIndexRoute
+}
+
+const PortalFormulariosRouteChildren: PortalFormulariosRouteChildren = {
+  PortalFormulariosSlugRoute: PortalFormulariosSlugRoute,
+  PortalFormulariosEnviadoRoute: PortalFormulariosEnviadoRoute,
+  PortalFormulariosIndexRoute: PortalFormulariosIndexRoute,
+}
+
+const PortalFormulariosRouteWithChildren =
+  PortalFormulariosRoute._addFileChildren(PortalFormulariosRouteChildren)
+
 interface PortalGenteGestaoRouteChildren {
   PortalGenteGestaoAtestadosRoute: typeof PortalGenteGestaoAtestadosRoute
   PortalGenteGestaoBeneficiosRoute: typeof PortalGenteGestaoBeneficiosRoute
@@ -894,26 +984,28 @@ interface PortalRouteChildren {
   PortalBuscaRoute: typeof PortalBuscaRoute
   PortalComunicadosRoute: typeof PortalComunicadosRouteWithChildren
   PortalCulturaRoute: typeof PortalCulturaRoute
-  PortalFormulariosRoute: typeof PortalFormulariosRoute
+  PortalFormulariosRoute: typeof PortalFormulariosRouteWithChildren
   PortalGenteGestaoRoute: typeof PortalGenteGestaoRouteWithChildren
   PortalIntegracaoRoute: typeof PortalIntegracaoRoute
   PortalMuralRoute: typeof PortalMuralRouteWithChildren
   PortalPerfilRoute: typeof PortalPerfilRoute
   PortalVagasRoute: typeof PortalVagasRoute
   PortalIndexRoute: typeof PortalIndexRoute
+  PortalSolicitacoesIdRoute: typeof PortalSolicitacoesIdRoute
 }
 
 const PortalRouteChildren: PortalRouteChildren = {
   PortalBuscaRoute: PortalBuscaRoute,
   PortalComunicadosRoute: PortalComunicadosRouteWithChildren,
   PortalCulturaRoute: PortalCulturaRoute,
-  PortalFormulariosRoute: PortalFormulariosRoute,
+  PortalFormulariosRoute: PortalFormulariosRouteWithChildren,
   PortalGenteGestaoRoute: PortalGenteGestaoRouteWithChildren,
   PortalIntegracaoRoute: PortalIntegracaoRoute,
   PortalMuralRoute: PortalMuralRouteWithChildren,
   PortalPerfilRoute: PortalPerfilRoute,
   PortalVagasRoute: PortalVagasRoute,
   PortalIndexRoute: PortalIndexRoute,
+  PortalSolicitacoesIdRoute: PortalSolicitacoesIdRoute,
 }
 
 const PortalRouteWithChildren =
