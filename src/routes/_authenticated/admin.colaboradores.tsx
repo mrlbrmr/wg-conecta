@@ -4,8 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import {
-  AlertCircle, CheckCircle2, ImagePlus, Loader2, MailCheck, MoreHorizontal,
-  Pencil, RefreshCcw, Search, ShieldOff, Upload, UserPlus, X,
+  AlertCircle,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  MailCheck,
+  MoreHorizontal,
+  Pencil,
+  RefreshCcw,
+  Search,
+  ShieldOff,
+  Upload,
+  UserPlus,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,7 +45,10 @@ type Employee = {
   name: string;
   email: string | null;
   department: string | null;
+  unit: string | null;
   job_title: string | null;
+  manager_id: string | null;
+  co_manager_id: string | null;
   phone: string | null;
   birth_date: string | null;
   admission_date: string | null;
@@ -48,6 +62,7 @@ type ImportRow = {
   name: string;
   email?: string;
   department?: string;
+  unit?: string;
   job_title?: string;
   admission_date?: string;
   birth_date?: string;
@@ -66,7 +81,7 @@ function toTitleCase(str: string) {
   return str
     .toLowerCase()
     .split(" ")
-    .map((w, i) => (i === 0 || !lower.has(w)) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+    .map((w, i) => (i === 0 || !lower.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(" ");
 }
 
@@ -102,7 +117,11 @@ function ColaboradoresPage() {
 
   const mAdd = useMutation({
     mutationFn: (p: Parameters<typeof doAdd>[0]["data"]) => doAdd({ data: p }),
-    onSuccess: () => { toast.success("Colaborador cadastrado."); invalidate(); setAdding(false); },
+    onSuccess: () => {
+      toast.success("Colaborador cadastrado.");
+      invalidate();
+      setAdding(false);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -131,13 +150,20 @@ function ColaboradoresPage() {
 
   const mUpdate = useMutation({
     mutationFn: (p: Parameters<typeof doUpdate>[0]["data"]) => doUpdate({ data: p }),
-    onSuccess: () => { toast.success("Atualizado."); invalidate(); setEditing(null); },
+    onSuccess: () => {
+      toast.success("Atualizado.");
+      invalidate();
+      setEditing(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const mToggle = useMutation({
     mutationFn: (emp: Employee) => doUpdate({ data: { id: emp.id, active: !emp.active } }),
-    onSuccess: () => { toast.success("Status atualizado."); invalidate(); },
+    onSuccess: () => {
+      toast.success("Status atualizado.");
+      invalidate();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -166,6 +192,7 @@ function ColaboradoresPage() {
       e.name.toLowerCase().includes(term) ||
       (e.email?.toLowerCase().includes(term) ?? false) ||
       (e.department?.toLowerCase().includes(term) ?? false) ||
+      (e.unit?.toLowerCase().includes(term) ?? false) ||
       (e.job_title?.toLowerCase().includes(term) ?? false)
     );
   });
@@ -233,7 +260,9 @@ function ColaboradoresPage() {
                 }`}
               >
                 <span className="capitalize">{s}</span>
-                <span className={`ml-1.5 text-xs ${statusFilter === s ? "text-black/60" : "text-gray-500"}`}>
+                <span
+                  className={`ml-1.5 text-xs ${statusFilter === s ? "text-black/60" : "text-gray-500"}`}
+                >
                   {counts[s]}
                 </span>
               </button>
@@ -252,25 +281,40 @@ function ColaboradoresPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-black/20 bg-black/5">
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Colaborador</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Filial / Cargo</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Admissão</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Acesso</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black">Ações</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Colaborador
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Filial
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Setor / Cargo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Admissão
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Acesso
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody>
               {q.isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
+                  <td colSpan={7} className="px-4 py-10 text-center">
                     <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#2F8F4A]" />
                   </td>
                 </tr>
               )}
               {!q.isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-700 text-sm">
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-700 text-sm">
                     {employees.length === 0
                       ? "Nenhum colaborador cadastrado."
                       : "Nenhum resultado para os filtros aplicados."}
@@ -278,7 +322,10 @@ function ColaboradoresPage() {
                 </tr>
               )}
               {filtered.map((emp) => (
-                <tr key={emp.id} className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors">
+                <tr
+                  key={emp.id}
+                  className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors"
+                >
                   {/* Colaborador: avatar + nome + email */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -289,21 +336,31 @@ function ColaboradoresPage() {
                           className="h-9 w-9 shrink-0 rounded-full object-cover object-top"
                         />
                       ) : (
-                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
+                        <span
+                          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}
+                        >
                           {initials(emp.name)}
                         </span>
                       )}
                       <div>
                         <div className="font-medium text-black">{emp.name}</div>
-                        {emp.email && (
-                          <div className="text-xs text-gray-700">{emp.email}</div>
-                        )}
+                        {emp.email && <div className="text-xs text-gray-700">{emp.email}</div>}
                       </div>
                     </div>
                   </td>
-                  {/* Filial / Cargo */}
+                  {/* Filial */}
                   <td className="px-6 py-4">
-                    {emp.department && <div className="text-sm font-medium text-black">{emp.department}</div>}
+                    {emp.unit ? (
+                      <div className="text-sm font-medium text-black">{emp.unit}</div>
+                    ) : (
+                      <span className="text-gray-500">—</span>
+                    )}
+                  </td>
+                  {/* Setor / Cargo */}
+                  <td className="px-6 py-4">
+                    {emp.department && (
+                      <div className="text-sm font-medium text-black">{emp.department}</div>
+                    )}
                     {emp.job_title && <div className="text-xs text-gray-700">{emp.job_title}</div>}
                     {!emp.department && !emp.job_title && <span className="text-gray-500">—</span>}
                   </td>
@@ -314,7 +371,9 @@ function ColaboradoresPage() {
                   {/* Acesso */}
                   <td className="px-6 py-4">
                     {emp.auth_user_id ? (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-blue-100 border border-black/30">Portal</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-blue-100 border border-black/30">
+                        Portal
+                      </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded px-2.5 py-0.5 text-xs font-bold text-black border border-black/20 bg-white">
                         <ShieldOff className="h-3 w-3" /> Sem acesso
@@ -324,9 +383,13 @@ function ColaboradoresPage() {
                   {/* Status */}
                   <td className="px-6 py-4">
                     {emp.active ? (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-[#8FD152]/30 border border-black/40">Ativo</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-[#8FD152]/30 border border-black/40">
+                        Ativo
+                      </span>
                     ) : (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-white border border-black/30">Inativo</span>
+                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-white border border-black/30">
+                        Inativo
+                      </span>
                     )}
                   </td>
                   {/* Ações */}
@@ -344,11 +407,17 @@ function ColaboradoresPage() {
                         <DropdownMenuSeparator />
                         {emp.auth_user_id ? (
                           <>
-                            <DropdownMenuItem onClick={() => mResend.mutate(emp.id)} disabled={mResend.isPending}>
+                            <DropdownMenuItem
+                              onClick={() => mResend.mutate(emp.id)}
+                              disabled={mResend.isPending}
+                            >
                               <MailCheck className="mr-2 h-3.5 w-3.5" /> Reenviar convite
                             </DropdownMenuItem>
                             {emp.email && (
-                              <DropdownMenuItem onClick={() => mReset.mutate(emp.email!)} disabled={mReset.isPending}>
+                              <DropdownMenuItem
+                                onClick={() => mReset.mutate(emp.email!)}
+                                disabled={mReset.isPending}
+                              >
                                 <RefreshCcw className="mr-2 h-3.5 w-3.5" /> Resetar senha
                               </DropdownMenuItem>
                             )}
@@ -380,9 +449,11 @@ function ColaboradoresPage() {
       {adding && (
         <Modal title="Cadastrar colaborador" onClose={() => setAdding(false)}>
           <p className="px-6 pt-4 text-xs text-slate-500">
-            O colaborador é adicionado ao diretório. Para dar acesso ao portal, use "Dar acesso" depois.
+            O colaborador é adicionado ao diretório. Para dar acesso ao portal, use "Dar acesso"
+            depois.
           </p>
           <EmployeeForm
+            colleagues={employees}
             onSubmit={(v) => mAdd.mutate(v)}
             onCancel={() => setAdding(false)}
             loading={mAdd.isPending}
@@ -395,6 +466,7 @@ function ColaboradoresPage() {
         <Modal title={`Editar — ${editing.name}`} onClose={() => setEditing(null)}>
           <EmployeeForm
             initial={editing}
+            colleagues={employees}
             onSubmit={(v) => mUpdate.mutate({ id: editing.id, ...v })}
             onCancel={() => setEditing(null)}
             loading={mUpdate.isPending}
@@ -436,7 +508,10 @@ function ColaboradoresPage() {
         <PhotoImportModal
           employees={employees}
           onSaveUrl={(id, url) => doUpdatePhoto({ data: { id, photo_url: url } })}
-          onClose={() => { setImportingPhotos(false); invalidate(); }}
+          onClose={() => {
+            setImportingPhotos(false);
+            invalidate();
+          }}
         />
       )}
     </div>
@@ -482,7 +557,10 @@ type EmployeeFormValues = {
   name: string;
   email?: string;
   department?: string;
+  unit?: string;
   job_title?: string;
+  manager_id?: string | null;
+  co_manager_id?: string | null;
   phone?: string;
   birth_date?: string;
   admission_date?: string;
@@ -490,11 +568,14 @@ type EmployeeFormValues = {
 
 function EmployeeForm({
   initial,
+  colleagues,
   onSubmit,
   onCancel,
   loading,
 }: {
   initial?: Partial<Employee>;
+  /** Diretório para escolher gestor — o próprio colaborador fica de fora. */
+  colleagues: Employee[];
   onSubmit: (v: EmployeeFormValues) => void;
   onCancel: () => void;
   loading: boolean;
@@ -502,7 +583,14 @@ function EmployeeForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [department, setDepartment] = useState(initial?.department ?? "");
+  const [unit, setUnit] = useState(initial?.unit ?? "");
   const [jobTitle, setJobTitle] = useState(initial?.job_title ?? "");
+  const [managerId, setManagerId] = useState(initial?.manager_id ?? "");
+  const [coManagerId, setCoManagerId] = useState(initial?.co_manager_id ?? "");
+
+  const gestores = colleagues
+    .filter((c) => c.active && c.id !== initial?.id)
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(initial?.admission_date ?? "");
@@ -516,7 +604,10 @@ function EmployeeForm({
           name,
           email: email || undefined,
           department: department || undefined,
+          unit: unit || undefined,
           job_title: jobTitle || undefined,
+          manager_id: managerId || null,
+          co_manager_id: coManagerId || null,
           phone: phone || undefined,
           birth_date: birthDate || undefined,
           admission_date: admissionDate || undefined,
@@ -529,7 +620,12 @@ function EmployeeForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <Field label="Nome completo">
-              <input required value={name} onChange={(e) => setName(e.target.value)} className={inp} />
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inp}
+              />
             </Field>
           </div>
           <div className="md:col-span-2">
@@ -550,8 +646,21 @@ function EmployeeForm({
           <h3 className="text-base font-semibold text-slate-800">Dados profissionais</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Filial / Departamento">
-            <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inp} />
+          <Field label="Filial">
+            <input
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="SJP, RJ, SP, LDA…"
+              className={inp}
+            />
+          </Field>
+          <Field label="Setor">
+            <input
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              placeholder="Varejo, Comercial Externo…"
+              className={inp}
+            />
           </Field>
           <Field label="Cargo">
             <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
@@ -563,6 +672,48 @@ function EmployeeForm({
               onChange={(e) => setAdmissionDate(e.target.value)}
               className={inp}
             />
+          </Field>
+        </div>
+
+        {/* Gestão — alimenta a aba "Meu time" do perfil do colaborador */}
+        <div className="mt-6 mb-4 border-b border-slate-100 pb-2">
+          <h3 className="text-base font-semibold text-slate-800">Gestão</h3>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Aparece na aba &ldquo;Meu time&rdquo; do perfil. O segundo gestor é opcional e só existe
+            para áreas divididas entre duas pessoas.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Gestor direto">
+            <select
+              value={managerId}
+              onChange={(e) => setManagerId(e.target.value)}
+              className={inp}
+            >
+              <option value="">Sem gestor definido</option>
+              {gestores.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Segundo gestor">
+            <select
+              value={coManagerId}
+              onChange={(e) => setCoManagerId(e.target.value)}
+              disabled={!managerId}
+              className={inp}
+            >
+              <option value="">Nenhum</option>
+              {gestores
+                .filter((g) => g.id !== managerId)
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+            </select>
           </Field>
         </div>
 
@@ -675,7 +826,11 @@ function ImportModal({
       // Normaliza chave de coluna: minúsculo, sem acentos, sem qualquer pontuação/espaço.
       // "Data Nasc." → "datanasc", "Dt. Admissão" → "dtadmissao", "E-mail" → "email"
       const nk = (k: string) =>
-        k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
+        k
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .replace(/[^a-z0-9]/g, "");
 
       // Converte string DD/MM/YYYY, YYYY-MM-DD ou serial Excel → ISO YYYY-MM-DD
       const parseDateISO = (val: unknown): string | undefined => {
@@ -696,35 +851,63 @@ function ImportModal({
         }
 
         const nome =
-          norm["nome"] || norm["name"] || norm["colaborador"] || norm["quemusai"] || norm["quemusao"] || norm["quemusa"];
+          norm["nome"] ||
+          norm["name"] ||
+          norm["colaborador"] ||
+          norm["quemusai"] ||
+          norm["quemusao"] ||
+          norm["quemusa"];
         if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
 
-        const emailRaw =
-          norm["email"] || norm["email1"] || norm["corretoeletronico"];
+        const emailRaw = norm["email"] || norm["email1"] || norm["corretoeletronico"];
 
         const cargo =
-          norm["cargo"] || norm["jobtitle"] || norm["funcao"] || norm["funcaocargo"] || norm["ocupacao"];
+          norm["cargo"] ||
+          norm["jobtitle"] ||
+          norm["funcao"] ||
+          norm["funcaocargo"] ||
+          norm["ocupacao"];
 
         const filial =
-          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["department"] || norm["empresa"] || norm["estabelecimento"];
+          norm["filial"] ||
+          norm["filiais"] ||
+          norm["unidade"] ||
+          norm["empresa"] ||
+          norm["estabelecimento"];
+
+        const setor = norm["setor"] || norm["departamento"] || norm["department"] || norm["area"];
 
         const admissao =
-          norm["admissao"] || norm["dtadmissao"] || norm["dataadmissao"] ||
-          norm["admissaodaempresa"] || norm["dataadmissaodaempresa"] || norm["admissiondate"];
+          norm["admissao"] ||
+          norm["dtadmissao"] ||
+          norm["dataadmissao"] ||
+          norm["admissaodaempresa"] ||
+          norm["dataadmissaodaempresa"] ||
+          norm["admissiondate"];
 
         const dataNasc =
-          norm["datanasc"] || norm["dtnasc"] || norm["dtnac"] ||
-          norm["datanascimento"] || norm["datadenascimento"] ||
-          norm["nascimento"] || norm["birthdate"] || norm["datanascimentocompleta"];
+          norm["datanasc"] ||
+          norm["dtnasc"] ||
+          norm["dtnac"] ||
+          norm["datanascimento"] ||
+          norm["datadenascimento"] ||
+          norm["nascimento"] ||
+          norm["birthdate"] ||
+          norm["datanascimentocompleta"];
 
         const emailStr = emailRaw
-          ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+          ? String(emailRaw)
+              .trim()
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/\p{Diacritic}/gu, "")
           : undefined;
 
         parsed.push({
           name: toTitleCase(String(nome).trim()),
           email: emailStr && emailStr.includes("@") ? emailStr : undefined,
-          department: filial ? String(filial).trim() : undefined,
+          unit: filial ? String(filial).trim() : undefined,
+          department: setor ? toTitleCase(String(setor).trim()) : undefined,
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
           admission_date: parseDateISO(admissao),
           birth_date: parseDateISO(dataNasc),
@@ -742,7 +925,9 @@ function ImportModal({
 
       setRows(unique);
       if (unique.length === 0) {
-        alert("Nenhuma linha válida encontrada. Verifique se o arquivo tem as colunas Nome, Cargo e Filial.");
+        alert(
+          "Nenhuma linha válida encontrada. Verifique se o arquivo tem as colunas Nome, Cargo, Filial e Setor.",
+        );
       }
     } catch (e) {
       alert((e as Error).message);
@@ -771,10 +956,12 @@ function ImportModal({
           <div className="rounded-xl bg-surface-muted p-4 text-sm space-y-1">
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
-              Nome / Quem usa, E-mail, Cargo, Filial / Unidade, Admissão / Data_admissão, Data Nasc. / Data_nascimento
+              Nome / Quem usa, E-mail, Cargo, Filial / Unidade, Setor / Departamento, Admissão /
+              Data_admissão, Data Nasc. / Data_nascimento
             </p>
             <p className="text-muted-foreground text-xs mt-2">
-              Insere novos colaboradores e atualiza os já cadastrados (por nome). Datas de admissão e nascimento são importadas automaticamente.
+              Insere novos colaboradores e atualiza os já cadastrados (por nome). Datas de admissão
+              e nascimento são importadas automaticamente.
             </p>
           </div>
 
@@ -796,9 +983,7 @@ function ImportModal({
             />
           </label>
 
-          {fileName && (
-            <p className="text-xs text-muted-foreground">Arquivo: {fileName}</p>
-          )}
+          {fileName && <p className="text-xs text-muted-foreground">Arquivo: {fileName}</p>}
 
           {rows.length > 0 && (
             <>
@@ -815,6 +1000,7 @@ function ImportModal({
                         <th className="px-3 py-2">Nome</th>
                         <th className="px-3 py-2">E-mail</th>
                         <th className="px-3 py-2">Filial</th>
+                        <th className="px-3 py-2">Setor</th>
                         <th className="px-3 py-2">Cargo</th>
                         <th className="px-3 py-2">Admissão</th>
                         <th className="px-3 py-2">Nasc.</th>
@@ -825,8 +1011,13 @@ function ImportModal({
                         <tr key={i} className="border-t border-border">
                           <td className="px-3 py-1.5 font-semibold">{r.name}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.email ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{r.department ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{r.unit ?? "—"}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">
+                            {r.department ?? "—"}
+                          </td>
+                          <td className="px-3 py-1.5 text-muted-foreground">
+                            {r.job_title ?? "—"}
+                          </td>
                           <td className="px-3 py-1.5 text-muted-foreground">
                             {r.admission_date ? fmtDate(r.admission_date) : "—"}
                           </td>
@@ -1013,7 +1204,10 @@ function PhotoImportModal({
     setDone(true);
     const successes = updated.filter((m) => m.status === "done").length;
     const errors = updated.filter((m) => m.status === "error").length;
-    if (successes > 0) toast.success(`${successes} foto${successes !== 1 ? "s" : ""} importada${successes !== 1 ? "s" : ""}.`);
+    if (successes > 0)
+      toast.success(
+        `${successes} foto${successes !== 1 ? "s" : ""} importada${successes !== 1 ? "s" : ""}.`,
+      );
     if (errors > 0) toast.error(`${errors} foto${errors !== 1 ? "s" : ""} com erro.`);
   }
 
@@ -1033,7 +1227,9 @@ function PhotoImportModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <h2 className="text-base font-semibold text-slate-900">Importar fotos em lote</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Selecione os arquivos — o nome do arquivo deve conter o nome do colaborador.</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Selecione os arquivos — o nome do arquivo deve conter o nome do colaborador.
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -1102,9 +1298,7 @@ function PhotoImportModal({
                     {m.status === "uploading" && (
                       <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     )}
-                    {m.status === "done" && (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    )}
+                    {m.status === "done" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                     {m.status === "error" && (
                       <span title={m.error}>
                         <AlertCircle className="h-4 w-4 text-red-500" />
