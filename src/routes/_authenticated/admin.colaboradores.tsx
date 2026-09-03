@@ -35,6 +35,7 @@ type Employee = {
   email: string | null;
   department: string | null;
   job_title: string | null;
+  unit: string | null;
   phone: string | null;
   birth_date: string | null;
   admission_date: string | null;
@@ -483,6 +484,7 @@ type EmployeeFormValues = {
   email?: string;
   department?: string;
   job_title?: string;
+  unit?: string;
   phone?: string;
   birth_date?: string;
   admission_date?: string;
@@ -503,6 +505,7 @@ function EmployeeForm({
   const [email, setEmail] = useState(initial?.email ?? "");
   const [department, setDepartment] = useState(initial?.department ?? "");
   const [jobTitle, setJobTitle] = useState(initial?.job_title ?? "");
+  const [unit, setUnit] = useState(initial?.unit ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(initial?.admission_date ?? "");
@@ -517,6 +520,7 @@ function EmployeeForm({
           email: email || undefined,
           department: department || undefined,
           job_title: jobTitle || undefined,
+          unit: unit || undefined,
           phone: phone || undefined,
           birth_date: birthDate || undefined,
           admission_date: admissionDate || undefined,
@@ -555,6 +559,14 @@ function EmployeeForm({
           </Field>
           <Field label="Cargo">
             <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
+          </Field>
+          <Field label="Unidade">
+            <input
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="Matriz SJP, CD Sorocaba…"
+              className={inp}
+            />
           </Field>
           <Field label="Data de admissão">
             <input
