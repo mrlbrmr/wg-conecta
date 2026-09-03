@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAdmin } from "@/integrations/supabase/require-admin";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const emailSchema = z.string().email();
 
@@ -95,4 +96,23 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("admin_users").delete().eq("id", data.id);
     return { ok: true };
+  });
+
+/**
+ * Diz se o usuário autenticado é admin, sem lançar erro.
+ * Serve para o gate de rota do painel: hoje qualquer usuário logado chega em
+ * `/admin` e o bloqueio é só o RLS — as telas aparecem vazias em vez de negar.
+ */
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context as { userId: string };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("admin_users")
+      .select("id")
+      .eq("id", userId)
+      .eq("active", true)
+      .maybeSingle();
+    return { isAdmin: Boolean(data) };
   });

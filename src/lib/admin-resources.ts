@@ -1,10 +1,41 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Megaphone, Gift, FileText, HelpCircle, Briefcase, Sparkles,
-  ClipboardList, Cake, Award, PartyPopper, Users, Link2, ScrollText, Building2, UserCheck,
+  Megaphone,
+  Gift,
+  FileText,
+  HelpCircle,
+  Briefcase,
+  Sparkles,
+  ClipboardList,
+  Cake,
+  Award,
+  PartyPopper,
+  Users,
+  Link2,
+  ScrollText,
+  Building2,
+  UserCheck,
+  Inbox,
+  ListChecks,
+  Image,
+  CalendarDays,
+  Timer,
 } from "lucide-react";
 
-export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "date" | "url" | "email" | "file" | "image" | "tags" | "richtext" | "icon";
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "boolean"
+  | "select"
+  | "date"
+  | "url"
+  | "email"
+  | "file"
+  | "image"
+  | "tags"
+  | "richtext"
+  | "icon";
 
 export interface FieldDef {
   key: string;
@@ -26,33 +57,76 @@ export interface ResourceDef {
   displayColumns: { key: string; label: string }[];
   fields: FieldDef[];
   section?: string;
+  /** Descrição sob o título da seção. */
+  note?: string;
+  /** Rótulo do botão de ação primária. */
+  actionLabel?: string;
+  /** Regra da seção, exibida abaixo da tabela. */
+  rule?: string;
 }
 
 export const RESOURCES: ResourceDef[] = [
   {
-    key: "comunicados", label: "Comunicados", labelSingular: "Comunicado", icon: Megaphone, table: "announcements",
-    orderBy: { column: "published_at", ascending: false }, section: "Comunicação",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "status", label: "Status" }, { key: "category", label: "Categoria" }, { key: "published_at", label: "Publicado" }],
+    key: "comunicados",
+    label: "Comunicados",
+    labelSingular: "Comunicado",
+    icon: Megaphone,
+    table: "announcements",
+    orderBy: { column: "published_at", ascending: false },
+    section: "Comunicação",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "status", label: "Status" },
+      { key: "category", label: "Categoria" },
+      { key: "published_at", label: "Publicado" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "summary", label: "Resumo", type: "textarea" },
+      {
+        key: "lead",
+        label: "Lide",
+        type: "textarea",
+        help: "Primeiro parágrafo em destaque no detalhe.",
+      },
       { key: "content", label: "Texto completo", type: "richtext" },
+      { key: "author_name", label: "Quem publicou", type: "text" },
+      { key: "author_role", label: "Cargo de quem publicou", type: "text" },
       { key: "image_url", label: "Imagem", type: "image" },
       { key: "attachment_url", label: "Anexo", type: "file" },
       { key: "category", label: "Categoria", type: "text" },
       { key: "tags", label: "Tags", type: "tags" },
       { key: "published_at", label: "Publicado em", type: "date" },
       { key: "expires_at", label: "Válido até", type: "date" },
-      { key: "status", label: "Status", type: "select", required: true,
-        options: [{ value: "rascunho", label: "Rascunho" }, { value: "publicado", label: "Publicado" }, { value: "arquivado", label: "Arquivado" }] },
+      {
+        key: "status",
+        label: "Status",
+        type: "select",
+        required: true,
+        options: [
+          { value: "rascunho", label: "Rascunho" },
+          { value: "publicado", label: "Publicado" },
+          { value: "arquivado", label: "Arquivado" },
+        ],
+      },
+      { key: "headline", label: "Manchete", type: "boolean" },
       { key: "pinned", label: "Fixar na home", type: "boolean" },
       { key: "important", label: "Comunicado importante", type: "boolean" },
     ],
   },
   {
-    key: "links-rapidos", label: "Links rápidos", labelSingular: "Link", icon: Link2, table: "quick_links",
-    orderBy: { column: "order_index" }, section: "Home",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "url", label: "URL" }, { key: "active", label: "Ativo" }],
+    key: "links-rapidos",
+    label: "Links rápidos",
+    labelSingular: "Link",
+    icon: Link2,
+    table: "quick_links",
+    orderBy: { column: "order_index" },
+    section: "Home",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "url", label: "URL" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "text" },
@@ -64,9 +138,18 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "beneficios", label: "Benefícios", labelSingular: "Benefício", icon: Gift, table: "benefits",
-    orderBy: { column: "order_index" }, section: "Gente & Gestão",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "active", label: "Ativo" }, { key: "order_index", label: "Ordem" }],
+    key: "beneficios",
+    label: "Benefícios",
+    labelSingular: "Benefício",
+    icon: Gift,
+    table: "benefits",
+    orderBy: { column: "order_index" },
+    section: "Gente & Gestão",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "active", label: "Ativo" },
+      { key: "order_index", label: "Ordem" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "textarea" },
@@ -76,14 +159,26 @@ export const RESOURCES: ResourceDef[] = [
       { key: "attachment_url", label: "Anexo", type: "file" },
       { key: "image_url", label: "Imagem", type: "image" },
       { key: "icon", label: "Ícone", type: "icon" },
+      { key: "featured", label: "Destaque em G&G", type: "boolean" },
+      { key: "badge", label: "Etiqueta", type: "text", placeholder: "Novo, Reajustado…" },
+      { key: "next_date", label: "Próxima data", type: "date" },
       { key: "order_index", label: "Ordem", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],
   },
   {
-    key: "documentos", label: "Documentos", labelSingular: "Documento", icon: FileText, table: "documents",
-    orderBy: { column: "published_at", ascending: false }, section: "Gente & Gestão",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "category", label: "Categoria" }, { key: "active", label: "Ativo" }],
+    key: "documentos",
+    label: "Documentos",
+    labelSingular: "Documento",
+    icon: FileText,
+    table: "documents",
+    orderBy: { column: "published_at", ascending: false },
+    section: "Gente & Gestão",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "category", label: "Categoria" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "textarea" },
@@ -96,9 +191,18 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "faq", label: "Dúvidas Frequentes", labelSingular: "Dúvida", icon: HelpCircle, table: "faq_items",
-    orderBy: { column: "order_index" }, section: "Gente & Gestão",
-    displayColumns: [{ key: "question", label: "Pergunta" }, { key: "category", label: "Categoria" }, { key: "active", label: "Ativo" }],
+    key: "faq",
+    label: "Dúvidas Frequentes",
+    labelSingular: "Dúvida",
+    icon: HelpCircle,
+    table: "faq_items",
+    orderBy: { column: "order_index" },
+    section: "Gente & Gestão",
+    displayColumns: [
+      { key: "question", label: "Pergunta" },
+      { key: "category", label: "Categoria" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "question", label: "Pergunta", type: "text", required: true },
       { key: "answer", label: "Resposta", type: "richtext", required: true },
@@ -109,26 +213,60 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "vagas", label: "Vagas internas", labelSingular: "Vaga", icon: Briefcase, table: "internal_jobs",
-    orderBy: { column: "published_at", ascending: false }, section: "Oportunidades",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "status", label: "Status" }, { key: "location", label: "Local" }],
+    key: "vagas",
+    label: "Vagas internas",
+    labelSingular: "Vaga",
+    icon: Briefcase,
+    table: "internal_jobs",
+    orderBy: { column: "published_at", ascending: false },
+    section: "Oportunidades",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "status", label: "Status" },
+      { key: "location", label: "Local" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
-      { key: "location", label: "Unidade/Local", type: "text" },
+      {
+        key: "unit",
+        label: "Unidade",
+        type: "text",
+        help: "Usada no filtro do portal: Matriz SJP, Curitiba, Joinville.",
+      },
+      { key: "location", label: "Local", type: "text" },
       { key: "job_type", label: "Tipo", type: "text" },
       { key: "summary", label: "Resumo", type: "textarea" },
       { key: "requirements", label: "Requisitos", type: "textarea" },
       { key: "external_url", label: "Link (Portal de Carreiras)", type: "url" },
-      { key: "status", label: "Status", type: "select", options: [
-        { value: "aberta", label: "Aberta" }, { value: "pausada", label: "Pausada" }, { value: "encerrada", label: "Encerrada" }] },
+      {
+        key: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "aberta", label: "Aberta" },
+          { value: "pausada", label: "Pausada" },
+          { value: "encerrada", label: "Encerrada" },
+        ],
+      },
       { key: "published_at", label: "Publicado em", type: "date" },
+      { key: "applications_deadline", label: "Inscrições até", type: "date" },
+      { key: "owner", label: "Responsável", type: "text" },
       { key: "order_index", label: "Ordem", type: "number" },
     ],
   },
   {
-    key: "integracao", label: "Integração", labelSingular: "Material", icon: Sparkles, table: "onboarding_materials",
-    orderBy: { column: "order_index" }, section: "Integração",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "category", label: "Categoria" }, { key: "active", label: "Ativo" }],
+    key: "integracao",
+    label: "Integração",
+    labelSingular: "Material",
+    icon: Sparkles,
+    table: "onboarding_materials",
+    orderBy: { column: "order_index" },
+    section: "Integração",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "category", label: "Categoria" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "text" },
@@ -137,28 +275,66 @@ export const RESOURCES: ResourceDef[] = [
       { key: "attachment_url", label: "Anexo", type: "file" },
       { key: "external_url", label: "Link externo", type: "url" },
       { key: "category", label: "Categoria", type: "text" },
+      {
+        key: "material_type",
+        label: "Tipo",
+        type: "select",
+        options: [
+          { value: "video", label: "Vídeo" },
+          { value: "pdf", label: "PDF" },
+          { value: "politica", label: "Política" },
+          { value: "livro", label: "Leitura" },
+        ],
+      },
+      {
+        key: "duration_label",
+        label: "Duração",
+        type: "text",
+        placeholder: "6 min · PDF, 8 páginas",
+      },
+      { key: "required", label: "Obrigatório", type: "boolean" },
       { key: "order_index", label: "Ordem", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],
   },
   {
-    key: "formularios", label: "Formulários", labelSingular: "Formulário", icon: ClipboardList, table: "forms",
-    orderBy: { column: "order_index" }, section: "Portal",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "category", label: "Categoria" }, { key: "active", label: "Ativo" }],
+    key: "formularios",
+    label: "Formulários",
+    labelSingular: "Formulário",
+    icon: ClipboardList,
+    table: "forms",
+    orderBy: { column: "order_index" },
+    section: "Portal",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "category", label: "Categoria" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "title", label: "Nome", type: "text", required: true },
       { key: "description", label: "Descrição", type: "text" },
       { key: "category", label: "Categoria", type: "text" },
       { key: "external_url", label: "Link externo", type: "url", required: true },
+      { key: "sla_days", label: "Prazo em dias úteis", type: "number" },
       { key: "icon", label: "Ícone", type: "icon" },
       { key: "order_index", label: "Ordem", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],
   },
   {
-    key: "aniversariantes", label: "Aniversariantes", labelSingular: "Aniversariante", icon: Cake, table: "birthdays",
-    orderBy: { column: "birthday_month" }, section: "Cultura",
-    displayColumns: [{ key: "name", label: "Nome" }, { key: "birthday_day", label: "Dia" }, { key: "birthday_month", label: "Mês" }, { key: "active", label: "Ativo" }],
+    key: "aniversariantes",
+    label: "Aniversariantes",
+    labelSingular: "Aniversariante",
+    icon: Cake,
+    table: "birthdays",
+    orderBy: { column: "birthday_month" },
+    section: "Cultura",
+    displayColumns: [
+      { key: "name", label: "Nome" },
+      { key: "birthday_day", label: "Dia" },
+      { key: "birthday_month", label: "Mês" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "name", label: "Nome", type: "text", required: true },
       { key: "role", label: "Cargo", type: "text" },
@@ -170,9 +346,18 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "tempo-de-casa", label: "Tempo de casa", labelSingular: "Aniversário de casa", icon: PartyPopper, table: "work_anniversaries",
-    orderBy: { column: "admission_date" }, section: "Cultura",
-    displayColumns: [{ key: "name", label: "Nome" }, { key: "admission_date", label: "Admissão" }, { key: "active", label: "Ativo" }],
+    key: "tempo-de-casa",
+    label: "Tempo de casa",
+    labelSingular: "Aniversário de casa",
+    icon: PartyPopper,
+    table: "work_anniversaries",
+    orderBy: { column: "admission_date" },
+    section: "Cultura",
+    displayColumns: [
+      { key: "name", label: "Nome" },
+      { key: "admission_date", label: "Admissão" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "name", label: "Nome", type: "text", required: true },
       { key: "role", label: "Cargo", type: "text" },
@@ -184,9 +369,18 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "reconhecimentos", label: "Reconhecimentos", labelSingular: "Reconhecimento", icon: Award, table: "recognitions",
-    orderBy: { column: "recognition_date", ascending: false }, section: "Cultura",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "person_or_team", label: "Pessoa/Equipe" }, { key: "recognition_date", label: "Data" }],
+    key: "reconhecimentos",
+    label: "Reconhecimentos",
+    labelSingular: "Reconhecimento",
+    icon: Award,
+    table: "recognitions",
+    orderBy: { column: "recognition_date", ascending: false },
+    section: "Cultura",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "person_or_team", label: "Pessoa/Equipe" },
+      { key: "recognition_date", label: "Data" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "person_or_team", label: "Colaborador ou equipe", type: "text", required: true },
@@ -197,9 +391,19 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "campanhas", label: "Campanhas", labelSingular: "Campanha", icon: Sparkles, table: "campaigns",
-    orderBy: { column: "created_at", ascending: false }, section: "Cultura",
-    displayColumns: [{ key: "title", label: "Título" }, { key: "start_date", label: "Início" }, { key: "end_date", label: "Fim" }, { key: "active", label: "Ativo" }],
+    key: "campanhas",
+    label: "Campanhas",
+    labelSingular: "Campanha",
+    icon: Sparkles,
+    table: "campaigns",
+    orderBy: { column: "created_at", ascending: false },
+    section: "Cultura",
+    displayColumns: [
+      { key: "title", label: "Título" },
+      { key: "start_date", label: "Início" },
+      { key: "end_date", label: "Fim" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
       { key: "title", label: "Título", type: "text", required: true },
       { key: "description", label: "Descrição", type: "textarea" },
@@ -211,9 +415,17 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "contatos", label: "Contatos G&G", labelSingular: "Contato", icon: Users, table: "contacts",
-    orderBy: { column: "order_index" }, section: "Gente & Gestão",
-    displayColumns: [{ key: "name", label: "Nome" }, { key: "email", label: "E-mail" }],
+    key: "contatos",
+    label: "Contatos G&G",
+    labelSingular: "Contato",
+    icon: Users,
+    table: "contacts",
+    orderBy: { column: "order_index" },
+    section: "Gente & Gestão",
+    displayColumns: [
+      { key: "name", label: "Nome" },
+      { key: "email", label: "E-mail" },
+    ],
     fields: [
       { key: "name", label: "Nome", type: "text", required: true },
       { key: "description", label: "Descrição", type: "text" },
@@ -225,11 +437,24 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
-    key: "paginas-gg", label: "Páginas G&G", labelSingular: "Página", icon: ScrollText, table: "gg_pages",
+    key: "paginas-gg",
+    label: "Páginas G&G",
+    labelSingular: "Página",
+    icon: ScrollText,
+    table: "gg_pages",
     section: "Gente & Gestão",
-    displayColumns: [{ key: "page_key", label: "Chave" }, { key: "title", label: "Título" }, { key: "active", label: "Ativo" }],
+    displayColumns: [
+      { key: "page_key", label: "Chave" },
+      { key: "title", label: "Título" },
+      { key: "active", label: "Ativo" },
+    ],
     fields: [
-      { key: "page_key", label: "Chave (ferias, atestados, cadastro, holerite, politicas)", type: "text", required: true },
+      {
+        key: "page_key",
+        label: "Chave (ferias, atestados, cadastro, holerite, politicas)",
+        type: "text",
+        required: true,
+      },
       { key: "title", label: "Título", type: "text", required: true },
       { key: "body", label: "Conteúdo", type: "richtext" },
       { key: "attachment_url", label: "Anexo", type: "file" },
@@ -237,11 +462,210 @@ export const RESOURCES: ResourceDef[] = [
       { key: "active", label: "Ativo", type: "boolean" },
     ],
   },
+  {
+    key: "solicitacoes",
+    label: "Solicitações",
+    labelSingular: "Solicitação",
+    icon: Inbox,
+    table: "requests",
+    orderBy: { column: "created_at", ascending: false },
+    section: "Portal",
+    actionLabel: "Exportar do mês ↗",
+    note: "Fila de tudo que o time pediu — formulários e solicitações livres caem aqui.",
+    rule: "Solicitação sem resposta em 3 dias úteis precisa subir para a coordenação. Formulários com anexo de documento pessoal vencem em 30 dias e são apagados automaticamente.",
+    displayColumns: [
+      { key: "title", label: "Solicitação" },
+      { key: "status", label: "Status" },
+      { key: "subject", label: "Assunto" },
+      { key: "due_date", label: "Prazo" },
+    ],
+    fields: [
+      { key: "title", label: "Título", type: "text", required: true },
+      { key: "subject", label: "Assunto", type: "text" },
+      { key: "body", label: "Descrição", type: "textarea" },
+      {
+        key: "status",
+        label: "Status",
+        type: "select",
+        required: true,
+        options: [
+          { value: "em_analise", label: "Em análise" },
+          { value: "respondida", label: "Respondida" },
+          { value: "concluida", label: "Concluída" },
+        ],
+      },
+      { key: "due_date", label: "Prazo", type: "date" },
+    ],
+  },
+  {
+    key: "trilha-integracao",
+    label: "Trilhas de integração",
+    labelSingular: "Item da trilha",
+    icon: ListChecks,
+    table: "onboarding_checklist_items",
+    orderBy: { column: "order_index" },
+    section: "Integração",
+    note: "A trilha padrão que todo mundo vê em Integração. O percentual de cada pessoa é derivado destes itens.",
+    rule: "A conversa de 30 dias costuma ser agendada quando a trilha passa de 60%.",
+    displayColumns: [
+      { key: "title", label: "Item" },
+      { key: "stage", label: "Etapa" },
+      { key: "deadline_label", label: "Prazo" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      { key: "title", label: "Título", type: "text", required: true },
+      { key: "detail", label: "Detalhe", type: "text" },
+      {
+        key: "stage",
+        label: "Etapa",
+        type: "select",
+        required: true,
+        options: [
+          { value: "primeiro_dia", label: "1º dia" },
+          { value: "primeira_semana", label: "1ª semana" },
+          { value: "trinta_dias", label: "30 dias" },
+          { value: "sessenta_dias", label: "60 dias" },
+          { value: "noventa_dias", label: "90 dias" },
+        ],
+      },
+      {
+        key: "deadline_label",
+        label: "Rótulo do prazo",
+        type: "text",
+        placeholder: "1º dia, até 12/04…",
+      },
+      { key: "order_index", label: "Ordem", type: "number" },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
+    key: "reconhecimentos-colegas",
+    label: "Reconhecimentos do time",
+    labelSingular: "Reconhecimento",
+    icon: Award,
+    table: "peer_recognitions",
+    orderBy: { column: "created_at", ascending: false },
+    section: "Cultura",
+    note: "O que os colegas publicaram uns sobre os outros. Marque um como destaque do mês para abrir a seção em Cultura.",
+    rule: "Reconhecimento em revisão não aparece no portal.",
+    displayColumns: [
+      { key: "message", label: "Mensagem" },
+      { key: "status", label: "Status" },
+      { key: "highlight", label: "Destaque" },
+      { key: "created_at", label: "Publicado" },
+    ],
+    fields: [
+      { key: "message", label: "Mensagem", type: "textarea", required: true },
+      {
+        key: "status",
+        label: "Status",
+        type: "select",
+        required: true,
+        options: [
+          { value: "publicado", label: "Publicado" },
+          { value: "em_revisao", label: "Em revisão" },
+          { value: "arquivado", label: "Arquivado" },
+        ],
+      },
+      { key: "highlight", label: "Destaque do mês", type: "boolean" },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
+    key: "fotos-cultura",
+    label: "O mês em fotos",
+    labelSingular: "Foto",
+    icon: Image,
+    table: "culture_photos",
+    orderBy: { column: "event_date", ascending: false },
+    section: "Cultura",
+    note: "As fotos de evento que aparecem em Cultura WG. Sem filtro, sem tratamento de cor.",
+    displayColumns: [
+      { key: "title", label: "Foto" },
+      { key: "event_date", label: "Data" },
+      { key: "unit", label: "Unidade" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      { key: "title", label: "Título", type: "text", required: true },
+      { key: "image_url", label: "Imagem", type: "image", required: true },
+      { key: "event_date", label: "Data do evento", type: "date" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "order_index", label: "Ordem", type: "number" },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
+    key: "calendario",
+    label: "Calendário interno",
+    labelSingular: "Evento",
+    icon: CalendarDays,
+    table: "culture_events",
+    orderBy: { column: "event_date" },
+    section: "Cultura",
+    note: "O que vem por aí, exibido em Cultura WG. Eventos passados somem sozinhos da lista.",
+    displayColumns: [
+      { key: "title", label: "Evento" },
+      { key: "event_date", label: "Data" },
+      { key: "event_type", label: "Tipo" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      { key: "title", label: "Título", type: "text", required: true },
+      { key: "detail", label: "Detalhe", type: "text" },
+      { key: "event_date", label: "Data", type: "date", required: true },
+      {
+        key: "event_type",
+        label: "Tipo",
+        type: "select",
+        required: true,
+        options: [
+          { value: "saude", label: "Saúde" },
+          { value: "celebracao", label: "Celebração" },
+          { value: "treinamento", label: "Treinamento" },
+          { value: "campanha", label: "Campanha" },
+          { value: "geral", label: "Interno" },
+        ],
+      },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
+    key: "prazos",
+    label: "Prazos do mês",
+    labelSingular: "Prazo",
+    icon: Timer,
+    table: "monthly_deadlines",
+    orderBy: { column: "due_date" },
+    section: "Gente & Gestão",
+    note: "Folha, atestados, adesões. Aparecem em Gente & Gestão e em Formulários.",
+    rule: "Só entram na lista os prazos do mês corrente — cadastre os do mês que vem antes de virar.",
+    displayColumns: [
+      { key: "label", label: "Prazo" },
+      { key: "due_date", label: "Data" },
+      { key: "order_index", label: "Ordem" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      { key: "label", label: "Nome do prazo", type: "text", required: true },
+      { key: "due_date", label: "Data limite", type: "date", required: true },
+      { key: "order_index", label: "Ordem", type: "number" },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
 ];
 
-export function findResource(key: string) { return RESOURCES.find(r => r.key === key); }
+export function findResource(key: string) {
+  return RESOURCES.find((r) => r.key === key);
+}
 export const SIDEBAR_EXTRA = [
   { key: "colaboradores", label: "Colaboradores", icon: UserCheck, section: "Configurações" },
   { key: "usuarios", label: "Usuários admin", icon: Users, section: "Configurações" },
-  { key: "configuracoes", label: "Configurações gerais", icon: Building2, section: "Configurações" },
+  {
+    key: "configuracoes",
+    label: "Configurações gerais",
+    icon: Building2,
+    section: "Configurações",
+  },
 ];
