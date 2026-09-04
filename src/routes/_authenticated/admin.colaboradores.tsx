@@ -13,6 +13,7 @@ import {
   Pencil,
   RefreshCcw,
   ShieldOff,
+  Trash2,
   Upload,
   UserPlus,
   X,
@@ -25,8 +26,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   addEmployee,
+  bulkDeleteEmployees,
   bulkImportEmployees,
+  deleteEmployee,
   inviteExistingEmployee,
   listEmployees,
   resendEmployeeInvite,
@@ -37,6 +51,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
+import { fieldLabel, fieldsToFill, matchByName } from "@/lib/employee-match";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAdminSearch } from "@/components/admin-search";
@@ -65,6 +80,7 @@ type Employee = {
 type ImportRow = {
   name: string;
   email?: string;
+  phone?: string;
   department?: string;
   job_title?: string;
   admission_date?: string;
@@ -84,13 +100,20 @@ const ALL_MANAGERS = "Todos os gestores";
 const NO_MANAGER = "__sem_gestor__";
 
 /** Mesma trilha da tela de Cultura: registro largo, colunas fixas, ações à direita. */
-const GRID = "grid grid-cols-[1fr_180px_170px_105px_112px_96px_104px] items-center gap-4";
+const GRID =
+  "grid grid-cols-[26px_1fr_180px_170px_105px_112px_96px_104px] items-center gap-x-4 gap-y-0";
 
 const SELECT =
   "h-[38px] rounded-full border-[1.5px] border-ink bg-surface px-3.5 text-[13px] font-bold " +
   "outline-none transition-colors hover:bg-accent-soft focus-visible:ring-1 focus-visible:ring-ring";
 
 const COL_HEAD = "text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase";
+
+/** Caixa de seleção no traço da casa: borda de tinta, marcado em verde elétrico. */
+const CHECKBOX =
+  "h-[17px] w-[17px] rounded-[5px] border-[1.5px] border-ink data-[state=checked]:border-ink " +
+  "data-[state=checked]:bg-accent data-[state=checked]:text-ink " +
+  "data-[state=indeterminate]:bg-accent data-[state=indeterminate]:text-ink";
 
 export const Route = createFileRoute("/_authenticated/admin/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores — Portal WG" }] }),
@@ -127,6 +150,8 @@ function ColaboradoresPage() {
   const doUpdate = useServerFn(updateEmployee);
   const doBulk = useServerFn(bulkImportEmployees);
   const doUpdatePhoto = useServerFn(updateEmployeePhotoUrl);
+  const doDelete = useServerFn(deleteEmployee);
+  const doBulkDelete = useServerFn(bulkDeleteEmployees);
 
   const q = useQuery({ queryKey: ["employees"], queryFn: () => doList() });
 
@@ -135,6 +160,10 @@ function ColaboradoresPage() {
   const [invitingExisting, setInvitingExisting] = useState<Employee | null>(null);
   const [importing, setImporting] = useState(false);
   const [importingPhotos, setImportingPhotos] = useState(false);
+  /** Ids marcados na tabela. Sobrevive à troca de filtro; some ao excluir. */
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmingOne, setConfirmingOne] = useState<Employee | null>(null);
+  const [confirmingMany, setConfirmingMany] = useState(false);
 
   const [dept, setDept] = useState(ALL_DEPTS);
   const [unit, setUnit] = useState(ALL_UNITS);
@@ -187,14 +216,39 @@ function ColaboradoresPage() {
   const mBulk = useMutation({
     mutationFn: (rows: ImportRow[]) => doBulk({ data: { employees: rows } }),
     onSuccess: (res) => {
-      const r = res as { updated: number; inserted: number; skipped: number };
+      const r = res as { completed: number; inserted: number; skipped: number };
       const parts: string[] = [];
-      if (r.inserted > 0) parts.push(`${r.inserted} inserido${r.inserted !== 1 ? "s" : ""}`);
-      if (r.updated > 0) parts.push(`${r.updated} atualizado${r.updated !== 1 ? "s" : ""}`);
-      if (r.skipped > 0) parts.push(`${r.skipped} sem alteração`);
+      if (r.inserted > 0) parts.push(`${r.inserted} cadastrado${r.inserted !== 1 ? "s" : ""}`);
+      if (r.completed > 0) parts.push(`${r.completed} completado${r.completed !== 1 ? "s" : ""}`);
+      if (r.skipped > 0) parts.push(`${r.skipped} sem nada a completar`);
       toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Nenhum registro processado.");
       invalidate();
       setImporting(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mDelete = useMutation({
+    mutationFn: (id: string) => doDelete({ data: { id } }),
+    onSuccess: (_res, id) => {
+      toast.success("Colaborador removido do diretório.");
+      deselect([id]);
+      invalidate();
+      setConfirmingOne(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mBulkDelete = useMutation({
+    mutationFn: (ids: string[]) => doBulkDelete({ data: { ids } }),
+    onSuccess: (res, ids) => {
+      const n = (res as { deleted: number }).deleted;
+      toast.success(
+        `${n} colaborador${n !== 1 ? "es" : ""} removido${n !== 1 ? "s" : ""} do diretório.`,
+      );
+      deselect(ids);
+      invalidate();
+      setConfirmingMany(false);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -313,6 +367,35 @@ function ColaboradoresPage() {
     };
   }, [employees]);
 
+  function deselect(ids: string[]) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  /** O "marcar tudo" do cabeçalho vale só para o que o filtro está mostrando. */
+  function toggleVisible(check: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const r of rows) {
+        if (check) next.add(r.id);
+        else next.delete(r.id);
+      }
+      return next;
+    });
+  }
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -329,6 +412,12 @@ function ColaboradoresPage() {
   }
 
   const mark = (key: SortKey) => (sortKey === key ? (sortDir === "asc" ? "↑" : "↓") : "↕");
+
+  // A seleção pode conter gente escondida pelo filtro; o cabeçalho fala só do visível.
+  const visibleSelected = rows.filter((r) => selected.has(r.id)).length;
+  const allVisibleChecked = rows.length > 0 && visibleSelected === rows.length;
+  const headerState = allVisibleChecked ? true : visibleSelected > 0 ? "indeterminate" : false;
+  const selectedList = base.filter((e) => selected.has(e.id));
 
   return (
     <div>
@@ -393,6 +482,34 @@ function ColaboradoresPage() {
       </div>
 
       <div className="mt-7 overflow-hidden rounded-lg border-[1.5px] border-ink bg-surface shadow-paper">
+        {/* Barra de seleção — só aparece com alguém marcado */}
+        {selectedList.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 border-b-[1.5px] border-ink bg-ink px-[22px] py-3">
+            <span className="text-[13px] font-extrabold text-paper tabular-nums">
+              {selectedList.length} {selectedList.length === 1 ? "selecionado" : "selecionados"}
+            </span>
+            {visibleSelected !== selectedList.length && (
+              <span className="text-[11.5px] text-paper/60">
+                {selectedList.length - visibleSelected} fora do filtro atual
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmingMany(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-paper/40 px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.1em] text-paper uppercase transition hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Excluir
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="ml-auto text-[12px] font-extrabold text-accent underline underline-offset-[3px]"
+            >
+              Limpar seleção
+            </button>
+          </div>
+        )}
+
         {/* Filtros */}
         <div className="flex flex-wrap items-center gap-3 border-b-[1.5px] border-ink px-[22px] py-3.5">
           <select
@@ -459,6 +576,13 @@ function ColaboradoresPage() {
           <div className="min-w-[1120px]">
             {/* Cabeçalho de colunas */}
             <div className={cn(GRID, "bg-ink px-[22px] py-[13px]")}>
+              <Checkbox
+                checked={headerState}
+                onCheckedChange={(v) => toggleVisible(v === true)}
+                disabled={rows.length === 0}
+                aria-label="Selecionar todos os colaboradores desta lista"
+                className={cn(CHECKBOX, "border-paper/70")}
+              />
               <button
                 type="button"
                 onClick={() => toggleSort("name")}
@@ -509,8 +633,16 @@ function ColaboradoresPage() {
                     GRID,
                     "border-t border-border px-[22px] py-4 transition-colors hover:bg-accent-soft/40",
                     !emp.active && "opacity-70",
+                    selected.has(emp.id) && "bg-accent-soft/60",
                   )}
                 >
+                  <Checkbox
+                    checked={selected.has(emp.id)}
+                    onCheckedChange={() => toggleOne(emp.id)}
+                    aria-label={`Selecionar ${emp.name}`}
+                    className={CHECKBOX}
+                  />
+
                   {/* Pessoa */}
                   <div className="flex min-w-0 items-center gap-3">
                     <UserAvatar name={emp.name} photoUrl={emp.photo_url} size={40} />
@@ -624,9 +756,14 @@ function ColaboradoresPage() {
                         <DropdownMenuItem
                           onClick={() => mToggle.mutate(emp)}
                           disabled={mToggle.isPending}
-                          className={emp.active ? "text-destructive focus:text-destructive" : ""}
                         >
                           {emp.active ? "Desativar colaborador" : "Reativar colaborador"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setConfirmingOne(emp)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir do diretório
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -699,6 +836,7 @@ function ColaboradoresPage() {
       {/* Modal: importação em massa via XLSX */}
       {importing && (
         <ImportModal
+          employees={employees}
           onImport={(rows) => mBulk.mutate(rows)}
           loading={mBulk.isPending}
           onClose={() => setImporting(false)}
@@ -713,6 +851,66 @@ function ColaboradoresPage() {
           onClose={() => { setImportingPhotos(false); invalidate(); }}
         />
       )}
+
+      {/* Excluir um */}
+      <AlertDialog open={confirmingOne !== null} onOpenChange={(v) => !v && setConfirmingOne(null)}>
+        <AlertDialogContent className="border-[1.5px] border-ink bg-paper shadow-elevated">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[22px] font-black tracking-[-0.03em]">
+              Excluir “{confirmingOne?.name}”?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-[1.65]">
+              Sai do diretório junto com cargo, área, unidade, gestor e datas, e não dá pra
+              desfazer. Para tirar alguém das listas sem apagar o cadastro, use “Desativar
+              colaborador”. A conta de acesso, quando existe, continua em Usuários admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmingOne && mDelete.mutate(confirmingOne.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir a seleção */}
+      <AlertDialog open={confirmingMany} onOpenChange={(v) => !v && setConfirmingMany(false)}>
+        <AlertDialogContent className="border-[1.5px] border-ink bg-paper shadow-elevated">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[22px] font-black tracking-[-0.03em]">
+              Excluir {selectedList.length}{" "}
+              {selectedList.length === 1 ? "colaborador" : "colaboradores"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-[1.65]">
+              Saem do diretório junto com cargo, área, unidade, gestor e datas, e não dá pra
+              desfazer. Quem for gestor de alguém deixa esse campo em branco nos liderados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="max-h-40 overflow-y-auto rounded-lg border border-border bg-surface-muted px-4 py-3 text-[13px] leading-[1.7]">
+            {selectedList.slice(0, 12).map((e) => (
+              <li key={e.id} className="truncate font-bold">
+                {e.name}
+              </li>
+            ))}
+            {selectedList.length > 12 && (
+              <li className="text-muted-foreground">e mais {selectedList.length - 12}…</li>
+            )}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => mBulkDelete.mutate(selectedList.map((e) => e.id))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir {selectedList.length}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -724,6 +922,7 @@ function SkeletonRows() {
     <div aria-busy="true" aria-label="Carregando colaboradores">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className={cn(GRID, "border-t border-border px-[22px] py-4")}>
+          <div className="h-[17px] w-[17px] rounded-[5px] bg-ink/10" />
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 shrink-0 rounded-full bg-ink/10" />
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -1034,11 +1233,42 @@ function InviteExistingForm({
   );
 }
 
+/** Molde do cadastro que a planilha ainda vai criar — só a prévia usa. */
+const EMPTY_EMPLOYEE: Employee = {
+  id: "",
+  auth_user_id: null,
+  name: "",
+  email: null,
+  department: null,
+  job_title: null,
+  unit: null,
+  phone: null,
+  birth_date: null,
+  admission_date: null,
+  manager_id: null,
+  co_manager_id: null,
+  active: true,
+  invited_at: null,
+  created_at: "",
+  photo_url: null,
+};
+
+/** Uma linha da planilha já confrontada com o diretório. */
+type ImportPlan = {
+  row: ImportRow;
+  /** Quem essa linha já é no cadastro, quando o nome casa. */
+  match: Employee | null;
+  /** Campos vazios no cadastro que esta linha preencheria. */
+  fills: ReturnType<typeof fieldsToFill>;
+};
+
 function ImportModal({
+  employees,
   onImport,
   loading,
   onClose,
 }: {
+  employees: Employee[];
   onImport: (rows: ImportRow[]) => void;
   loading: boolean;
   onClose: () => void;
@@ -1046,6 +1276,33 @@ function ImportModal({
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState("");
   const [parsing, setParsing] = useState(false);
+
+  /**
+   * Mesma conta que o servidor faz na hora de gravar: quem casa por nome não é
+   * duplicado, só tem os campos vazios completados. Cada pessoa é tocada uma vez
+   * só, e um cadastro novo entra na lista para a linha seguinte não duplicar.
+   */
+  const plans = useMemo<ImportPlan[]>(() => {
+    const pool: Employee[] = [...employees];
+    const touched = new Set<string>();
+    return rows.map((row, i) => {
+      const match = matchByName(row.name, pool);
+      if (!match) {
+        // O cadastro novo entra na lista: uma segunda linha parecida não duplica.
+        const novo = { ...EMPTY_EMPLOYEE, ...row, id: `novo:${i}` };
+        pool.push(novo);
+        touched.add(novo.id);
+        return { row, match: null, fills: [] };
+      }
+      if (touched.has(match.id)) return { row, match, fills: [] };
+      touched.add(match.id);
+      return { row, match, fills: fieldsToFill(row, match) };
+    });
+  }, [rows, employees]);
+
+  const novos = plans.filter((p) => !p.match).length;
+  const completa = plans.filter((p) => p.match && p.fills.length > 0).length;
+  const iguais = plans.length - novos - completa;
 
   const handleFile = async (file: File) => {
     setParsing(true);
@@ -1060,6 +1317,19 @@ function ImportModal({
       // "Data Nasc." → "datanasc", "Dt. Admissão" → "dtadmissao", "E-mail" → "email"
       const nk = (k: string) =>
         k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
+
+      // Telefone chega como número ("11987654321") ou já mascarado. Guarda com máscara
+      // quando dá para reconhecer fixo ou celular; caso contrário, o texto original.
+      const parsePhone = (val: unknown): string | undefined => {
+        if (val === null || val === undefined || val === "") return undefined;
+        const raw = String(val).trim();
+        if (!raw) return undefined;
+        const d = raw.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+        if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+        if (d.length < 8) return undefined;
+        return raw.slice(0, 30);
+      };
 
       // Converte string DD/MM/YYYY, YYYY-MM-DD ou serial Excel → ISO YYYY-MM-DD
       const parseDateISO = (val: unknown): string | undefined => {
@@ -1083,8 +1353,16 @@ function ImportModal({
           norm["nome"] || norm["name"] || norm["colaborador"] || norm["quemusai"] || norm["quemusao"] || norm["quemusa"];
         if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
 
-        const emailRaw =
-          norm["email"] || norm["email1"] || norm["corretoeletronico"];
+        const emailRaw = norm["email"] || norm["email1"] || norm["corretoeletronico"];
+
+        const telefone =
+          norm["telefone"] ||
+          norm["telefone1"] ||
+          norm["celular"] ||
+          norm["whatsapp"] ||
+          norm["fone"] ||
+          norm["tel"] ||
+          norm["contato"];
 
         const cargo =
           norm["cargo"] || norm["jobtitle"] || norm["funcao"] || norm["funcaocargo"] || norm["ocupacao"];
@@ -1108,6 +1386,7 @@ function ImportModal({
         parsed.push({
           name: toTitleCase(String(nome).trim()),
           email: emailStr && emailStr.includes("@") ? emailStr : undefined,
+          phone: parsePhone(telefone),
           department: filial ? String(filial).trim() : undefined,
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
           admission_date: parseDateISO(admissao),
@@ -1155,10 +1434,14 @@ function ImportModal({
           <div className="rounded-xl bg-surface-muted p-4 text-sm space-y-1">
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
-              Nome / Quem usa, E-mail, Cargo, Filial / Unidade, Admissão / Data_admissão, Data Nasc. / Data_nascimento
+              Nome / Quem usa, E-mail, Telefone / Celular, Cargo, Filial / Unidade, Admissão /
+              Data_admissão, Data Nasc. / Data_nascimento
             </p>
             <p className="text-muted-foreground text-xs mt-2">
-              Insere novos colaboradores e atualiza os já cadastrados (por nome). Datas de admissão e nascimento são importadas automaticamente.
+              Quem já está no diretório <strong>não é cadastrado de novo</strong>: a planilha só
+              completa os campos que estão vazios no cadastro. Dado já preenchido nunca é
+              sobrescrito. Quem não casa com ninguém entra como colaborador novo, sem acesso ao
+              portal.
             </p>
           </div>
 
@@ -1186,9 +1469,18 @@ function ImportModal({
 
           {rows.length > 0 && (
             <>
-              <div className="inline-flex items-center gap-1.5 chip-accent">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {rows.length} colaboradores prontos para importação
+              <div className="flex flex-wrap gap-2">
+                <Chip tone="accent" className="gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5" /> {novos} novo{novos !== 1 ? "s" : ""}
+                </Chip>
+                <Chip tone="success" className="gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {completa} a completar
+                </Chip>
+                {iguais > 0 && (
+                  <Chip tone="soft" className="gap-1.5">
+                    {iguais} sem nada a completar
+                  </Chip>
+                )}
               </div>
 
               <div className="card-soft overflow-hidden">
@@ -1198,17 +1490,20 @@ function ImportModal({
                       <tr>
                         <th className="px-3 py-2">Nome</th>
                         <th className="px-3 py-2">E-mail</th>
+                        <th className="px-3 py-2">Telefone</th>
                         <th className="px-3 py-2">Filial</th>
                         <th className="px-3 py-2">Cargo</th>
                         <th className="px-3 py-2">Admissão</th>
                         <th className="px-3 py-2">Nasc.</th>
+                        <th className="px-3 py-2">O que acontece</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.slice(0, 100).map((r, i) => (
+                      {plans.slice(0, 100).map(({ row: r, match, fills }, i) => (
                         <tr key={i} className="border-t border-border">
                           <td className="px-3 py-1.5 font-semibold">{r.name}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.email ?? "—"}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{r.phone ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.department ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">
@@ -1217,6 +1512,23 @@ function ImportModal({
                           <td className="px-3 py-1.5 text-muted-foreground">
                             {r.birth_date ? fmtDate(r.birth_date, "dd/mm") : "—"}
                           </td>
+                          <td className="px-3 py-1.5">
+                            {!match ? (
+                              <span className="font-bold text-primary">Cadastra</span>
+                            ) : fills.length > 0 ? (
+                              <span className="text-muted-foreground">
+                                Completa {fills.map(fieldLabel).join(", ")}
+                                <span className="block text-[10px] opacity-70">
+                                  já existe como {match.name}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground opacity-70">
+                                Ignora
+                                <span className="block text-[10px]">já existe como {match.name}</span>
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1224,14 +1536,16 @@ function ImportModal({
                 </div>
               </div>
 
-              <button
+              <InkButton
                 onClick={() => onImport(rows)}
-                disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                disabled={loading || novos + completa === 0}
+                className="w-full justify-center"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Importar {rows.length} colaboradores
-              </button>
+                {novos + completa === 0
+                  ? "Nada a importar"
+                  : `Cadastrar ${novos} e completar ${completa}`}
+              </InkButton>
             </>
           )}
         </div>

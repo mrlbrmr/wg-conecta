@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { fieldsToFill, matchByName } from "@/lib/employee-match";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { normalizeSiteUrl } from "@/lib/site-url";
@@ -258,6 +259,21 @@ export const deleteEmployee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Exclusão em lote a partir da seleção da tabela. Mesma regra do individual:
+// sai só o registro do diretório, a conta de acesso continua em Usuários admin.
+export const bulkDeleteEmployees = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error, count } = await supabaseAdmin
+      .from("employees")
+      .delete({ count: "exact" })
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, deleted: count ?? data.ids.length };
+  });
+
 export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator(z.object({ id: z.string().uuid(), photo_url: z.string().url() }))
@@ -271,6 +287,13 @@ export const updateEmployeePhotoUrl = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Importação da planilha do DP.
+ *
+ * Quem já existe **não** é duplicado nem sobrescrito: a linha só completa os campos
+ * que estão vazios no cadastro (e-mail, telefone, datas, cargo, área, unidade).
+ * Quem não casa com ninguém entra como colaborador novo, sem acesso ao portal.
+ */
 export const bulkImportEmployees = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator(
@@ -279,6 +302,7 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
         z.object({
           name: z.string().min(2).max(120),
           email: z.string().email().optional(),
+          phone: z.string().max(30).optional(),
           department: z.string().max(120).optional(),
           job_title: z.string().max(120).optional(),
           unit: z.string().max(120).optional(),
@@ -292,74 +316,42 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { randomUUID } = await import("crypto");
 
-    // Carrega colaboradores existentes
     const { data: existing } = await supabaseAdmin
       .from("employees")
-      .select("id, name, email, birth_date, admission_date, department, job_title");
+      .select("id, name, email, phone, birth_date, admission_date, department, job_title, unit");
 
     type Emp = {
       id: string;
       name: string;
       email: string | null;
+      phone: string | null;
       birth_date: string | null;
       admission_date: string | null;
       department: string | null;
       job_title: string | null;
+      unit: string | null;
     };
-    const employees = (existing ?? []) as Emp[];
+    const pool = [...((existing ?? []) as Emp[])];
 
-    // Normaliza: minúsculo, sem acentos, espaços comprimidos.
-    // "CÉLIO DE BRITTO" e "Celio de Britto" viram "celio de britto".
-    const norm = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    // Índice por nome completo normalizado
-    const byFullName = new Map(employees.map((e) => [norm(e.name), e]));
-
-    // Índice por primeiro nome → null se ambíguo (mais de um colaborador)
-    const byFirstName = new Map<string, Emp | null>();
-    for (const e of employees) {
-      const first = norm(e.name).split(" ")[0];
-      byFirstName.set(first, byFirstName.has(first) ? null : e);
-    }
-
-    const findMatch = (name: string): Emp | null => {
-      const key = norm(name);
-      const exact = byFullName.get(key);
-      if (exact) return exact;
-      const first = key.split(" ")[0];
-      return byFirstName.get(first) ?? null;
-    };
-
-    let updated = 0;
+    let completed = 0;
     let inserted = 0;
     let skipped = 0;
+    // Duas linhas da planilha nunca escrevem na mesma pessoa.
+    const touched = new Set<string>();
 
     for (const emp of data.employees) {
-      const match = findMatch(emp.name);
+      const match = matchByName(emp.name, pool);
 
       if (match) {
-        // Atualiza campos ausentes/novos — nunca sobrescreve dados existentes sem motivo
-        const patch: {
-          email?: string;
-          birth_date?: string;
-          admission_date?: string;
-          department?: string;
-          job_title?: string;
-          unit?: string;
-          updated_at?: string;
-        } = {};
-        if (emp.email && !match.email) patch.email = emp.email;
-        if (emp.birth_date && !match.birth_date) patch.birth_date = emp.birth_date;
-        if (emp.admission_date && !match.admission_date) patch.admission_date = emp.admission_date;
-        if (emp.department) patch.department = emp.department;
-        if (emp.job_title) patch.job_title = emp.job_title;
-        if (emp.unit) patch.unit = emp.unit;
+        if (touched.has(match.id)) {
+          skipped++;
+          continue;
+        }
+        touched.add(match.id);
+
+        // Só o que está vazio no cadastro. Dado já gravado nunca é sobrescrito.
+        const patch: Record<string, string> = {};
+        for (const key of fieldsToFill(emp, match)) patch[key] = emp[key]!;
 
         if (Object.keys(patch).length === 0) {
           skipped++;
@@ -371,25 +363,32 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
           .from("employees")
           .update(patch as never)
           .eq("id", match.id);
-        if (!error) updated++;
+        if (error) throw new Error(error.message);
+        completed++;
+        Object.assign(match, patch);
       } else {
-        // Insere novo colaborador sem conta de acesso
-        const { error } = await supabaseAdmin.from("employees").insert({
+        const row = {
           id: randomUUID(),
           name: emp.name,
           email: emp.email ?? null,
+          phone: emp.phone ?? null,
           department: emp.department ?? null,
           job_title: emp.job_title ?? null,
           unit: emp.unit ?? null,
           birth_date: emp.birth_date ?? null,
           admission_date: emp.admission_date ?? null,
           active: true,
-        });
-        if (!error) inserted++;
+        };
+        const { error } = await supabaseAdmin.from("employees").insert(row);
+        if (error) throw new Error(error.message);
+        inserted++;
+        // Entra no índice: uma segunda linha com o mesmo nome completa, não duplica.
+        pool.push(row as Emp);
+        touched.add(row.id);
       }
     }
 
-    return { ok: true, updated, inserted, skipped };
+    return { ok: true, completed, inserted, skipped };
   });
 
 /**
