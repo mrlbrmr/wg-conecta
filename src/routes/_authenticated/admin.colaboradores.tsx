@@ -1276,6 +1276,11 @@ function ImportModal({
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState("");
   const [parsing, setParsing] = useState(false);
+  /**
+   * Planilha de cadastro traz gente nova; planilha de e-mails traz caixa de setor
+   * ("Financeiro", "NF-e"), que não é pessoa nenhuma. Quem decide é quem importa.
+   */
+  const [createNew, setCreateNew] = useState(true);
 
   /**
    * Mesma conta que o servidor faz na hora de gravar: quem casa por nome não é
@@ -1289,20 +1294,27 @@ function ImportModal({
       const match = matchByName(row.name, pool);
       if (!match) {
         // O cadastro novo entra na lista: uma segunda linha parecida não duplica.
-        const novo = { ...EMPTY_EMPLOYEE, ...row, id: `novo:${i}` };
-        pool.push(novo);
-        touched.add(novo.id);
+        // Se ninguém vai ser cadastrado, ele não existe e a linha seguinte também fica de fora.
+        if (createNew) {
+          const novo = { ...EMPTY_EMPLOYEE, ...row, id: `novo:${i}` };
+          pool.push(novo);
+          touched.add(novo.id);
+        }
         return { row, match: null, fills: [] };
       }
       if (touched.has(match.id)) return { row, match, fills: [] };
       touched.add(match.id);
       return { row, match, fills: fieldsToFill(row, match) };
     });
-  }, [rows, employees]);
+  }, [rows, employees, createNew]);
 
   const novos = plans.filter((p) => !p.match).length;
   const completa = plans.filter((p) => p.match && p.fills.length > 0).length;
   const iguais = plans.length - novos - completa;
+  // Só sobe o que muda alguma coisa — o resto nem sai do navegador.
+  const toImport = plans
+    .filter((pl) => (pl.match ? pl.fills.length > 0 : createNew))
+    .map((pl) => pl.row);
 
   const handleFile = async (file: File) => {
     setParsing(true);
@@ -1349,8 +1361,18 @@ function ImportModal({
           norm[nk(k)] = v;
         }
 
+        // "Nome completo" primeiro: na planilha de e-mails a coluna "Quem usa" traz
+        // apelido ("Adriane") ou caixa de setor ("Financeiro", "NF-e"), e é o nome
+        // completo que casa com o cadastro. Quando ela vem vazia, cai para o resto.
         const nome =
-          norm["nome"] || norm["name"] || norm["colaborador"] || norm["quemusai"] || norm["quemusao"] || norm["quemusa"];
+          norm["nomecompleto"] ||
+          norm["nomecompletodocolaborador"] ||
+          norm["nome"] ||
+          norm["name"] ||
+          norm["colaborador"] ||
+          norm["quemusai"] ||
+          norm["quemusao"] ||
+          norm["quemusa"];
         if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
 
         const emailRaw = norm["email"] || norm["email1"] || norm["corretoeletronico"];
@@ -1434,8 +1456,12 @@ function ImportModal({
           <div className="rounded-xl bg-surface-muted p-4 text-sm space-y-1">
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
-              Nome / Quem usa, E-mail, Telefone / Celular, Cargo, Filial / Unidade, Admissão /
-              Data_admissão, Data Nasc. / Data_nascimento
+              Nome completo / Nome / Quem usa, E-mail, Telefone / Celular, Cargo, Filial /
+              Unidade, Admissão / Data_admissão, Data Nasc. / Data_nascimento
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              Quando existe uma coluna <strong>Nome completo</strong>, é ela que vale — “Quem usa”
+              costuma trazer apelido ou caixa de setor.
             </p>
             <p className="text-muted-foreground text-xs mt-2">
               Quem já está no diretório <strong>não é cadastrado de novo</strong>: a planilha só
@@ -1469,19 +1495,32 @@ function ImportModal({
 
           {rows.length > 0 && (
             <>
-              <div className="flex flex-wrap gap-2">
-                <Chip tone="accent" className="gap-1.5">
-                  <UserPlus className="h-3.5 w-3.5" /> {novos} novo{novos !== 1 ? "s" : ""}
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip tone={createNew ? "accent" : "soft"} className="gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5" /> {novos} fora do diretório
                 </Chip>
                 <Chip tone="success" className="gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5" /> {completa} a completar
                 </Chip>
                 {iguais > 0 && (
-                  <Chip tone="soft" className="gap-1.5">
-                    {iguais} sem nada a completar
-                  </Chip>
+                  <Chip tone="soft" className="gap-1.5">{iguais} sem nada a completar</Chip>
                 )}
               </div>
+
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border-[1.5px] border-ink/25 bg-surface px-4 py-3">
+                <Checkbox
+                  checked={createNew}
+                  onCheckedChange={(v) => setCreateNew(v === true)}
+                  className={cn(CHECKBOX, "mt-[1px]")}
+                />
+                <span className="text-sm leading-[1.5]">
+                  <span className="font-bold">Cadastrar quem não está no diretório</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Desmarque em planilha que só traz contato — as {novos} linhas sem
+                    correspondência ficam de fora em vez de virar colaborador novo.
+                  </span>
+                </span>
+              </label>
 
               <div className="card-soft overflow-hidden">
                 <div className="max-h-72 overflow-y-auto">
@@ -1514,7 +1553,14 @@ function ImportModal({
                           </td>
                           <td className="px-3 py-1.5">
                             {!match ? (
-                              <span className="font-bold text-primary">Cadastra</span>
+                              createNew ? (
+                                <span className="font-bold text-primary">Cadastra</span>
+                              ) : (
+                                <span className="text-muted-foreground opacity-70">
+                                  Deixa de fora
+                                  <span className="block text-[10px]">não está no diretório</span>
+                                </span>
+                              )
                             ) : fills.length > 0 ? (
                               <span className="text-muted-foreground">
                                 Completa {fills.map(fieldLabel).join(", ")}
@@ -1536,15 +1582,24 @@ function ImportModal({
                 </div>
               </div>
 
+              {plans.length > 100 && (
+                <p className="text-xs text-muted-foreground">
+                  A prévia mostra as 100 primeiras linhas; os números acima valem para a planilha
+                  inteira ({plans.length} linhas).
+                </p>
+              )}
+
               <InkButton
-                onClick={() => onImport(rows)}
-                disabled={loading || novos + completa === 0}
+                onClick={() => onImport(toImport)}
+                disabled={loading || toImport.length === 0}
                 className="w-full justify-center"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {novos + completa === 0
+                {toImport.length === 0
                   ? "Nada a importar"
-                  : `Cadastrar ${novos} e completar ${completa}`}
+                  : createNew
+                    ? `Cadastrar ${novos} e completar ${completa}`
+                    : `Completar ${completa} cadastro${completa !== 1 ? "s" : ""}`}
               </InkButton>
             </>
           )}
