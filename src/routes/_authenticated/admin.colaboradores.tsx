@@ -1,11 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import {
-  AlertCircle, CheckCircle2, ImagePlus, Loader2, MailCheck, MoreHorizontal,
-  Pencil, RefreshCcw, Search, ShieldOff, Upload, UserPlus, X,
+  AlertCircle,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  MailCheck,
+  MoreHorizontal,
+  Pencil,
+  RefreshCcw,
+  ShieldOff,
+  Upload,
+  UserPlus,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,7 +35,12 @@ import {
   updateEmployeePhotoUrl,
 } from "@/lib/employee.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { avatarColor, fmtDate, initials } from "@/lib/employee-ui";
+import { fmtDate } from "@/lib/employee-ui";
+import { formatDate } from "@/lib/tenure";
+import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
+import { UserAvatar } from "@/components/user-avatar";
+import { useAdminSearch } from "@/components/admin-search";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type Employee = {
@@ -39,6 +54,8 @@ type Employee = {
   phone: string | null;
   birth_date: string | null;
   admission_date: string | null;
+  manager_id: string | null;
+  co_manager_id: string | null;
   active: boolean;
   invited_at: string | null;
   created_at: string;
@@ -55,6 +72,25 @@ type ImportRow = {
 };
 
 type StatusFilter = "todos" | "ativos" | "inativos";
+type SortKey = "name" | "manager" | "admission";
+type SortDir = "asc" | "desc";
+
+/** Linha da tabela já resolvida: o gestor vem por id e precisa virar nome. */
+type Row = Employee & { managerName: string; coManagerName: string };
+
+const ALL_DEPTS = "Todos os departamentos";
+const ALL_UNITS = "Todas as unidades";
+const ALL_MANAGERS = "Todos os gestores";
+const NO_MANAGER = "__sem_gestor__";
+
+/** Mesma trilha da tela de Cultura: registro largo, colunas fixas, ações à direita. */
+const GRID = "grid grid-cols-[1fr_180px_170px_105px_112px_96px_104px] items-center gap-4";
+
+const SELECT =
+  "h-[38px] rounded-full border-[1.5px] border-ink bg-surface px-3.5 text-[13px] font-bold " +
+  "outline-none transition-colors hover:bg-accent-soft focus-visible:ring-1 focus-visible:ring-ring";
+
+const COL_HEAD = "text-[10px] font-extrabold tracking-[0.16em] text-paper/75 uppercase";
 
 export const Route = createFileRoute("/_authenticated/admin/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores — Portal WG" }] }),
@@ -81,6 +117,7 @@ function xlDateToISO(serial: unknown): string | undefined {
 function ColaboradoresPage() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ["employees"] });
+  const { term: rawTerm } = useAdminSearch();
 
   const doList = useServerFn(listEmployees);
   const doAdd = useServerFn(addEmployee);
@@ -98,8 +135,13 @@ function ColaboradoresPage() {
   const [invitingExisting, setInvitingExisting] = useState<Employee | null>(null);
   const [importing, setImporting] = useState(false);
   const [importingPhotos, setImportingPhotos] = useState(false);
-  const [search, setSearch] = useState("");
+
+  const [dept, setDept] = useState(ALL_DEPTS);
+  const [unit, setUnit] = useState(ALL_UNITS);
+  const [manager, setManager] = useState(ALL_MANAGERS);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const mAdd = useMutation({
     mutationFn: (p: Parameters<typeof doAdd>[0]["data"]) => doAdd({ data: p }),
@@ -157,190 +199,409 @@ function ColaboradoresPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const employees = (q.data ?? []) as Employee[];
-  const term = search.trim().toLowerCase();
-  const filtered = employees.filter((e) => {
-    if (statusFilter === "ativos" && !e.active) return false;
-    if (statusFilter === "inativos" && e.active) return false;
-    if (!term) return true;
-    return (
-      e.name.toLowerCase().includes(term) ||
-      (e.email?.toLowerCase().includes(term) ?? false) ||
-      (e.department?.toLowerCase().includes(term) ?? false) ||
-      (e.job_title?.toLowerCase().includes(term) ?? false)
-    );
-  });
+  const employees = useMemo(() => (q.data ?? []) as Employee[], [q.data]);
 
-  const counts = {
-    todos: employees.length,
-    ativos: employees.filter((e) => e.active).length,
-    inativos: employees.filter((e) => !e.active).length,
-  };
+  const nameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of employees) m.set(e.id, e.name);
+    return m;
+  }, [employees]);
+
+  /** Base da tela: todo mundo, com o gestor já resolvido em nome. */
+  const base = useMemo<Row[]>(
+    () =>
+      employees.map((e) => ({
+        ...e,
+        managerName: (e.manager_id && nameById.get(e.manager_id)) || "",
+        coManagerName: (e.co_manager_id && nameById.get(e.co_manager_id)) || "",
+      })),
+    [employees, nameById],
+  );
+
+  const deptOptions = useMemo(() => {
+    const set = new Set(employees.map((e) => e.department).filter(Boolean) as string[]);
+    return [ALL_DEPTS, ...[...set].sort((a, b) => a.localeCompare(b, "pt-BR"))];
+  }, [employees]);
+
+  const unitOptions = useMemo(() => {
+    const set = new Set(employees.map((e) => e.unit).filter(Boolean) as string[]);
+    return [ALL_UNITS, ...[...set].sort((a, b) => a.localeCompare(b, "pt-BR"))];
+  }, [employees]);
+
+  /** Só quem de fato lidera alguém entra no filtro, mais a opção "sem gestor". */
+  const managerOptions = useMemo(() => {
+    const ids = new Set<string>();
+    for (const e of employees) {
+      if (e.manager_id) ids.add(e.manager_id);
+      if (e.co_manager_id) ids.add(e.co_manager_id);
+    }
+    const named = [...ids]
+      .map((id) => ({ id, name: nameById.get(id) ?? "—" }))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    return [
+      { id: ALL_MANAGERS, name: ALL_MANAGERS },
+      { id: NO_MANAGER, name: "Sem gestor definido" },
+      ...named,
+    ];
+  }, [employees, nameById]);
+
+  const term = rawTerm.trim().toLowerCase();
+  // A base muda com a importação; um filtro órfão volta para "todos".
+  const activeDept = deptOptions.includes(dept) ? dept : ALL_DEPTS;
+  const activeUnit = unitOptions.includes(unit) ? unit : ALL_UNITS;
+  const activeManager = managerOptions.some((m) => m.id === manager) ? manager : ALL_MANAGERS;
+  const hasFilters =
+    activeDept !== ALL_DEPTS ||
+    activeUnit !== ALL_UNITS ||
+    activeManager !== ALL_MANAGERS ||
+    statusFilter !== "todos";
+
+  const rows = useMemo(() => {
+    const filtered = base.filter((e) => {
+      if (statusFilter === "ativos" && !e.active) return false;
+      if (statusFilter === "inativos" && e.active) return false;
+      if (activeDept !== ALL_DEPTS && e.department !== activeDept) return false;
+      if (activeUnit !== ALL_UNITS && e.unit !== activeUnit) return false;
+      if (activeManager === NO_MANAGER && (e.manager_id || e.co_manager_id)) return false;
+      if (
+        activeManager !== ALL_MANAGERS &&
+        activeManager !== NO_MANAGER &&
+        e.manager_id !== activeManager &&
+        e.co_manager_id !== activeManager
+      ) {
+        return false;
+      }
+      if (!term) return true;
+      return (
+        e.name.toLowerCase().includes(term) ||
+        (e.email?.toLowerCase().includes(term) ?? false) ||
+        (e.department?.toLowerCase().includes(term) ?? false) ||
+        (e.unit?.toLowerCase().includes(term) ?? false) ||
+        (e.job_title?.toLowerCase().includes(term) ?? false) ||
+        e.managerName.toLowerCase().includes(term)
+      );
+    });
+
+    const sign = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      if (sortKey === "manager") {
+        // Quem não tem gestor fica no fim nos dois sentidos.
+        if (!a.managerName !== !b.managerName) return a.managerName ? -1 : 1;
+        const byManager = a.managerName.localeCompare(b.managerName, "pt-BR");
+        if (byManager !== 0) return sign * byManager;
+        return a.name.localeCompare(b.name, "pt-BR");
+      }
+      if (sortKey === "admission") {
+        // Sem admissão também vai para o fim. Ascendente = mais antigo primeiro.
+        if (!a.admission_date !== !b.admission_date) return a.admission_date ? -1 : 1;
+        const byDate = (a.admission_date ?? "").localeCompare(b.admission_date ?? "");
+        if (byDate !== 0) return sign * byDate;
+        return a.name.localeCompare(b.name, "pt-BR");
+      }
+      return sign * a.name.localeCompare(b.name, "pt-BR");
+    });
+  }, [base, term, activeDept, activeUnit, activeManager, statusFilter, sortKey, sortDir]);
+
+  const counts = useMemo(() => {
+    const active = employees.filter((e) => e.active);
+    return {
+      todos: employees.length,
+      ativos: active.length,
+      inativos: employees.length - active.length,
+      comAcesso: active.filter((e) => e.auth_user_id).length,
+      semGestor: active.filter((e) => !e.manager_id && !e.co_manager_id).length,
+    };
+  }, [employees]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  function clearFilters() {
+    setDept(ALL_DEPTS);
+    setUnit(ALL_UNITS);
+    setManager(ALL_MANAGERS);
+    setStatusFilter("todos");
+  }
+
+  const mark = (key: SortKey) => (sortKey === key ? (sortDir === "asc" ? "↑" : "↓") : "↕");
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b-[1.5px] border-ink pb-5">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-black">Colaboradores</h1>
-          <p className="text-sm text-gray-700">
-            Gerencie o diretório e os acessos ao Portal do Colaborador.
+          <Kicker>Gente &amp; Gestão</Kicker>
+          <h1 className="mt-3 text-[28px] leading-[1.02] font-black tracking-[-0.045em] sm:text-[34px] lg:text-[42px]">
+            Colaboradores.
+          </h1>
+          <p className="mt-3 max-w-[60ch] text-[15.5px] leading-[1.7] text-muted-foreground">
+            Diretório completo, gestão direta e acesso ao Portal do Colaborador. As datas
+            cadastradas aqui alimentam{" "}
+            <Link
+              to="/admin/recurso/$key"
+              params={{ key: "aniversariantes" }}
+              className="font-bold text-primary hover:underline"
+            >
+              Aniversariantes e tempo de casa
+            </Link>
+            .
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setImporting(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
-          >
+        <div className="flex flex-wrap gap-2">
+          <InkButton variant="outline" onClick={() => setImporting(true)}>
             <Upload className="h-4 w-4" /> Importar XLSX
-          </button>
-          <button
-            onClick={() => setImportingPhotos(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
-          >
+          </InkButton>
+          <InkButton variant="outline" onClick={() => setImportingPhotos(true)}>
             <ImagePlus className="h-4 w-4" /> Importar fotos
-          </button>
-          <button
-            onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#8FD152] px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
-          >
+          </InkButton>
+          <InkButton onClick={() => setAdding(true)}>
             <UserPlus className="h-4 w-4" /> Cadastrar colaborador
-          </button>
+          </InkButton>
         </div>
+      </header>
+
+      {/* Indicadores — sempre sobre a base inteira, nunca sobre o filtro. */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          size="sm"
+          label="Colaboradores ativos"
+          value={String(counts.ativos)}
+          note={`${counts.inativos} inativo(s) no cadastro`}
+        />
+        <KpiCard
+          size="sm"
+          label="Com acesso ao portal"
+          value={String(counts.comAcesso)}
+          note={`${counts.ativos - counts.comAcesso} ainda sem acesso`}
+        />
+        <KpiCard
+          size="sm"
+          label="Sem gestor definido"
+          value={String(counts.semGestor)}
+          note="entre os ativos"
+        />
+        <KpiCard
+          size="sm"
+          label="Gestores no cadastro"
+          value={String(Math.max(0, managerOptions.length - 2))}
+          note="pessoas que lideram alguém"
+        />
       </div>
 
-      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-        {/* Toolbar: busca e filtros */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-black/20">
-          {/* Busca */}
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, e-mail, filial ou cargo…"
-              className="w-full rounded-lg border-2 border-black/20 bg-white pl-9 pr-4 py-2 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-black/10"
-            />
-          </div>
-          {/* Tabs de filtro */}
-          <div className="inline-flex items-center gap-1 rounded-lg bg-black/5 p-1 border border-black/20">
-            {(["todos", "ativos", "inativos"] as StatusFilter[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`rounded px-3 py-1 text-sm transition-all ${
-                  statusFilter === s
-                    ? "bg-white border border-black text-black font-bold"
-                    : "text-gray-700 hover:text-black"
-                }`}
-              >
-                <span className="capitalize">{s}</span>
-                <span className={`ml-1.5 text-xs ${statusFilter === s ? "text-black/60" : "text-gray-500"}`}>
-                  {counts[s]}
-                </span>
-              </button>
+      <div className="mt-7 overflow-hidden rounded-lg border-[1.5px] border-ink bg-surface shadow-paper">
+        {/* Filtros */}
+        <div className="flex flex-wrap items-center gap-3 border-b-[1.5px] border-ink px-[22px] py-3.5">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            aria-label="Filtrar por status"
+            className={SELECT}
+          >
+            <option value="todos">Todos ({counts.todos})</option>
+            <option value="ativos">Ativos ({counts.ativos})</option>
+            <option value="inativos">Inativos ({counts.inativos})</option>
+          </select>
+          <select
+            value={activeDept}
+            onChange={(e) => setDept(e.target.value)}
+            aria-label="Filtrar por departamento"
+            className={SELECT}
+          >
+            {deptOptions.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
             ))}
-          </div>
-          {/* Contador */}
-          {employees.length > 0 && (
-            <span className="text-xs text-gray-700 sm:ml-auto whitespace-nowrap">
-              {filtered.length} de {employees.length} colaboradores
-            </span>
+          </select>
+          <select
+            value={activeUnit}
+            onChange={(e) => setUnit(e.target.value)}
+            aria-label="Filtrar por unidade"
+            className={SELECT}
+          >
+            {unitOptions.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          <select
+            value={activeManager}
+            onChange={(e) => setManager(e.target.value)}
+            aria-label="Filtrar por gestor"
+            className={SELECT}
+          >
+            {managerOptions.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-[13px] font-extrabold text-primary underline underline-offset-[3px]"
+            >
+              Limpar filtros
+            </button>
           )}
+          <span className="ml-auto text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase tabular-nums">
+            {rows.length} {rows.length === 1 ? "pessoa" : "pessoas"}
+          </span>
         </div>
 
-        {/* Tabela */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-black/20 bg-black/5">
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Colaborador</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Filial / Cargo</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Admissão</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Acesso</th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {q.isLoading && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#2F8F4A]" />
-                  </td>
-                </tr>
-              )}
-              {!q.isLoading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-700 text-sm">
-                    {employees.length === 0
-                      ? "Nenhum colaborador cadastrado."
-                      : "Nenhum resultado para os filtros aplicados."}
-                  </td>
-                </tr>
-              )}
-              {filtered.map((emp) => (
-                <tr key={emp.id} className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors">
-                  {/* Colaborador: avatar + nome + email */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {emp.photo_url ? (
-                        <img
-                          src={emp.photo_url}
-                          alt={emp.name}
-                          className="h-9 w-9 shrink-0 rounded-full object-cover object-top"
-                        />
-                      ) : (
-                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(emp.name)}`}>
-                          {initials(emp.name)}
-                        </span>
+          <div className="min-w-[1120px]">
+            {/* Cabeçalho de colunas */}
+            <div className={cn(GRID, "bg-ink px-[22px] py-[13px]")}>
+              <button
+                type="button"
+                onClick={() => toggleSort("name")}
+                className={cn(COL_HEAD, "inline-flex items-center gap-1.5 text-left")}
+              >
+                Pessoa <span className="text-accent">{mark("name")}</span>
+              </button>
+              <span className={COL_HEAD}>Cargo e área</span>
+              <button
+                type="button"
+                onClick={() => toggleSort("manager")}
+                className={cn(COL_HEAD, "inline-flex items-center gap-1.5 text-left")}
+              >
+                Gestor <span className="text-accent">{mark("manager")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleSort("admission")}
+                className={cn(COL_HEAD, "inline-flex items-center gap-1.5 text-left")}
+              >
+                Admissão <span className="text-accent">{mark("admission")}</span>
+              </button>
+              <span className={COL_HEAD}>Acesso</span>
+              <span className={COL_HEAD}>Status</span>
+              <span className={cn(COL_HEAD, "text-right")}>Ações</span>
+            </div>
+
+            {q.isLoading ? (
+              <SkeletonRows />
+            ) : rows.length === 0 ? (
+              <div className="px-[22px] py-10">
+                <p className="text-xl font-black tracking-tight">
+                  {employees.length === 0
+                    ? "Nenhum colaborador cadastrado."
+                    : "Nenhum resultado para esses filtros."}
+                </p>
+                <p className="mt-2 text-[15px] leading-[1.65] text-muted-foreground">
+                  {employees.length === 0
+                    ? "Cadastre a primeira pessoa ou importe a planilha do DP."
+                    : "Tente outro nome, ou limpe os filtros para ver o diretório inteiro."}
+                </p>
+              </div>
+            ) : (
+              rows.map((emp) => (
+                <div
+                  key={emp.id}
+                  className={cn(
+                    GRID,
+                    "border-t border-border px-[22px] py-4 transition-colors hover:bg-accent-soft/40",
+                    !emp.active && "opacity-70",
+                  )}
+                >
+                  {/* Pessoa */}
+                  <div className="flex min-w-0 items-center gap-3">
+                    <UserAvatar name={emp.name} photoUrl={emp.photo_url} size={40} />
+                    <div className="min-w-0">
+                      <p className="truncate text-[16.5px] font-extrabold tracking-[-0.02em]">
+                        {emp.name}
+                      </p>
+                      {emp.email && (
+                        <p className="truncate text-xs text-muted-foreground">{emp.email}</p>
                       )}
-                      <div>
-                        <div className="font-medium text-black">{emp.name}</div>
-                        {emp.email && (
-                          <div className="text-xs text-gray-700">{emp.email}</div>
-                        )}
-                      </div>
                     </div>
-                  </td>
-                  {/* Filial / Cargo */}
-                  <td className="px-6 py-4">
-                    {emp.department && <div className="text-sm font-medium text-black">{emp.department}</div>}
-                    {emp.job_title && <div className="text-xs text-gray-700">{emp.job_title}</div>}
-                    {!emp.department && !emp.job_title && <span className="text-gray-500">—</span>}
-                  </td>
+                  </div>
+
+                  {/* Cargo e área */}
+                  <div className="min-w-0">
+                    {emp.job_title && (
+                      <p className="truncate text-[13px] font-bold">{emp.job_title}</p>
+                    )}
+                    {emp.department && (
+                      <p className="truncate text-xs text-muted-foreground">{emp.department}</p>
+                    )}
+                    {!emp.job_title && !emp.department && (
+                      <span className="text-[13px] text-muted-foreground">—</span>
+                    )}
+                  </div>
+
+                  {/* Gestor */}
+                  <div className="min-w-0">
+                    {emp.managerName ? (
+                      <>
+                        <p className="truncate text-[13px] font-bold text-muted-foreground">
+                          {emp.managerName}
+                        </p>
+                        {emp.coManagerName && (
+                          <p className="truncate text-[11.5px] text-muted-foreground">
+                            e {emp.coManagerName}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-[13px] text-muted-foreground">—</span>
+                    )}
+                  </div>
+
                   {/* Admissão */}
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {fmtDate(emp.admission_date) ?? <span className="text-gray-500">—</span>}
-                  </td>
+                  <span className="text-[13px] font-bold text-muted-foreground tabular-nums">
+                    {formatDate(emp.admission_date)}
+                  </span>
+
                   {/* Acesso */}
-                  <td className="px-6 py-4">
+                  <span>
                     {emp.auth_user_id ? (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-blue-100 border border-black/30">Portal</span>
+                      <Chip tone="accent">Portal</Chip>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded px-2.5 py-0.5 text-xs font-bold text-black border border-black/20 bg-white">
+                      <Chip tone="soft" className="gap-1">
                         <ShieldOff className="h-3 w-3" /> Sem acesso
-                      </span>
+                      </Chip>
                     )}
-                  </td>
+                  </span>
+
                   {/* Status */}
-                  <td className="px-6 py-4">
+                  <span>
                     {emp.active ? (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-[#8FD152]/30 border border-black/40">Ativo</span>
+                      <Chip tone="success">Ativo</Chip>
                     ) : (
-                      <span className="inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black bg-white border border-black/30">Inativo</span>
+                      <Chip tone="soft">Inativo</Chip>
                     )}
-                  </td>
+                  </span>
+
                   {/* Ações */}
-                  <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(emp)}
+                      className="text-[11px] font-extrabold tracking-[0.1em] text-ink uppercase hover:text-primary"
+                    >
+                      Editar
+                    </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="rounded-lg p-1.5 text-gray-500 hover:text-black hover:bg-black/5 transition-colors">
+                        <button
+                          type="button"
+                          aria-label={`Mais ações para ${emp.name}`}
+                          className="grid h-7 w-7 place-items-center rounded-lg border border-border transition hover:bg-accent-soft"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-52">
                         <DropdownMenuItem onClick={() => setEditing(emp)}>
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> Editar
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> Editar cadastro
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {emp.auth_user_id ? (
@@ -363,27 +624,38 @@ function ColaboradoresPage() {
                         <DropdownMenuItem
                           onClick={() => mToggle.mutate(emp)}
                           disabled={mToggle.isPending}
-                          className={emp.active ? "text-red-600 focus:text-red-600" : ""}
+                          className={emp.active ? "text-destructive focus:text-destructive" : ""}
                         >
                           {emp.active ? "Desativar colaborador" : "Reativar colaborador"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t-[1.5px] border-ink px-[22px] py-3">
+          <span className="text-[11.5px] text-muted-foreground">
+            Uso interno. Nada de CPF, endereço, documentos ou dados bancários por aqui.
+          </span>
+          <span className="text-[11.5px] font-bold text-muted-foreground tabular-nums">
+            {rows.length} de {employees.length} colaboradores
+          </span>
         </div>
       </div>
 
       {/* Modal: cadastrar colaborador no diretório (sem convite) */}
       {adding && (
         <Modal title="Cadastrar colaborador" onClose={() => setAdding(false)}>
-          <p className="px-6 pt-4 text-xs text-slate-500">
-            O colaborador é adicionado ao diretório. Para dar acesso ao portal, use "Dar acesso" depois.
+          <p className="px-6 pt-4 text-xs text-muted-foreground">
+            O colaborador é adicionado ao diretório. Para dar acesso ao portal, use “Dar acesso”
+            depois.
           </p>
           <EmployeeForm
+            employees={employees}
             onSubmit={(v) => mAdd.mutate(v)}
             onCancel={() => setAdding(false)}
             loading={mAdd.isPending}
@@ -396,6 +668,7 @@ function ColaboradoresPage() {
         <Modal title={`Editar — ${editing.name}`} onClose={() => setEditing(null)}>
           <EmployeeForm
             initial={editing}
+            employees={employees}
             onSubmit={(v) => mUpdate.mutate({ id: editing.id, ...v })}
             onCancel={() => setEditing(null)}
             loading={mUpdate.isPending}
@@ -410,7 +683,7 @@ function ColaboradoresPage() {
           onClose={() => setInvitingExisting(null)}
         >
           <div className="px-6 py-5">
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="mb-4 text-sm text-muted-foreground">
               Informe o e-mail deste colaborador para enviar o convite de acesso ao Portal.
             </p>
             <InviteExistingForm
@@ -444,6 +717,32 @@ function ColaboradoresPage() {
   );
 }
 
+/* ─── Peças da tabela ──────────────────────────────────────────────────────── */
+
+function SkeletonRows() {
+  return (
+    <div aria-busy="true" aria-label="Carregando colaboradores">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className={cn(GRID, "border-t border-border px-[22px] py-4")}>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-full bg-ink/10" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="h-4 w-44 max-w-full rounded bg-ink/10" />
+              <div className="h-3 w-28 max-w-full rounded bg-ink/[0.07]" />
+            </div>
+          </div>
+          <div className="h-3 w-24 rounded bg-ink/[0.07]" />
+          <div className="h-3 w-28 rounded bg-ink/[0.07]" />
+          <div className="h-3 w-16 rounded bg-ink/[0.07]" />
+          <div className="h-5 w-16 rounded-full bg-ink/10" />
+          <div className="h-5 w-14 rounded-full bg-ink/10" />
+          <div className="h-7 w-20 justify-self-end rounded-lg bg-ink/[0.07]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Modais e formulários ─────────────────────────────────────────────────── */
 
 function Modal({
@@ -457,23 +756,30 @@ function Modal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-[3px] md:items-center md:p-6"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[95vh] flex flex-col"
+        className="animate-content-in flex max-h-[92vh] w-full max-w-[560px] flex-col rounded-t-lg border-[1.5px] border-ink bg-paper shadow-elevated md:rounded-lg"
       >
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+        <div className="flex items-start justify-between gap-4 border-b-[1.5px] border-ink px-6 py-5">
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold tracking-[0.18em] text-primary uppercase">
+              Gente &amp; Gestão
+            </p>
+            <h2 className="mt-1 truncate text-[22px] font-black tracking-[-0.03em]">{title}</h2>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Fechar"
+            className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] border-[1.5px] border-ink bg-surface transition hover:bg-accent"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1">{children}</div>
+        <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
@@ -488,15 +794,19 @@ type EmployeeFormValues = {
   phone?: string;
   birth_date?: string;
   admission_date?: string;
+  manager_id: string | null;
+  co_manager_id: string | null;
 };
 
 function EmployeeForm({
   initial,
+  employees,
   onSubmit,
   onCancel,
   loading,
 }: {
   initial?: Partial<Employee>;
+  employees: Employee[];
   onSubmit: (v: EmployeeFormValues) => void;
   onCancel: () => void;
   loading: boolean;
@@ -509,6 +819,21 @@ function EmployeeForm({
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(initial?.admission_date ?? "");
+  const [managerId, setManagerId] = useState(initial?.manager_id ?? "");
+  const [coManagerId, setCoManagerId] = useState(initial?.co_manager_id ?? "");
+
+  // Ninguém é gestor de si mesmo. Inativo só aparece se já estiver gravado.
+  const candidates = useMemo(
+    () =>
+      employees
+        .filter(
+          (e) =>
+            e.id !== initial?.id &&
+            (e.active || e.id === initial?.manager_id || e.id === initial?.co_manager_id),
+        )
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    [employees, initial?.id, initial?.manager_id, initial?.co_manager_id],
+  );
 
   return (
     <form
@@ -524,13 +849,15 @@ function EmployeeForm({
           phone: phone || undefined,
           birth_date: birthDate || undefined,
           admission_date: admissionDate || undefined,
+          manager_id: managerId || null,
+          // Segundo gestor sem o primeiro não faz sentido.
+          co_manager_id: (managerId && coManagerId) || null,
         });
       }}
     >
-      {/* Corpo do formulário */}
       <div className="px-6 pt-5 pb-2">
         {/* Identificação */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <Field label="Nome completo">
               <input required value={name} onChange={(e) => setName(e.target.value)} className={inp} />
@@ -550,10 +877,8 @@ function EmployeeForm({
         </div>
 
         {/* Dados profissionais */}
-        <div className="mt-6 mb-4 border-b border-slate-100 pb-2">
-          <h3 className="text-base font-semibold text-slate-800">Dados profissionais</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormDivider>Dados profissionais</FormDivider>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Filial / Departamento">
             <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inp} />
           </Field>
@@ -578,11 +903,56 @@ function EmployeeForm({
           </Field>
         </div>
 
-        {/* Dados pessoais */}
-        <div className="mt-6 mb-4 border-b border-slate-100 pb-2">
-          <h3 className="text-base font-semibold text-slate-800">Dados pessoais</h3>
+        {/* Gestão direta */}
+        <FormDivider>Gestão direta</FormDivider>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Gestor imediato">
+            <select
+              value={managerId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setManagerId(v);
+                // Sem gestor, ou gestor igual ao segundo: o segundo cai fora.
+                if (!v || v === coManagerId) setCoManagerId("");
+              }}
+              className={inp}
+            >
+              <option value="">Sem gestor definido</option>
+              {candidates.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                  {e.active ? "" : " (inativo)"}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Segundo gestor (opcional)">
+            <select
+              value={coManagerId}
+              disabled={!managerId}
+              onChange={(e) => setCoManagerId(e.target.value)}
+              className={cn(inp, "disabled:opacity-50")}
+            >
+              <option value="">Nenhum</option>
+              {candidates
+                .filter((e) => e.id !== managerId)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                    {e.active ? "" : " (inativo)"}
+                  </option>
+                ))}
+            </select>
+          </Field>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+        <p className="mt-2 text-xs text-muted-foreground">
+          O gestor aparece em “Meu time” no portal e preenche o campo “Gestor imediato” dos
+          formulários de G&amp;G. O segundo gestor é para as áreas divididas entre duas pessoas.
+        </p>
+
+        {/* Dados pessoais */}
+        <FormDivider>Dados pessoais</FormDivider>
+        <div className="grid grid-cols-1 gap-4 pb-4 md:grid-cols-2">
           <Field label="Telefone / WhatsApp">
             <input
               type="tel"
@@ -604,23 +974,25 @@ function EmployeeForm({
       </div>
 
       {/* Rodapé fixo */}
-      <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex justify-end gap-2 rounded-b-2xl">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-        >
+      <div className="sticky bottom-0 flex justify-end gap-2 border-t-[1.5px] border-ink bg-paper px-6 py-4">
+        <InkButton variant="outline" onClick={onCancel}>
           Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={loading || !name.trim()}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-        >
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
-        </button>
+        </InkButton>
+        <InkButton type="submit" disabled={loading || !name.trim()}>
+          {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Salvar
+        </InkButton>
       </div>
     </form>
+  );
+}
+
+function FormDivider({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-6 mb-4 border-b border-border pb-2">
+      <h3 className="text-[11px] font-extrabold tracking-[0.14em] text-muted-foreground uppercase">
+        {children}
+      </h3>
+    </div>
   );
 }
 
@@ -650,14 +1022,14 @@ function InviteExistingForm({
           className={inp}
         />
       </Field>
-      <button
+      <InkButton
         type="submit"
         disabled={loading || !email.trim()}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+        className="w-full justify-center"
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         <MailCheck className="h-4 w-4" /> Enviar convite
-      </button>
+      </InkButton>
     </form>
   );
 }
@@ -1164,13 +1536,16 @@ function PhotoImportModal({
 /* ─── Utilitários de UI ────────────────────────────────────────────────────── */
 
 const inp =
-  "w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-1 focus:ring-green-500";
+  "w-full rounded-lg border-[1.5px] border-ink/25 bg-surface px-3 py-2 text-sm outline-none " +
+  "transition-colors focus:border-ink focus-visible:ring-1 focus-visible:ring-ring";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <div className="mt-1.5">{children}</div>
+      <span className="mb-1.5 block text-[11px] font-extrabold tracking-[0.1em] text-muted-foreground uppercase">
+        {label}
+      </span>
+      {children}
     </label>
   );
 }

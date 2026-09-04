@@ -61,6 +61,8 @@ export const addEmployee = createServerFn({ method: "POST" })
       phone: z.string().max(30).optional(),
       birth_date: z.string().optional(),
       admission_date: z.string().optional(),
+      manager_id: z.string().uuid().nullish(),
+      co_manager_id: z.string().uuid().nullish(),
     }),
   )
   .handler(async ({ data }) => {
@@ -76,6 +78,8 @@ export const addEmployee = createServerFn({ method: "POST" })
       phone: data.phone ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
+      manager_id: data.manager_id ?? null,
+      co_manager_id: data.co_manager_id ?? null,
       active: true,
     });
     if (error) throw new Error(error.message);
@@ -179,6 +183,8 @@ export const updateEmployee = createServerFn({ method: "POST" })
       phone: z.string().max(30).nullish(),
       birth_date: z.string().nullish(),
       admission_date: z.string().nullish(),
+      manager_id: z.string().uuid().nullish(),
+      co_manager_id: z.string().uuid().nullish(),
       active: z.boolean().optional(),
     }),
   )
@@ -214,6 +220,8 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.phone !== undefined && { phone: data.phone }),
       ...(data.birth_date !== undefined && { birth_date: data.birth_date }),
       ...(data.admission_date !== undefined && { admission_date: data.admission_date }),
+      ...(data.manager_id !== undefined && { manager_id: data.manager_id }),
+      ...(data.co_manager_id !== undefined && { co_manager_id: data.co_manager_id }),
       ...(data.active !== undefined && { active: data.active }),
     };
     const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", data.id);
@@ -222,7 +230,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
   });
 
 const EMPLOYEE_COLUMNS =
-  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, admission_date, active, invited_at, created_at, photo_url";
+  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, admission_date, manager_id, co_manager_id, active, invited_at, created_at, photo_url";
 
 export const listEmployees = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
