@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 /* ─── Tipos ─────────────────────────────────────────────────────────────────── */
@@ -34,6 +35,8 @@ type Employee = {
   department: string | null;
   unit: string | null;
   birth_date: string | null;
+  /** Não comemora: fica fora da aba de aniversários e do KPI, como no portal. */
+  hide_birthday: boolean;
   admission_date: string | null;
   photo_url: string | null;
   active: boolean;
@@ -154,7 +157,7 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
     const dateKey = tab === "birth" ? "birth_date" : "admission_date";
     const month = new Date().getMonth();
     return employees
-      .filter((e) => e.active && e[dateKey])
+      .filter((e) => e.active && e[dateKey] && !(tab === "birth" && e.hide_birthday))
       .map((e) => {
         const adm = e.admission_date;
         const t = adm ? tenureFrom(adm) : { years: 0, months: 0 };
@@ -545,7 +548,7 @@ type Stat = { label: string; value: string; note: string };
 function buildStats(employees: Employee[]): Stat[] {
   const month = new Date().getMonth();
   const active = employees.filter((e) => e.active);
-  const withBirth = active.filter((e) => e.birth_date);
+  const withBirth = active.filter((e) => e.birth_date && !e.hide_birthday);
   const withAdmission = active.filter((e) => e.admission_date);
 
   const birthThisMonth = withBirth.filter((e) => monthOf(e.birth_date!) === month);
@@ -647,6 +650,7 @@ type EditValues = {
   unit: string | null;
   birth_date: string | null;
   admission_date: string | null;
+  hide_birthday: boolean;
 };
 
 function EditDialog({
@@ -666,6 +670,7 @@ function EditDialog({
   const [unit, setUnit] = useState(employee.unit ?? "");
   const [birthDate, setBirthDate] = useState(employee.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(employee.admission_date ?? "");
+  const [hideBirthday, setHideBirthday] = useState(employee.hide_birthday ?? false);
 
   return (
     <div
@@ -703,6 +708,7 @@ function EditDialog({
               unit: unit || null,
               birth_date: birthDate || null,
               admission_date: admissionDate || null,
+              hide_birthday: hideBirthday,
             });
           }}
         >
@@ -753,6 +759,19 @@ function EditDialog({
                 className={FIELD}
               />
             </Field>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border-[1.5px] border-ink/25 bg-surface px-4 py-3 md:col-span-2">
+              <Checkbox
+                checked={hideBirthday}
+                onCheckedChange={(v) => setHideBirthday(v === true)}
+                className="mt-[1px] h-[17px] w-[17px] rounded-[5px] border-[1.5px] border-ink data-[state=checked]:border-ink data-[state=checked]:bg-accent data-[state=checked]:text-ink"
+              />
+              <span className="text-sm leading-[1.5]">
+                <span className="font-bold">Não exibir aniversário no portal</span>
+                <span className="block text-xs text-muted-foreground">
+                  Some dos aniversariantes do portal e do assistente. A data continua guardada.
+                </span>
+              </span>
+            </label>
           </div>
           <p className="px-6 pb-4 text-xs text-muted-foreground">
             E-mail, telefone e acesso ao portal continuam em Colaboradores.

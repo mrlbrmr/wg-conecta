@@ -1,6 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const FORBIDDEN_EXT = new Set(["exe", "bat", "cmd", "com", "scr", "msi", "sh", "ps1", "vbs", "js"]);
+// HTML e afins são servidos na mesma origem do portal por `/api/public/files` — mesmo com
+// CSP `sandbox` lá, não há motivo para aceitar. SVG fica: o proxy o isola.
+const FORBIDDEN_EXT = new Set([
+  "exe",
+  "bat",
+  "cmd",
+  "com",
+  "scr",
+  "msi",
+  "sh",
+  "ps1",
+  "vbs",
+  "js",
+  "html",
+  "htm",
+  "xhtml",
+  "mht",
+  "xml",
+]);
 
 export function fileUrl(path: string | null | undefined): string | null {
   if (!path) return null;

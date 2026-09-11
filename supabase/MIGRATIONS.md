@@ -1,6 +1,27 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
-## URGENTE (11/09/2026): colaboradores com acesso de admin
+## Pendentes (PR `fix/p1-aniversario-e-endurecimento`)
+
+Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem**:
+
+| Arquivo | O que faz |
+|---|---|
+| `20260911130000_employees_hide_birthday.sql` | Cria `employees.hide_birthday` ("Não exibir aniversário no portal"). A view `employee_directory` passa a devolver o aniversário vazio para quem estiver marcado, e a pessoa some da home, da Cultura, do KPI e do Baterito. |
+| `20260911140000_storage_photo_extension.sql` | A foto do colaborador em `employee-photos/` passa a aceitar só JPG, PNG, WEBP e AVIF. |
+
+A migration de `hide_birthday` precisa rodar **antes do deploy** do PR. O painel já lê e grava a
+coluna, e sem ela a tela de Colaboradores dá erro. Depois do deploy, marque "Não exibir
+aniversário no portal" em Colaboradores → editar → Dados pessoais.
+
+## Resolvido (11/09/2026): colaboradores com acesso de admin
+
+Os blocos A a D abaixo foram rodados e conferidos no portal em 11/09/2026:
+- `admin_users` limpo;
+- `20260911120000_undo_setup_completo.sql` aplicada;
+- `write_auth` removidas;
+- `employees` voltou a ter só o UPDATE por coluna.
+
+O texto fica como registro e para conferências futuras.
 
 Em uso real, colaboradores viram as solicitações uns dos outros. A causa provável é a da seção
 "Antes de aplicar: conferir quem é admin", logo abaixo: a limpeza de `admin_users` nunca rodou.
@@ -8,39 +29,53 @@ Quem está lá como ativo passa em `requests_admin_all`, lê todas as solicitaç
 entra no painel `/admin`**, onde vê telefone, nascimento, férias e atestados de todo mundo.
 
 O PR `fix/p0-isolamento-por-colaborador` já faz "Meus envios" filtrar pelo colaborador no
-servidor, mesmo para admin. Mas o acesso ao painel só fecha com a limpeza. No SQL Editor do
-projeto **`wrldlvcrrslzbrwuwdsr`** (o do `.env`):
+servidor, mesmo para admin. Mas o acesso ao painel só fecha com a limpeza. Tudo abaixo roda no
+SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`** (o do `.env`).
+
+> O SQL Editor executa **tudo** o que está no editor e mostra só o resultado da última
+> consulta. Rode um bloco por vez: selecione o trecho antes de apertar Run.
+
+**Situação em 11/09/2026:**
+- A limpeza de `admin_users` rodou junto com um roteiro anterior. Ela deixa ativos só os três
+  e-mails do rodapé (Julliana, Murilo e Yasmin) e desativa os demais com `active = false`, sem
+  apagar nenhuma linha. Confirme com o bloco A.
+- As `*_write_auth` existiam, porque o `setup_completo.sql` foi rodado depois das migrations. A
+  correção é `migrations/20260911120000_undo_setup_completo.sql` (bloco C).
+- O Baterito foi usado por uma conta só. Não há conta compartilhada.
+
+**A) Quem é admin** (só leitura):
 
 ```sql
--- 1) Quem é admin hoje, e se é colaborador
-SELECT a.id, a.email, a.name, a.active,
+SELECT a.email, a.name, a.active, a.updated_at,
        EXISTS (SELECT 1 FROM public.employees e WHERE e.auth_user_id = a.id) AS e_colaborador
   FROM public.admin_users a
- ORDER BY a.active DESC, a.email;
-
--- 2) Mantém ativo só o time de G&G — preencha a lista
-UPDATE public.admin_users
-   SET active = false, updated_at = now()
- WHERE active AND lower(email) NOT IN (
-   'julliana.rocha@wgbaterias.com.br',
-   'murilo.bremer@wgbaterias.com.br',
-   'yasmin@wgbaterias.com.br'
-   -- , '...'
- );
-
--- 3) O setup_completo.sql, se tiver sido rodado, deixou políticas de escrita abertas
-SELECT tablename, policyname FROM pg_policies WHERE policyname LIKE '%write\_auth%';
--- Se voltar linhas: DROP POLICY <policyname> ON public.<tablename>; para cada uma.
-
--- 4) Uma conta sendo usada por várias pessoas? (muitas perguntas em muitos dias)
-SELECT q.user_id, u.email, count(*) AS perguntas, count(DISTINCT q.created_at::date) AS dias
-  FROM public.baterito_queries q LEFT JOIN auth.users u ON u.id = q.user_id
- GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20;
+ ORDER BY a.active DESC, a.updated_at DESC;
 ```
 
-A lista do passo 2 é o rodapé do portal (os e-mails de contato do G&G). **Confira contra o
-resultado do passo 1 antes de rodar.** Quem sair da lista continua entrando no portal
-normalmente; só perde o painel. Para devolver o acesso a alguém: `UPDATE … SET active = true`.
+Para devolver o painel a alguém do G&G:
+
+```sql
+UPDATE public.admin_users SET active = true, updated_at = now() WHERE email = '...';
+```
+
+**B) Políticas abertas** (só leitura). Depois do bloco C, deve voltar vazio:
+
+```sql
+SELECT tablename, policyname FROM pg_policies WHERE policyname LIKE '%write\_auth%';
+```
+
+**C) Correção:** cole e rode o arquivo `migrations/20260911120000_undo_setup_completo.sql`
+inteiro. Ele é idempotente.
+
+**D) Conferência de `employees`** (só leitura). Depois do bloco C, `authenticated` deve ter
+`UPDATE` só nas colunas `bio`, `extension`, `email`, `photo_url` e `updated_at`. A lista abaixo
+deve voltar vazia:
+
+```sql
+SELECT privilege_type FROM information_schema.role_table_grants
+ WHERE table_schema = 'public' AND table_name = 'employees' AND grantee = 'authenticated'
+   AND privilege_type IN ('INSERT', 'UPDATE', 'DELETE');
+```
 
 As 12 migrations com prefixo `20260903*` **ainda não foram aplicadas**. Elas foram escritas no
 ambiente de desenvolvimento, que não tem a CLI do Supabase nem a `SUPABASE_SERVICE_ROLE_KEY`.
