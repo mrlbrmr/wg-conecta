@@ -67,8 +67,12 @@ Para o primeiro caso, rode a consulta de conferência de `baterito_search()` em
 
 ## Privacidade
 
-- A conversa vive no `localStorage` do navegador, chaveada pelo id do usuário autenticado.
-  Ela não é gravada no banco.
+- A conversa vive no `sessionStorage` da aba, chaveada pelo id do usuário autenticado: some
+  quando a aba fecha ou a pessoa sai. Ela não é gravada no banco. Até set/2026 ficava no
+  `localStorage` e sobrevivia no computador; o hook apaga essas chaves antigas ao carregar.
+- Trocar de conta sem recarregar (login em outra aba, por exemplo) zera a conversa em memória antes
+  de ler a nova chave, e uma resposta em curso de quem saiu é descartada. O logout
+  (`src/lib/session.ts`) apaga todas as chaves `wg-baterito:*`.
 - `baterito_queries` guarda uma linha por pergunta — com a PII já mascarada por `pii.ts` — para o
   rate limit e para o relatório de lacunas. Só admin lê, por RLS.
 - O mascaramento é rede de segurança, não garantia: padrões ambíguos (agência e conta, por

@@ -87,6 +87,21 @@ export const addEmployee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+type AdminClient = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
+
+/** Conta do Auth por e-mail. A API admin não busca por e-mail, então pagina. */
+async function findAuthUserByEmail(db: AdminClient, email: string) {
+  const target = email.trim().toLowerCase();
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(error.message);
+    const found = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (found) return { id: found.id };
+    if (data.users.length < 1000) return null;
+  }
+  return null;
+}
+
 // Dá acesso ao portal para colaborador do diretório.
 // Se o e-mail já tiver conta no Auth, vincula direto (sem novo convite).
 export const inviteExistingEmployee = createServerFn({ method: "POST" })
@@ -102,11 +117,9 @@ export const inviteExistingEmployee = createServerFn({ method: "POST" })
     if (error) {
       // Usuário já registrado — vincula a conta existente sem reenviar convite
       if (error.message.toLowerCase().includes("already")) {
-        const { data: existing } = await supabaseAdmin
-          .from("admin_users")
-          .select("id")
-          .eq("email", data.email)
-          .single();
+        // A busca era em `admin_users`, que só espelhava o Auth por causa do
+        // trigger que fazia de toda conta nova um admin. Sem ele, só o Auth sabe.
+        const existing = await findAuthUserByEmail(supabaseAdmin, data.email);
         if (!existing) throw new Error(error.message);
         const { error: dbErr } = await supabaseAdmin
           .from("employees")

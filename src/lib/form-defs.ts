@@ -289,15 +289,40 @@ function displayValue(key: string, raw: unknown): string {
   return value;
 }
 
+const LABELS_BY_SLUG: Record<string, Array<[string, string]>> = {
+  ferias: VACATION_LABELS,
+  "solicitacao-geral": GENERAL_LABELS,
+};
+
 /**
- * Pares rótulo/valor na ordem do formulário. É o que a fila do painel e o
- * e-mail renderizam — nenhum dos dois precisa conhecer o formato de cada slug.
+ * Slug a partir das próprias chaves do payload — rede de segurança para quando
+ * quem chama não tem o slug (solicitação de formulário já desativado, ou uma
+ * tela que passou a categoria no lugar dele).
+ */
+function inferSlug(data: Record<string, unknown>): string {
+  for (const [slug, labels] of Object.entries(LABELS_BY_SLUG)) {
+    if (labels.some(([key]) => key in data)) return slug;
+  }
+  return "";
+}
+
+/** `advance_13th` → "Advance 13th": feio, mas nunca a chave crua do banco. */
+function humanizeKey(key: string): string {
+  const spaced = key.replace(/[_-]+/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * Pares rótulo/valor na ordem do formulário. É o que a fila do painel, o
+ * e-mail e o acompanhamento do colaborador renderizam — nenhum deles precisa
+ * conhecer o formato de cada slug.
  */
 export function renderPayload(slug: string, payload: unknown): PayloadEntry[] {
   const data = (payload ?? {}) as Record<string, unknown>;
+  const resolved = slug in LABELS_BY_SLUG ? slug : inferSlug(data);
   const labels: Array<[string, string]> = [
     ...IDENTIFICATION_LABELS,
-    ...(slug === "ferias" ? VACATION_LABELS : slug === "solicitacao-geral" ? GENERAL_LABELS : []),
+    ...(LABELS_BY_SLUG[resolved] ?? []),
   ];
 
   const known = new Set(labels.map(([key]) => key));
@@ -309,7 +334,7 @@ export function renderPayload(slug: string, payload: unknown): PayloadEntry[] {
   // chegou, inclusive de uma versão anterior do formulário.
   for (const [key, raw] of Object.entries(data)) {
     if (known.has(key)) continue;
-    entries.push({ label: key, value: displayValue(key, raw) });
+    entries.push({ label: humanizeKey(key), value: displayValue(key, raw) });
   }
 
   return entries;

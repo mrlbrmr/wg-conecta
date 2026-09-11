@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { KeyRound, Loader2, LogIn, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "@/lib/session";
 import { WGLogo } from "@/components/wg-logo";
 import { toast } from "sonner";
 
@@ -15,6 +16,23 @@ function GatePage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  /** E-mail de quem já está conectado neste navegador, se houver. */
+  const [signedInAs, setSignedInAs] = useState<string | null>(null);
+
+  // Logar por cima de uma sessão aberta misturava as duas contas na mesma aba.
+  // Quem já está conectado escolhe: continua ou sai antes.
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      setSignedInAs(data.session?.user.email ?? null);
+    });
+  }, []);
+
+  const switchAccount = async () => {
+    setLoading(true);
+    await signOut();
+    setLoading(false);
+    setSignedInAs(null);
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,45 +69,77 @@ function GatePage() {
         </div>
 
         <div className="card-paper p-6 md:p-8 bg-surface">
-          <form onSubmit={onSubmit} className="space-y-4">
-            <label className="block">
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">E-mail</span>
-              <div className="mt-2 relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
-                <input
-                  autoFocus
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  className="w-full border-[1.5px] border-ink bg-paper pl-11 pr-4 py-3.5 text-base outline-none transition focus:bg-accent-soft"
-                />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Senha</span>
-              <div className="mt-2 relative">
-                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full border-[1.5px] border-ink bg-paper pl-11 pr-4 py-3.5 text-base outline-none transition focus:bg-accent-soft"
-                />
-              </div>
-            </label>
-            <button
-              type="submit"
-              disabled={loading || !email.trim() || !password}
-              className="w-full btn-ink py-3.5 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-              Entrar no portal
-            </button>
-          </form>
+          {signedInAs ? (
+            <div className="space-y-4 text-center">
+              <p className="text-sm leading-relaxed">
+                Você já está conectado como <strong className="break-all">{signedInAs}</strong>.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/" })}
+                className="w-full btn-ink py-3.5"
+              >
+                <LogIn className="h-4 w-4" />
+                Continuar no portal
+              </button>
+              <button
+                type="button"
+                onClick={switchAccount}
+                disabled={loading}
+                className="w-full text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground underline-offset-2 hover:text-ink hover:underline disabled:opacity-50"
+              >
+                Não é você? Sair e entrar com outra conta
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-4">
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  E-mail
+                </span>
+                <div className="mt-2 relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
+                  <input
+                    autoFocus
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="w-full border-[1.5px] border-ink bg-paper pl-11 pr-4 py-3.5 text-base outline-none transition focus:bg-accent-soft"
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  Senha
+                </span>
+                <div className="mt-2 relative">
+                  <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full border-[1.5px] border-ink bg-paper pl-11 pr-4 py-3.5 text-base outline-none transition focus:bg-accent-soft"
+                  />
+                </div>
+              </label>
+              <button
+                type="submit"
+                disabled={loading || !email.trim() || !password}
+                className="w-full btn-ink py-3.5 disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LogIn className="h-4 w-4" />
+                )}
+                Entrar no portal
+              </button>
+            </form>
+          )}
 
           <p className="mt-5 text-xs text-muted-foreground text-center">
             <Link

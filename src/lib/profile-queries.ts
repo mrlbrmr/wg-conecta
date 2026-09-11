@@ -1,11 +1,16 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  listOwnRequestMessages,
+  listOwnRequests,
+  type OwnRequest,
+} from "@/lib/portal-write.functions";
 
 export type PeerRecognition = Tables<"peer_recognitions">;
 export type ChecklistItem = Tables<"onboarding_checklist_items">;
 export type OnboardingProgress = Tables<"onboarding_progress">;
-export type PortalRequest = Tables<"requests">;
+export type PortalRequest = OwnRequest;
 export type RequestMessage = Tables<"request_messages">;
 
 function ensureList<T>(res: { data: T[] | null; error: { message: string } | null }): T[] {
@@ -72,27 +77,21 @@ export const ownMaterialViewsQuery = queryOptions({
     ensureList(await supabase.from("material_views").select("*")),
 });
 
-/** Solicitações do próprio usuário — o RLS já filtra por colaborador. */
+/**
+ * Solicitações do próprio usuário. Passa pelo servidor, que filtra pelo
+ * colaborador do JWT — o RLS sozinho entrega a fila inteira a quem é admin.
+ */
 export const ownRequestsQuery = queryOptions({
   queryKey: ["requests", "own"],
-  queryFn: async (): Promise<PortalRequest[]> =>
-    ensureList(
-      await supabase.from("requests").select("*").order("created_at", { ascending: false }),
-    ),
+  queryFn: (): Promise<PortalRequest[]> => listOwnRequests(),
 });
 
 export function requestMessagesQuery(requestId: string | undefined) {
   return queryOptions({
     queryKey: ["request_messages", requestId],
     enabled: Boolean(requestId),
-    queryFn: async (): Promise<RequestMessage[]> =>
-      ensureList(
-        await supabase
-          .from("request_messages")
-          .select("*")
-          .eq("request_id", requestId!)
-          .order("created_at"),
-      ),
+    queryFn: (): Promise<RequestMessage[]> =>
+      listOwnRequestMessages({ data: { request_id: requestId! } }),
   });
 }
 

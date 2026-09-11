@@ -5,6 +5,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const emailSchema = z.string().email();
 
+/**
+ * As ações de "usuário do painel" recebem um id do Auth e, sem esta checagem,
+ * valiam para qualquer conta — inclusive a de colaborador: dava para trocar a
+ * senha de alguém e entrar como essa pessoa. Colaborador troca senha pelo
+ * e-mail de redefinição (`triggerEmployeePasswordReset`).
+ */
+async function assertPanelUser(id: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("admin_users").select("id").eq("id", id).maybeSingle();
+  if (!data) throw new Error("Essa conta não é um usuário do painel.");
+}
+
 export const createAdminUser = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((data: unknown) =>
@@ -25,7 +37,8 @@ export const createAdminUser = createServerFn({ method: "POST" })
       user_metadata: { name: data.name },
     });
     if (error) throw new Error(error.message);
-    // trigger cria admin_users, mas garantimos o nome:
+    // Nada cria a linha sozinho desde que o trigger de admin automático caiu
+    // (`20260903120000_roles_hardening.sql`): o upsert é o que dá o acesso.
     if (created.user) {
       await supabaseAdmin.from("admin_users").upsert({
         id: created.user.id,
@@ -50,6 +63,7 @@ export const updateAdminUser = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    await assertPanelUser(data.id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.email) {
       const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
@@ -79,6 +93,7 @@ export const resetAdminPassword = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    await assertPanelUser(data.id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
       password: data.password,
@@ -91,6 +106,7 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
+    await assertPanelUser(data.id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.id);
     if (error) throw new Error(error.message);
