@@ -81,6 +81,10 @@ export const updateOwnPhoto = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin();
     const id = await employeeIdOf((context as { userId: string }).userId);
+    // Só o arquivo que `uploadEmployeePhoto` grava. Aceitar qualquer texto deixava apontar
+    // a foto para uma URL externa ou para o arquivo de outra pessoa.
+    const expected = new RegExp(`^employee-photos/${id}\\.(jpe?g|png|webp|avif)$`, "i");
+    if (!expected.test(data.photo_url)) throw new Error("Foto inválida. Envia de novo?");
     fail((await db.from("employees").update({ photo_url: data.photo_url }).eq("id", id)).error);
     return { ok: true };
   });

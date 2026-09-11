@@ -484,6 +484,7 @@ export type Database = {
           job_title: string | null
           phone: string | null
           birth_date: string | null
+          hide_birthday: boolean
           admission_date: string | null
           photo_url: string | null
           marital_status: string | null
@@ -517,6 +518,7 @@ export type Database = {
           job_title?: string | null
           phone?: string | null
           birth_date?: string | null
+          hide_birthday?: boolean
           admission_date?: string | null
           photo_url?: string | null
           marital_status?: string | null
@@ -550,6 +552,7 @@ export type Database = {
           job_title?: string | null
           phone?: string | null
           birth_date?: string | null
+          hide_birthday?: boolean
           admission_date?: string | null
           photo_url?: string | null
           marital_status?: string | null

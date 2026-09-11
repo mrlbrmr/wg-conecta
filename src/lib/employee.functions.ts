@@ -56,14 +56,15 @@ export const addEmployee = createServerFn({ method: "POST" })
     z.object({
       name: z.string().min(2).max(120),
       email: emailSchema.optional(),
-      department: z.string().max(120).optional(),
-      job_title: z.string().max(120).optional(),
-      unit: z.string().max(120).optional(),
-      phone: z.string().max(30).optional(),
-      birth_date: z.string().optional(),
-      admission_date: z.string().optional(),
+      department: z.string().max(120).nullish(),
+      job_title: z.string().max(120).nullish(),
+      unit: z.string().max(120).nullish(),
+      phone: z.string().max(30).nullish(),
+      birth_date: z.string().nullish(),
+      admission_date: z.string().nullish(),
       manager_id: z.string().uuid().nullish(),
       co_manager_id: z.string().uuid().nullish(),
+      hide_birthday: z.boolean().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -81,6 +82,7 @@ export const addEmployee = createServerFn({ method: "POST" })
       admission_date: data.admission_date ?? null,
       manager_id: data.manager_id ?? null,
       co_manager_id: data.co_manager_id ?? null,
+      hide_birthday: data.hide_birthday ?? false,
       active: true,
     });
     if (error) throw new Error(error.message);
@@ -200,6 +202,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       manager_id: z.string().uuid().nullish(),
       co_manager_id: z.string().uuid().nullish(),
       active: z.boolean().optional(),
+      hide_birthday: z.boolean().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -237,6 +240,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.manager_id !== undefined && { manager_id: data.manager_id }),
       ...(data.co_manager_id !== undefined && { co_manager_id: data.co_manager_id }),
       ...(data.active !== undefined && { active: data.active }),
+      ...(data.hide_birthday !== undefined && { hide_birthday: data.hide_birthday }),
     };
     const { error } = await supabaseAdmin.from("employees").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -244,7 +248,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
   });
 
 const EMPLOYEE_COLUMNS =
-  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, admission_date, manager_id, co_manager_id, active, invited_at, created_at, photo_url";
+  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, hide_birthday, admission_date, manager_id, co_manager_id, active, invited_at, created_at, photo_url";
 
 export const listEmployees = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
@@ -407,7 +411,8 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
 /**
  * Colaborador do usuário autenticado.
  * Resolve por `auth_user_id` e cai para `id` (vínculos antigos gravaram só o `id`).
- * Privacidade: o aniversário sai só como dia e mês — nunca a data completa.
+ * Privacidade: o aniversário sai só como dia e mês — nunca a data completa — e sai
+ * vazio quando o G&G marcou `hide_birthday`.
  */
 export const getOwnEmployee = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -417,7 +422,7 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
 
     // String literal única: o PostgREST tipa o retorno a partir dela.
     const columns =
-      "id, name, email, department, job_title, unit, extension, bio, registration_number, manager_id, co_manager_id, buddy_id, admission_date, birth_date, photo_url, active";
+      "id, name, email, department, job_title, unit, extension, bio, registration_number, manager_id, co_manager_id, buddy_id, admission_date, birth_date, hide_birthday, photo_url, active";
 
     let { data } = await supabaseAdmin
       .from("employees")
@@ -435,7 +440,12 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
     if (!data) return null;
 
     const row = data as Record<string, unknown>;
-    const birth = row.birth_date ? new Date(`${row.birth_date as string}T00:00:00`) : null;
+    // Quem pediu para não exibir também não vê o próprio aniversário destacado no perfil
+    // ("o time todo vai saber" seria falso — e indesejado).
+    const birth =
+      row.birth_date && !row.hide_birthday
+        ? new Date(`${row.birth_date as string}T00:00:00`)
+        : null;
 
     return {
       id: row.id as string,

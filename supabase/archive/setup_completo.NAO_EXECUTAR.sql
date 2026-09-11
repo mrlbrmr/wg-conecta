@@ -1,7 +1,20 @@
 -- =============================================================
--- WG Conecta — Setup completo do banco de dados
--- Execute este arquivo UMA VEZ no SQL Editor do Supabase.
--- Idempotente: usa IF NOT EXISTS / CREATE OR REPLACE / DROP IF EXISTS.
+-- ⛔ NÃO EXECUTAR. Arquivo histórico, guardado só para consulta.
+--
+-- Este script é anterior às migrations de segurança. Rodado sobre o banco atual, ele
+-- recria políticas `*_write_auth` (qualquer colaborador logado escreve em comunicados,
+-- benefícios, documentos...) e desfaz a restrição por coluna de `employees`. Foi o que
+-- aconteceu antes de 11/09/2026, corrigido por
+-- `supabase/migrations/20260911120000_undo_setup_completo.sql`.
+--
+-- O esquema de verdade é `supabase/migrations/`, aplicado em ordem.
+-- =============================================================
+DO $$ BEGIN
+  RAISE EXCEPTION 'setup_completo.sql está arquivado e não deve ser executado — use supabase/migrations/';
+END $$;
+
+-- =============================================================
+-- WG Conecta — Setup completo do banco de dados (versão antiga)
 -- =============================================================
 
 

@@ -68,6 +68,7 @@ type Employee = {
   unit: string | null;
   phone: string | null;
   birth_date: string | null;
+  hide_birthday: boolean;
   admission_date: string | null;
   manager_id: string | null;
   co_manager_id: string | null;
@@ -984,17 +985,21 @@ function Modal({
   );
 }
 
+// Campo vazio vai como `null`, e não `undefined`: para `updateEmployee`, `undefined` é
+// "não mexer", e apagar a data de nascimento e salvar deixava a data antiga no banco.
+// O e-mail é a exceção — ele é o login da conta, e não se apaga por aqui.
 type EmployeeFormValues = {
   name: string;
   email?: string;
-  department?: string;
-  job_title?: string;
-  unit?: string;
-  phone?: string;
-  birth_date?: string;
-  admission_date?: string;
+  department: string | null;
+  job_title: string | null;
+  unit: string | null;
+  phone: string | null;
+  birth_date: string | null;
+  admission_date: string | null;
   manager_id: string | null;
   co_manager_id: string | null;
+  hide_birthday: boolean;
 };
 
 function EmployeeForm({
@@ -1020,6 +1025,7 @@ function EmployeeForm({
   const [admissionDate, setAdmissionDate] = useState(initial?.admission_date ?? "");
   const [managerId, setManagerId] = useState(initial?.manager_id ?? "");
   const [coManagerId, setCoManagerId] = useState(initial?.co_manager_id ?? "");
+  const [hideBirthday, setHideBirthday] = useState(initial?.hide_birthday ?? false);
 
   // Ninguém é gestor de si mesmo. Inativo só aparece se já estiver gravado.
   const candidates = useMemo(
@@ -1042,15 +1048,16 @@ function EmployeeForm({
         onSubmit({
           name,
           email: email || undefined,
-          department: department || undefined,
-          job_title: jobTitle || undefined,
-          unit: unit || undefined,
-          phone: phone || undefined,
-          birth_date: birthDate || undefined,
-          admission_date: admissionDate || undefined,
+          department: department.trim() || null,
+          job_title: jobTitle.trim() || null,
+          unit: unit.trim() || null,
+          phone: phone.trim() || null,
+          birth_date: birthDate || null,
+          admission_date: admissionDate || null,
           manager_id: managerId || null,
           // Segundo gestor sem o primeiro não faz sentido.
           co_manager_id: (managerId && coManagerId) || null,
+          hide_birthday: hideBirthday,
         });
       }}
     >
@@ -1169,6 +1176,20 @@ function EmployeeForm({
               className={inp}
             />
           </Field>
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border-[1.5px] border-ink/25 bg-surface px-4 py-3 md:col-span-2">
+            <Checkbox
+              checked={hideBirthday}
+              onCheckedChange={(v) => setHideBirthday(v === true)}
+              className={cn(CHECKBOX, "mt-[1px]")}
+            />
+            <span className="text-sm leading-[1.5]">
+              <span className="font-bold">Não exibir aniversário no portal</span>
+              <span className="block text-xs text-muted-foreground">
+                Para quem não comemora. Some dos aniversariantes da home, da Cultura e do
+                assistente. A data continua guardada e o tempo de casa segue aparecendo.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 
@@ -1244,6 +1265,7 @@ const EMPTY_EMPLOYEE: Employee = {
   unit: null,
   phone: null,
   birth_date: null,
+  hide_birthday: false,
   admission_date: null,
   manager_id: null,
   co_manager_id: null,
