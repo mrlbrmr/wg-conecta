@@ -35,8 +35,9 @@ function RequestDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  // O RLS já limita a lista às próprias solicitações, então buscar na lista
-  // evita uma query nova e mantém o cache compartilhado com "Meus envios".
+  // A lista já vem filtrada pelo servidor (só as do próprio colaborador), então
+  // buscar nela evita uma query nova e mantém o cache com "Meus envios". Um id
+  // de outra pessoa simplesmente não está ali e cai em "não encontrada".
   const requests = useQuery(ownRequestsQuery);
   const messages = useQuery(requestMessagesQuery(id));
   const directory = useQuery(directoryQuery);
@@ -82,7 +83,7 @@ function RequestDetailPage() {
     );
   }
 
-  const entries = renderPayload(request.subject ?? "", request.payload);
+  const entries = renderPayload(request.form_slug ?? "", request.payload);
   const nameOf = (employeeId: string | null) =>
     employeeId ? ((directory.data ?? []).find((d) => d.id === employeeId)?.name ?? null) : null;
 

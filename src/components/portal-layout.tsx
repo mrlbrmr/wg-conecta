@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useRef } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   Home,
   LayoutGrid,
@@ -8,10 +8,12 @@ import {
   Search,
   CircleUser,
   ArrowUpRight,
+  LogOut,
 } from "lucide-react";
 import { WGLogo } from "./wg-logo";
 import { UserAvatar } from "./user-avatar";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
+import { signOut } from "@/lib/session";
 import { BateritoLauncher } from "./baterito/baterito-launcher";
 
 const NAV = [
@@ -36,6 +38,18 @@ export function PortalLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const mainRef = useRef<HTMLElement>(null);
   const { data: me } = useCurrentEmployee();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const onSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+      navigate({ to: "/gate" });
+    }
+  };
 
   useEffect(() => {
     const el = mainRef.current;
@@ -103,6 +117,16 @@ export function PortalLayout({ children }: { children: ReactNode }) {
             <Link to="/perfil" aria-label="Meu perfil" title="Meu perfil" className="rounded-full">
               <UserAvatar name={me?.name} photoUrl={me?.photo_url} size={40} />
             </Link>
+            <button
+              type="button"
+              onClick={onSignOut}
+              disabled={signingOut}
+              aria-label="Sair do portal"
+              title="Sair"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-ink bg-surface text-ink transition hover:bg-accent disabled:opacity-50"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>

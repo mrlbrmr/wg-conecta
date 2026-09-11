@@ -11,7 +11,7 @@ import {
   type RequestFormSlug,
 } from "@/lib/form-defs";
 import { normalizeSiteUrl } from "@/lib/site-url";
-import type { Json } from "@/integrations/supabase/types";
+import type { Json, Tables } from "@/integrations/supabase/types";
 
 const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 
@@ -404,37 +404,90 @@ export const openFormRequest = createServerFn({ method: "POST" })
     return { ok: true, id: created!.id, protocol: created!.protocol };
   });
 
+export type OwnRequest = Tables<"requests"> & { form_slug: string | null };
+
+/**
+ * Solicitações do próprio colaborador, com o slug do formulário.
+ *
+ * Não dá para confiar só no RLS aqui: para quem está em `admin_users` a policy
+ * `requests_admin_all` libera todas as linhas, e "Meus envios" virava a fila
+ * inteira do G&G. O filtro por `employee_id` sai do JWT, nunca do cliente. A
+ * fila do painel continua em `listRequests` (`request.functions.ts`).
+ */
+export const listOwnRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<OwnRequest[]> => {
+    const db = await admin();
+    const employee_id = await employeeIdOf((context as { userId: string }).userId);
+
+    const { data: rows, error } = await db
+      .from("requests")
+      .select("*")
+      .eq("employee_id", employee_id)
+      .order("created_at", { ascending: false });
+    fail(error);
+
+    // `form_slug` é o que `renderPayload` espera — `subject` é a categoria
+    // ("Férias"), e passar ela no lugar do slug deixava os campos sem rótulo.
+    const formIds = [...new Set((rows ?? []).map((r) => r.form_id).filter(Boolean))] as string[];
+    const slugOf = new Map<string, string | null>();
+    if (formIds.length > 0) {
+      const { data: forms } = await db.from("forms").select("id, slug").in("id", formIds);
+      for (const f of forms ?? []) slugOf.set(f.id, f.slug ?? null);
+    }
+
+    return (rows ?? []).map((r) => ({
+      ...r,
+      form_slug: r.form_id ? (slugOf.get(r.form_id) ?? null) : null,
+    }));
+  });
+
+/** Conversa de uma solicitação — só se ela for do próprio colaborador. */
+export const listOwnRequestMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ request_id: z.string().uuid() }))
+  .handler(async ({ data, context }): Promise<Tables<"request_messages">[]> => {
+    const db = await admin();
+    const employee_id = await employeeIdOf((context as { userId: string }).userId);
+
+    const { data: req } = await db
+      .from("requests")
+      .select("id")
+      .eq("id", data.request_id)
+      .eq("employee_id", employee_id)
+      .maybeSingle();
+    if (!req) return [];
+
+    const { data: rows, error } = await db
+      .from("request_messages")
+      .select("*")
+      .eq("request_id", data.request_id)
+      .order("created_at");
+    fail(error);
+    return rows ?? [];
+  });
+
 /**
  * URL assinada do anexo, válida por poucos minutos.
  *
  * O bucket é privado e o proxy `/api/public/files` não pede login, então a
- * leitura passa por aqui: quem pode ver é o dono da solicitação ou o G&G.
+ * leitura passa por aqui. Esta é a porta do portal: só o dono da solicitação
+ * abre. O G&G abre pelo painel (`adminAttachmentUrl` em `request.functions.ts`).
  */
 export const getRequestAttachmentUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({ request_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     const db = await admin();
-    const userId = (context as { userId: string }).userId;
+    const employee_id = await employeeIdOf((context as { userId: string }).userId);
 
     const { data: req } = await db
       .from("requests")
       .select("employee_id, attachment_path")
       .eq("id", data.request_id)
+      .eq("employee_id", employee_id)
       .maybeSingle();
-    if (!req?.attachment_path) throw new Error("Essa solicitação não tem anexo.");
-
-    const { data: isAdmin } = await db
-      .from("admin_users")
-      .select("id")
-      .eq("id", userId)
-      .eq("active", true)
-      .maybeSingle();
-
-    if (!isAdmin) {
-      const employee_id = await employeeIdOf(userId);
-      if (req.employee_id !== employee_id) throw new Error("Anexo não encontrado.");
-    }
+    if (!req?.attachment_path) throw new Error("Anexo não encontrado.");
 
     const { data: signed, error } = await db.storage
       .from("request-attachments")

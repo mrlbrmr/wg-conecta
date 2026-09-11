@@ -12,6 +12,7 @@ import { type ReactNode, useEffect } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { installStaleChunkRecovery } from "@/lib/stale-chunk-recovery";
+import { useAuthIsolation } from "@/lib/session";
 
 function NotFoundComponent() {
   return (
@@ -107,6 +108,7 @@ function RootComponent() {
   useEffect(() => {
     installStaleChunkRecovery();
   }, []);
+  useAuthIsolation(queryClient);
 
   return (
     <QueryClientProvider client={queryClient}>

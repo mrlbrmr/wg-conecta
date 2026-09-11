@@ -1,5 +1,47 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## URGENTE (11/09/2026): colaboradores com acesso de admin
+
+Em uso real, colaboradores viram as solicitações uns dos outros. A causa provável é a da seção
+"Antes de aplicar: conferir quem é admin", logo abaixo: a limpeza de `admin_users` nunca rodou.
+Quem está lá como ativo passa em `requests_admin_all`, lê todas as solicitações pela API **e
+entra no painel `/admin`**, onde vê telefone, nascimento, férias e atestados de todo mundo.
+
+O PR `fix/p0-isolamento-por-colaborador` já faz "Meus envios" filtrar pelo colaborador no
+servidor, mesmo para admin. Mas o acesso ao painel só fecha com a limpeza. No SQL Editor do
+projeto **`wrldlvcrrslzbrwuwdsr`** (o do `.env`):
+
+```sql
+-- 1) Quem é admin hoje, e se é colaborador
+SELECT a.id, a.email, a.name, a.active,
+       EXISTS (SELECT 1 FROM public.employees e WHERE e.auth_user_id = a.id) AS e_colaborador
+  FROM public.admin_users a
+ ORDER BY a.active DESC, a.email;
+
+-- 2) Mantém ativo só o time de G&G — preencha a lista
+UPDATE public.admin_users
+   SET active = false, updated_at = now()
+ WHERE active AND lower(email) NOT IN (
+   'julliana.rocha@wgbaterias.com.br',
+   'murilo.bremer@wgbaterias.com.br',
+   'yasmin@wgbaterias.com.br'
+   -- , '...'
+ );
+
+-- 3) O setup_completo.sql, se tiver sido rodado, deixou políticas de escrita abertas
+SELECT tablename, policyname FROM pg_policies WHERE policyname LIKE '%write\_auth%';
+-- Se voltar linhas: DROP POLICY <policyname> ON public.<tablename>; para cada uma.
+
+-- 4) Uma conta sendo usada por várias pessoas? (muitas perguntas em muitos dias)
+SELECT q.user_id, u.email, count(*) AS perguntas, count(DISTINCT q.created_at::date) AS dias
+  FROM public.baterito_queries q LEFT JOIN auth.users u ON u.id = q.user_id
+ GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20;
+```
+
+A lista do passo 2 é o rodapé do portal (os e-mails de contato do G&G). **Confira contra o
+resultado do passo 1 antes de rodar.** Quem sair da lista continua entrando no portal
+normalmente; só perde o painel. Para devolver o acesso a alguém: `UPDATE … SET active = true`.
+
 As 12 migrations com prefixo `20260903*` **ainda não foram aplicadas**. Elas foram escritas no
 ambiente de desenvolvimento, que não tem a CLI do Supabase nem a `SUPABASE_SERVICE_ROLE_KEY`.
 Enquanto não rodarem, as telas novas (`/perfil`, `/mural`, `/cultura`) carregam o layout mas não
