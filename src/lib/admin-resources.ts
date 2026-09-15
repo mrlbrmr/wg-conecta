@@ -21,6 +21,7 @@ import {
   CalendarDays,
   Timer,
 } from "lucide-react";
+import { compareChecklistItems, ONBOARDING_STAGES } from "@/lib/onboarding-stages";
 
 export type FieldType =
   | "text"
@@ -54,6 +55,8 @@ export interface ResourceDef {
   icon: LucideIcon;
   table: string;
   orderBy?: { column: string; ascending?: boolean };
+  /** Ordem aplicada depois da busca, quando uma coluna só não basta. Tem precedência sobre `orderBy`. */
+  sortRows?: (a: Record<string, unknown>, b: Record<string, unknown>) => number;
   displayColumns: { key: string; label: string }[];
   fields: FieldDef[];
   section?: string;
@@ -469,6 +472,7 @@ export const RESOURCES: ResourceDef[] = [
     icon: ListChecks,
     table: "onboarding_checklist_items",
     orderBy: { column: "order_index" },
+    sortRows: compareChecklistItems,
     section: "Integração",
     note: "A trilha padrão que todo mundo vê em Integração. O percentual de cada pessoa é derivado destes itens.",
     rule: "A conversa de 30 dias costuma ser agendada quando a trilha passa de 60%.",
@@ -486,13 +490,7 @@ export const RESOURCES: ResourceDef[] = [
         label: "Etapa",
         type: "select",
         required: true,
-        options: [
-          { value: "primeiro_dia", label: "1º dia" },
-          { value: "primeira_semana", label: "1ª semana" },
-          { value: "trinta_dias", label: "30 dias" },
-          { value: "sessenta_dias", label: "60 dias" },
-          { value: "noventa_dias", label: "90 dias" },
-        ],
+        options: ONBOARDING_STAGES.map((s) => ({ value: s.id, label: s.label })),
       },
       {
         key: "deadline_label",

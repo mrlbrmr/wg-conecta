@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { DirectoryEntry } from "@/lib/directory-queries";
-import { parseISODate, yearsSince } from "@/lib/tenure";
+import { parseISODate, yearsOnAnniversary } from "@/lib/tenure";
 
 export type CulturePhoto = Tables<"culture_photos">;
 export type CultureEvent = Tables<"culture_events">;
@@ -48,26 +48,34 @@ export function birthdaysInMonth(entries: DirectoryEntry[], month: number) {
     .sort((a, b) => (a.birthday_day ?? 0) - (b.birthday_day ?? 0));
 }
 
-/** Aniversários de casa do mês — quem completa pelo menos um ano. */
+/**
+ * Aniversários de casa do mês — quem completa pelo menos um ano no aniversário deste ano.
+ * Os anos são os do aniversário, não os de hoje: quem faz 1 ano no fim do mês já aparece.
+ */
 export function anniversariesInMonth(entries: DirectoryEntry[], month: number) {
   return entries
     .filter((e): e is DirectoryEntry & { admission_date: string } => e.admission_date != null)
     .filter(
       (e) =>
-        parseISODate(e.admission_date).getMonth() + 1 === month && yearsSince(e.admission_date) > 0,
+        parseISODate(e.admission_date).getMonth() + 1 === month &&
+        yearsOnAnniversary(e.admission_date) > 0,
     )
     .sort(
       (a, b) => parseISODate(a.admission_date).getDate() - parseISODate(b.admission_date).getDate(),
     );
 }
 
-/** Quem entrou nos últimos 90 dias, do mais recente para o mais antigo. */
+/**
+ * Quem entrou nos últimos 90 dias (o período de experiência), em ordem cronológica:
+ * de quem chegou primeiro — e está mais perto de fechar os 90 dias — para quem chegou agora.
+ */
 export function newcomers(entries: DirectoryEntry[], days = 90) {
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const today = new Date();
+  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
   return entries
     .filter((e): e is DirectoryEntry & { admission_date: string } => e.admission_date != null)
-    .filter((e) => parseISODate(e.admission_date).getTime() >= cutoff)
-    .sort((a, b) => b.admission_date.localeCompare(a.admission_date));
+    .filter((e) => parseISODate(e.admission_date) >= cutoff)
+    .sort((a, b) => a.admission_date.localeCompare(b.admission_date));
 }
 
 /** Eventos daqui pra frente, do mais próximo para o mais distante. */

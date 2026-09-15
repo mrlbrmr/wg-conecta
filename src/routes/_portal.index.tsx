@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ICON_MAP } from "@/lib/icon-map";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/user-avatar";
 import {
   activeAnnouncementsQuery,
   portalSettingsQuery,
@@ -194,6 +195,15 @@ function HomePage() {
               <ul className="mt-4 space-y-2 text-sm border-t-[1.5px] border-ink/20 pt-4">
                 {monthBirthdays.slice(0, 3).map((b) => (
                   <li key={b.id} className="flex items-center gap-3">
+                    <UserAvatar name={b.name} photoUrl={b.photo_url} size={40} tone="ink" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold">{b.name}</span>
+                      {b.unit && (
+                        <span className="block truncate text-[11px] font-bold uppercase tracking-[0.1em] text-ink/60">
+                          {b.unit}
+                        </span>
+                      )}
+                    </span>
                     <span className="inline-flex flex-col items-center justify-center h-10 w-10 rounded-full bg-ink text-accent shrink-0 leading-none">
                       <span className="text-[8px] font-bold uppercase opacity-70 tracking-wide">
                         dia
@@ -202,11 +212,10 @@ function HomePage() {
                         {String(b.birthday_day).padStart(2, "0")}
                       </span>
                     </span>
-                    <span className="truncate font-bold min-w-0">{b.name}</span>
                   </li>
                 ))}
                 {monthBirthdays.length > 3 && (
-                  <li className="text-xs font-bold uppercase tracking-wider text-ink/60 pl-11">
+                  <li className="text-xs font-bold uppercase tracking-wider text-ink/60 pl-[52px]">
                     + {monthBirthdays.length - 3} colegas
                   </li>
                 )}

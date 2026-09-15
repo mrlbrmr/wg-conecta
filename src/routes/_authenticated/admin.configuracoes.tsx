@@ -6,6 +6,7 @@ import { portalSettingsQuery, type PortalSettings } from "@/lib/portal-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, fileUrl } from "@/lib/storage";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Portal WG" }] }),
@@ -27,6 +28,7 @@ function ConfigPage() {
         logo_url: form.logo_url, primary_color: form.primary_color,
         privacy_notice: form.privacy_notice, gg_contact_text: form.gg_contact_text,
         footer_message: form.footer_message,
+        onboarding_track_enabled: form.onboarding_track_enabled ?? true,
       }).eq("singleton", true);
       if (error) throw new Error(error.message);
     },
@@ -76,6 +78,25 @@ function ConfigPage() {
         <Field label="Mensagem do rodapé">
           <input value={form.footer_message ?? ""} onChange={(e) => setForm(s => ({ ...s, footer_message: e.target.value }))} className={inp} />
         </Field>
+      </section>
+
+      <section className="card-soft p-6 space-y-4">
+        <h2 className="font-bold">Integração</h2>
+        <label className="flex items-start justify-between gap-6 cursor-pointer">
+          <span>
+            <span className="block text-sm font-bold">Trilha de integração ativa</span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              Desligada, somem a aba "Trilha" do perfil e o checklist, o percentual e a linha do tempo da
+              página Integração. Vídeos, materiais e "Quem é quem" continuam. Itens e progresso ficam
+              guardados para quando religar.
+            </span>
+          </span>
+          <Switch
+            checked={form.onboarding_track_enabled ?? true}
+            onCheckedChange={(v) => setForm(s => ({ ...s, onboarding_track_enabled: v }))}
+            className="mt-0.5 shrink-0"
+          />
+        </label>
       </section>
 
       <div>

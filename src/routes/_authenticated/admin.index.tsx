@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { directoryQuery } from "@/lib/directory-queries";
 import { pendingProfileRequestsQuery } from "@/lib/admin-queries";
 import { formatDate } from "@/lib/tenure";
+import { useTrackEnabled } from "@/hooks/use-track-enabled";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Dashboard — Painel WG" }] }),
@@ -80,6 +81,7 @@ function Dashboard() {
 
   const month = new Date().getMonth() + 1;
   const birthdays = (directory.data ?? []).filter((e) => e.birthday_month === month).length;
+  const trackEnabled = useTrackEnabled();
   const headcount = (directory.data ?? []).length;
 
   // Alcance: leituras registradas sobre o total possível (comunicados × pessoas).
@@ -193,7 +195,12 @@ function Dashboard() {
             value={stats.data?.activeAnnouncements ?? 0}
           />
           <KpiCard size="sm" label="Vagas abertas" value={stats.data?.openJobs ?? 0} />
-          <KpiCard size="sm" label="Em integração" value={stats.data?.onboarding ?? 0} />
+          <KpiCard
+            size="sm"
+            label="Em integração"
+            value={stats.data?.onboarding ?? 0}
+            note={trackEnabled ? undefined : "trilha desligada"}
+          />
           <KpiCard size="sm" label="Aniversariantes" value={birthdays} note="neste mês" />
         </div>
       </div>
