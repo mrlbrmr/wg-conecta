@@ -29,13 +29,26 @@ async function admin() {
   return supabaseAdmin;
 }
 
-/** Colaborador do usuário autenticado — por auth_user_id, com fallback para id. */
+/**
+ * Colaborador do usuário autenticado — por auth_user_id, com fallback para id.
+ * Desativado não escreve: o Auth bane a conta, mas um JWT emitido antes ainda vale até expirar.
+ */
 async function employeeIdOf(userId: string): Promise<string> {
   const db = await admin();
-  const { data } = await db.from("employees").select("id").eq("auth_user_id", userId).maybeSingle();
+  const { data } = await db
+    .from("employees")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .eq("active", true)
+    .maybeSingle();
   if (data?.id) return data.id;
 
-  const { data: byId } = await db.from("employees").select("id").eq("id", userId).maybeSingle();
+  const { data: byId } = await db
+    .from("employees")
+    .select("id")
+    .eq("id", userId)
+    .eq("active", true)
+    .maybeSingle();
   if (byId?.id) return byId.id;
 
   throw new Error("Não encontramos seu cadastro de colaborador. Fala com o G&G?");

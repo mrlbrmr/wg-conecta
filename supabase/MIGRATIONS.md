@@ -13,6 +13,28 @@ A migration de `hide_birthday` precisa rodar **antes do deploy** do PR. O painel
 coluna, e sem ela a tela de Colaboradores dá erro. Depois do deploy, marque "Não exibir
 aniversário no portal" em Colaboradores → editar → Dados pessoais.
 
+## Pendentes (PR `fix/p2-escritas-pelo-servidor`)
+
+Rodar depois das duas de cima, também um arquivo por vez. Nenhuma delas depende de deploy: dá
+para rodar antes ou depois do merge.
+
+| Arquivo | O que faz |
+|---|---|
+| `20260911150000_self_writes_via_server.sql` | Remove as policies de escrita "próprio registro" pela API REST: solicitações, mensagens, atualização cadastral, reconhecimentos, comentários, reações, parabéns e `employees`. Toda escrita do colaborador já passa pelo servidor. A leitura não muda. |
+| `20260911160000_retention_and_attachment_limits.sql` | Apaga `baterito_queries` com mais de 90 dias e agenda a limpeza diária, se o `pg_cron` estiver habilitado. O bucket `request-attachments` passa a aceitar só PDF, JPG e PNG de até 10 MB. |
+| `20260911170000_hygiene.sql` | Apaga a tabela `portal_access`, que guardava o código compartilhado antigo, e restringe as leituras de conteúdo a `authenticated`. |
+
+Para conferir a primeira, rode à parte. Deve voltar só as policies de admin e as de leitura:
+
+```sql
+SELECT tablename, policyname, cmd FROM pg_policies
+ WHERE schemaname = 'public' AND cmd <> 'SELECT'
+   AND tablename IN ('requests','request_messages','profile_update_requests','peer_recognitions',
+                     'announcement_comments','announcement_reactions','anniversary_congrats',
+                     'announcement_reads','onboarding_progress','material_views','employees')
+ ORDER BY 1, 2;
+```
+
 ## Resolvido (11/09/2026): colaboradores com acesso de admin
 
 Os blocos A a D abaixo foram rodados e conferidos no portal em 11/09/2026:
@@ -130,7 +152,7 @@ Os arquivos são idempotentes e devem rodar na ordem do nome:
 Com a CLI:
 
 ```bash
-supabase link --project-ref icllhgvhuzhhlxwlqwtt
+supabase link --project-ref wrldlvcrrslzbrwuwdsr
 supabase db push
 ```
 
@@ -151,9 +173,10 @@ do portal. A migration:
 
 ### Situação conferida em 03/09/2026
 
-Checagem via API contra o projeto que está no `.env` (`wrldlvcrrslzbrwuwdsr`), que **não** é o
-`icllhgvhuzhhlxwlqwtt` citado acima — confirme o project-ref antes de aplicar qualquer coisa,
-porque o desta página está desatualizado:
+Checagem via API contra o projeto que está no `.env` (`wrldlvcrrslzbrwuwdsr`). Esta página
+citava `icllhgvhuzhhlxwlqwtt`, que está desatualizado; foi corrigido em 11/09/2026. O
+`project_id` de `supabase/config.toml` é só o nome do ambiente local da CLI e não aponta para o
+projeto remoto:
 
 - `requests`, `request_messages`, `profile_update_requests` e `employees` **existem** — as
   migrations `20260903*` já foram aplicadas neste projeto, ao contrário do que esta página dizia;
@@ -172,7 +195,7 @@ estava defasado (faltavam `auth_user_id`, `phone`, `birth_date`, `admission_date
 `employees`, o que produzia 25 erros de tipo). Regenere assim que a CLI estiver disponível:
 
 ```bash
-supabase gen types typescript --project-id icllhgvhuzhhlxwlqwtt > src/integrations/supabase/types.ts
+supabase gen types typescript --project-id wrldlvcrrslzbrwuwdsr > src/integrations/supabase/types.ts
 ```
 
 ## Dado de exemplo

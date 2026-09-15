@@ -82,9 +82,13 @@ export async function uploadRequestAttachment(file: File, employeeId: string): P
   }
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${employeeId}/${Date.now()}-${safeName}`;
+  // O bucket só aceita estes três tipos. Pela extensão (já validada acima), e não por
+  // `file.type`, que alguns navegadores deixam vazio e o bucket recusaria.
+  const contentType =
+    ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : "image/jpeg";
   const { error } = await supabase.storage.from("request-attachments").upload(path, file, {
     upsert: false,
-    contentType: file.type || undefined,
+    contentType,
   });
   if (error) throw new Error(error.message);
   return path;
