@@ -1,5 +1,14 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/matriz-contatos`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915150000_contact_matrix.sql` | Cria `contact_matrix`: para cada assunto, o contato de cada departamento (vazio = vale para todos). O portal lê as ativas; só admin escreve. |
+
+Pode rodar antes ou depois do deploy: sem a tabela, "Com quem falar" mostra só os contatos do G&G,
+como antes. Depois, o G&G preenche em Gente & Gestão → Matriz de contatos.
+
 ## Pendentes (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes
