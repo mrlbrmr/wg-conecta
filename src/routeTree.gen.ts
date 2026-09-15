@@ -27,13 +27,16 @@ import { Route as PortalFormulariosRouteImport } from './routes/_portal.formular
 import { Route as PortalCulturaRouteImport } from './routes/_portal.cultura'
 import { Route as PortalComunicadosRouteImport } from './routes/_portal.comunicados'
 import { Route as PortalBuscaRouteImport } from './routes/_portal.busca'
+import { Route as PortalAcompanharRouteImport } from './routes/_portal.acompanhar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as PortalSimIndexRouteImport } from './routes/_portal.sim.index'
 import { Route as PortalMuralIndexRouteImport } from './routes/_portal.mural.index'
 import { Route as PortalGenteGestaoIndexRouteImport } from './routes/_portal.gente-gestao.index'
 import { Route as PortalFormulariosIndexRouteImport } from './routes/_portal.formularios.index'
 import { Route as PortalComunicadosIndexRouteImport } from './routes/_portal.comunicados.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as PortalSolicitacoesIdRouteImport } from './routes/_portal.solicitacoes.$id'
+import { Route as PortalSimIdRouteImport } from './routes/_portal.sim.$id'
 import { Route as PortalMuralArquivoRouteImport } from './routes/_portal.mural.arquivo'
 import { Route as PortalMuralIdRouteImport } from './routes/_portal.mural.$id'
 import { Route as PortalGenteGestaoPoliticasRouteImport } from './routes/_portal.gente-gestao.politicas'
@@ -53,6 +56,7 @@ import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedAdminColaboradoresRouteImport } from './routes/_authenticated/admin.colaboradores'
+import { Route as AuthenticatedAdminCanaisRouteImport } from './routes/_authenticated/admin.canais'
 import { Route as ApiPublicFilesSplatRouteImport } from './routes/api/public/files/$'
 import { Route as AuthenticatedAdminRecursoKeyRouteImport } from './routes/_authenticated/admin.recurso.$key'
 
@@ -145,10 +149,20 @@ const PortalBuscaRoute = PortalBuscaRouteImport.update({
   path: '/busca',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalAcompanharRoute = PortalAcompanharRouteImport.update({
+  id: '/acompanhar',
+  path: '/acompanhar',
+  getParentRoute: () => PortalRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const PortalSimIndexRoute = PortalSimIndexRouteImport.update({
+  id: '/sim/',
+  path: '/sim/',
+  getParentRoute: () => PortalRoute,
 } as any)
 const PortalMuralIndexRoute = PortalMuralIndexRouteImport.update({
   id: '/',
@@ -178,6 +192,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
 const PortalSolicitacoesIdRoute = PortalSolicitacoesIdRouteImport.update({
   id: '/solicitacoes/$id',
   path: '/solicitacoes/$id',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSimIdRoute = PortalSimIdRouteImport.update({
+  id: '/sim/$id',
+  path: '/sim/$id',
   getParentRoute: () => PortalRoute,
 } as any)
 const PortalMuralArquivoRoute = PortalMuralArquivoRouteImport.update({
@@ -288,6 +307,12 @@ const AuthenticatedAdminColaboradoresRoute =
     path: '/colaboradores',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCanaisRoute =
+  AuthenticatedAdminCanaisRouteImport.update({
+    id: '/canais',
+    path: '/canais',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicFilesSplatRoute = ApiPublicFilesSplatRouteImport.update({
   id: '/api/public/files/$',
   path: '/api/public/files/$',
@@ -305,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
   '/comunicados': typeof PortalComunicadosRouteWithChildren
   '/cultura': typeof PortalCulturaRoute
@@ -318,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
+  '/admin/canais': typeof AuthenticatedAdminCanaisRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -337,12 +364,14 @@ export interface FileRoutesByFullPath {
   '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/mural/$id': typeof PortalMuralIdRoute
   '/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/sim/$id': typeof PortalSimIdRoute
   '/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/comunicados/': typeof PortalComunicadosIndexRoute
   '/formularios/': typeof PortalFormulariosIndexRoute
   '/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/mural/': typeof PortalMuralIndexRoute
+  '/sim/': typeof PortalSimIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
@@ -350,6 +379,7 @@ export interface FileRoutesByTo {
   '/': typeof PortalIndexRoute
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
+  '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
   '/cultura': typeof PortalCulturaRoute
   '/integracao': typeof PortalIntegracaoRoute
@@ -359,6 +389,7 @@ export interface FileRoutesByTo {
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
+  '/admin/canais': typeof AuthenticatedAdminCanaisRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -378,12 +409,14 @@ export interface FileRoutesByTo {
   '/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/mural/$id': typeof PortalMuralIdRoute
   '/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/sim/$id': typeof PortalSimIdRoute
   '/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/comunicados': typeof PortalComunicadosIndexRoute
   '/formularios': typeof PortalFormulariosIndexRoute
   '/gente-gestao': typeof PortalGenteGestaoIndexRoute
   '/mural': typeof PortalMuralIndexRoute
+  '/sim': typeof PortalSimIndexRoute
   '/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
@@ -394,6 +427,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_portal/acompanhar': typeof PortalAcompanharRoute
   '/_portal/busca': typeof PortalBuscaRoute
   '/_portal/comunicados': typeof PortalComunicadosRouteWithChildren
   '/_portal/cultura': typeof PortalCulturaRoute
@@ -408,6 +442,7 @@ export interface FileRoutesById {
   '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/_portal/': typeof PortalIndexRoute
+  '/_authenticated/admin/canais': typeof AuthenticatedAdminCanaisRoute
   '/_authenticated/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -427,12 +462,14 @@ export interface FileRoutesById {
   '/_portal/gente-gestao/politicas': typeof PortalGenteGestaoPoliticasRoute
   '/_portal/mural/$id': typeof PortalMuralIdRoute
   '/_portal/mural/arquivo': typeof PortalMuralArquivoRoute
+  '/_portal/sim/$id': typeof PortalSimIdRoute
   '/_portal/solicitacoes/$id': typeof PortalSolicitacoesIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_portal/comunicados/': typeof PortalComunicadosIndexRoute
   '/_portal/formularios/': typeof PortalFormulariosIndexRoute
   '/_portal/gente-gestao/': typeof PortalGenteGestaoIndexRoute
   '/_portal/mural/': typeof PortalMuralIndexRoute
+  '/_portal/sim/': typeof PortalSimIndexRoute
   '/_authenticated/admin/recurso/$key': typeof AuthenticatedAdminRecursoKeyRoute
   '/api/public/files/$': typeof ApiPublicFilesSplatRoute
 }
@@ -443,6 +480,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/gate'
     | '/admin'
+    | '/acompanhar'
     | '/busca'
     | '/comunicados'
     | '/cultura'
@@ -456,6 +494,7 @@ export interface FileRouteTypes {
     | '/colaborador/confirmar'
     | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
+    | '/admin/canais'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
     | '/admin/solicitacoes'
@@ -475,12 +514,14 @@ export interface FileRouteTypes {
     | '/gente-gestao/politicas'
     | '/mural/$id'
     | '/mural/arquivo'
+    | '/sim/$id'
     | '/solicitacoes/$id'
     | '/admin/'
     | '/comunicados/'
     | '/formularios/'
     | '/gente-gestao/'
     | '/mural/'
+    | '/sim/'
     | '/admin/recurso/$key'
     | '/api/public/files/$'
   fileRoutesByTo: FileRoutesByTo
@@ -488,6 +529,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/gate'
+    | '/acompanhar'
     | '/busca'
     | '/cultura'
     | '/integracao'
@@ -497,6 +539,7 @@ export interface FileRouteTypes {
     | '/colaborador/confirmar'
     | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
+    | '/admin/canais'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
     | '/admin/solicitacoes'
@@ -516,12 +559,14 @@ export interface FileRouteTypes {
     | '/gente-gestao/politicas'
     | '/mural/$id'
     | '/mural/arquivo'
+    | '/sim/$id'
     | '/solicitacoes/$id'
     | '/admin'
     | '/comunicados'
     | '/formularios'
     | '/gente-gestao'
     | '/mural'
+    | '/sim'
     | '/admin/recurso/$key'
     | '/api/public/files/$'
   id:
@@ -531,6 +576,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/gate'
     | '/_authenticated/admin'
+    | '/_portal/acompanhar'
     | '/_portal/busca'
     | '/_portal/comunicados'
     | '/_portal/cultura'
@@ -545,6 +591,7 @@ export interface FileRouteTypes {
     | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
     | '/_portal/'
+    | '/_authenticated/admin/canais'
     | '/_authenticated/admin/colaboradores'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/solicitacoes'
@@ -564,12 +611,14 @@ export interface FileRouteTypes {
     | '/_portal/gente-gestao/politicas'
     | '/_portal/mural/$id'
     | '/_portal/mural/arquivo'
+    | '/_portal/sim/$id'
     | '/_portal/solicitacoes/$id'
     | '/_authenticated/admin/'
     | '/_portal/comunicados/'
     | '/_portal/formularios/'
     | '/_portal/gente-gestao/'
     | '/_portal/mural/'
+    | '/_portal/sim/'
     | '/_authenticated/admin/recurso/$key'
     | '/api/public/files/$'
   fileRoutesById: FileRoutesById
@@ -714,12 +763,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalBuscaRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/_portal/acompanhar': {
+      id: '/_portal/acompanhar'
+      path: '/acompanhar'
+      fullPath: '/acompanhar'
+      preLoaderRoute: typeof PortalAcompanharRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_portal/sim/': {
+      id: '/_portal/sim/'
+      path: '/sim'
+      fullPath: '/sim/'
+      preLoaderRoute: typeof PortalSimIndexRouteImport
+      parentRoute: typeof PortalRoute
     }
     '/_portal/mural/': {
       id: '/_portal/mural/'
@@ -761,6 +824,13 @@ declare module '@tanstack/react-router' {
       path: '/solicitacoes/$id'
       fullPath: '/solicitacoes/$id'
       preLoaderRoute: typeof PortalSolicitacoesIdRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/_portal/sim/$id': {
+      id: '/_portal/sim/$id'
+      path: '/sim/$id'
+      fullPath: '/sim/$id'
+      preLoaderRoute: typeof PortalSimIdRouteImport
       parentRoute: typeof PortalRoute
     }
     '/_portal/mural/arquivo': {
@@ -896,6 +966,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminColaboradoresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/canais': {
+      id: '/_authenticated/admin/canais'
+      path: '/canais'
+      fullPath: '/admin/canais'
+      preLoaderRoute: typeof AuthenticatedAdminCanaisRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/files/$': {
       id: '/api/public/files/$'
       path: '/api/public/files/$'
@@ -914,6 +991,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminCanaisRoute: typeof AuthenticatedAdminCanaisRoute
   AuthenticatedAdminColaboradoresRoute: typeof AuthenticatedAdminColaboradoresRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
@@ -923,6 +1001,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminCanaisRoute: AuthenticatedAdminCanaisRoute,
   AuthenticatedAdminColaboradoresRoute: AuthenticatedAdminColaboradoresRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
@@ -1021,6 +1100,7 @@ const PortalMuralRouteWithChildren = PortalMuralRoute._addFileChildren(
 )
 
 interface PortalRouteChildren {
+  PortalAcompanharRoute: typeof PortalAcompanharRoute
   PortalBuscaRoute: typeof PortalBuscaRoute
   PortalComunicadosRoute: typeof PortalComunicadosRouteWithChildren
   PortalCulturaRoute: typeof PortalCulturaRoute
@@ -1031,10 +1111,13 @@ interface PortalRouteChildren {
   PortalPerfilRoute: typeof PortalPerfilRoute
   PortalVagasRoute: typeof PortalVagasRoute
   PortalIndexRoute: typeof PortalIndexRoute
+  PortalSimIdRoute: typeof PortalSimIdRoute
   PortalSolicitacoesIdRoute: typeof PortalSolicitacoesIdRoute
+  PortalSimIndexRoute: typeof PortalSimIndexRoute
 }
 
 const PortalRouteChildren: PortalRouteChildren = {
+  PortalAcompanharRoute: PortalAcompanharRoute,
   PortalBuscaRoute: PortalBuscaRoute,
   PortalComunicadosRoute: PortalComunicadosRouteWithChildren,
   PortalCulturaRoute: PortalCulturaRoute,
@@ -1045,7 +1128,9 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalPerfilRoute: PortalPerfilRoute,
   PortalVagasRoute: PortalVagasRoute,
   PortalIndexRoute: PortalIndexRoute,
+  PortalSimIdRoute: PortalSimIdRoute,
   PortalSolicitacoesIdRoute: PortalSolicitacoesIdRoute,
+  PortalSimIndexRoute: PortalSimIndexRoute,
 }
 
 const PortalRouteWithChildren =

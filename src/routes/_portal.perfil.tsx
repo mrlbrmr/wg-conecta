@@ -28,6 +28,8 @@ import { uploadEmployeePhoto } from "@/lib/storage";
 import { formatDate, formatDayMonth, tenureLabel, MONTHS } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
 import { PRIVACY_NOTE } from "@/lib/form-defs";
+import { SUBMISSION_STATUS_LABEL, SUBMISSION_STATUS_TONE } from "@/lib/channel-defs";
+import { mySubmissionsQuery } from "@/lib/channel-queries";
 
 const TABS = [
   { id: "visao-geral", label: "Visão geral", short: "Visão geral" },
@@ -692,7 +694,67 @@ function RequestsTab() {
           ))}
         </div>
       )}
+
+      <MySims />
     </div>
+  );
+}
+
+/** SIMs enviados com o nome. Os anônimos não aparecem aqui — nem têm como. */
+function MySims() {
+  const sims = useQuery(mySubmissionsQuery);
+  const list = sims.data ?? [];
+
+  return (
+    <section className="mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Kicker>Meus SIMs</Kicker>
+        <InkButton variant="outline" asChild>
+          <Link to="/sim">Enviar um SIM ↗</Link>
+        </InkButton>
+      </div>
+
+      {sims.isLoading ? (
+        <Skeleton className="mt-5 h-24 w-full" />
+      ) : list.length === 0 ? (
+        <p className="mt-4 max-w-[60ch] text-[14.5px] leading-[1.65] text-muted-foreground">
+          Os SIMs que você enviar com seu nome aparecem aqui, com a resposta do G&amp;G. Os enviados
+          sem identificação se acompanham pelo protocolo, em{" "}
+          <Link to="/acompanhar" className="font-bold text-primary hover:underline">
+            Acompanhar
+          </Link>
+          .
+        </p>
+      ) : (
+        <div className="mt-5 flex flex-col gap-3">
+          {list.map((s) => (
+            <PaperCard key={s.id} className="grid gap-5 p-[22px] sm:grid-cols-[1fr_auto]">
+              <div className="min-w-0">
+                <p className="font-mono text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                  {s.protocol}
+                </p>
+                <h3 className="mt-1.5 text-xl font-black tracking-[-0.03em]">{s.category}</h3>
+                <p className="mt-1.5 text-sm tabular-nums text-muted-foreground">
+                  Enviado em {formatDate(s.received_on)}
+                </p>
+              </div>
+              <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:justify-between">
+                <Chip tone={SUBMISSION_STATUS_TONE[s.status]}>
+                  {SUBMISSION_STATUS_LABEL[s.status]}
+                </Chip>
+                <Link
+                  to="/sim/$id"
+                  params={{ id: s.id }}
+                  className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink hover:text-primary"
+                >
+                  Ver conversa ↗
+                </Link>
+              </div>
+            </PaperCard>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

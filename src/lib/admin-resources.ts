@@ -21,6 +21,7 @@ import {
   CalendarDays,
   Timer,
   Network,
+  Lightbulb,
 } from "lucide-react";
 import { compareChecklistItems, ONBOARDING_STAGES } from "@/lib/onboarding-stages";
 import { DEPARTMENTS } from "@/lib/org";
@@ -684,6 +685,13 @@ export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
     icon: Inbox,
     section: "Gente & Gestão",
     to: "/admin/solicitacoes",
+  },
+  {
+    key: "canais",
+    label: "SIM · Melhorias",
+    icon: Lightbulb,
+    section: "Gente & Gestão",
+    to: "/admin/canais",
   },
   {
     key: "colaboradores",

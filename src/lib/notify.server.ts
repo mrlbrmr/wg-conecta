@@ -29,12 +29,15 @@ export async function resolveGgRecipients(): Promise<string[]> {
 }
 
 export async function notifyGG(subject: string, html: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY || !process.env.GG_NOTIFY_FROM) return false;
+  return sendEmail(await resolveGgRecipients(), subject, html);
+}
+
+/** E-mail avulso pelo mesmo remetente. Sem env ou sem destinatário, não faz nada. */
+export async function sendEmail(to: string[], subject: string, html: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.GG_NOTIFY_FROM;
-  if (!key || !from) return false;
-
-  const to = await resolveGgRecipients();
-  if (to.length === 0) return false;
+  if (!key || !from || to.length === 0) return false;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
