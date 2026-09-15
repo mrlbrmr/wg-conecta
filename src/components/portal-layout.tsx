@@ -182,6 +182,12 @@ function PortalFooter() {
                 </a>
               ))}
             </div>
+            <Link
+              to="/sim"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-accent hover:underline"
+            >
+              SIM · Ideia, crítica ou sugestão <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+            </Link>
             <p className="mt-3 text-xs text-paper/60 max-w-xs">
               Uso interno. Não compartilhe CPF, documentos ou dados bancários em comunicados e
               mensagens — dados cadastrais só pelo canal de Atualização Cadastral.

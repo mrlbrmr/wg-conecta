@@ -1,5 +1,42 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/sim`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915170000_channel_submissions.sql` | Cria `channel_submissions` e `channel_submission_messages`, a base do SIM (e, depois, do Canal de Escuta). Envio sem identificação não tem autor nem hora; o identificado (só no SIM) guarda o colaborador do login. Só o servidor lê. |
+
+Rodar **antes do deploy**: sem as tabelas, o envio do SIM, o Acompanhar e a tela do painel dão
+erro (o resto do portal não é afetado).
+
+Conferências (só leitura), uma por vez:
+
+```sql
+-- Não deve voltar nenhuma linha: nem anon nem authenticated têm acesso.
+SELECT table_name, grantee, privilege_type
+  FROM information_schema.role_table_grants
+ WHERE table_schema = 'public'
+   AND table_name IN ('channel_submissions', 'channel_submission_messages')
+   AND grantee IN ('anon', 'authenticated', 'PUBLIC');
+```
+
+```sql
+-- Depois dos primeiros envios: anônimos sem autor e com chave; identificados com autor e sem chave.
+SELECT author_employee_id IS NOT NULL AS identificado,
+       access_key_hash IS NOT NULL AS tem_chave,
+       count(*)
+  FROM public.channel_submissions
+ GROUP BY 1, 2;
+```
+
+**Depois do deploy:**
+- Tirar o Google Forms do SIM de Admin › Formulários e de Links rápidos, se estiver lá: o SIM
+  agora é em `/sim`.
+- Os avisos por e-mail (ao G&G, de envio novo; a quem enviou com o nome, de resposta e de
+  conclusão) usam o Resend das solicitações (`RESEND_API_KEY` e `GG_NOTIFY_FROM`). Levam só o
+  protocolo e o link, nunca o conteúdo. Quem entra por CPF não recebe e-mail e acompanha pelo
+  Perfil.
+
 ## Pendentes (PR `feat/matriz-contatos`)
 
 | Arquivo | O que faz |

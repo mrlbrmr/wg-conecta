@@ -65,4 +65,10 @@ export const GG_LINKS = [
     desc: "Contatos por assunto e área",
     icon: "Users",
   },
+  {
+    to: "/sim",
+    title: "SIM",
+    desc: "Ideia, crítica ou sugestão",
+    icon: "Lightbulb",
+  },
 ] as const;

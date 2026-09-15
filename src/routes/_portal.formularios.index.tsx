@@ -100,6 +100,17 @@ function FormulariosPage() {
               Solicitação livre ↗
             </InkButton>
           </PaperCard>
+          <PaperCard className="p-6">
+            <p className="text-[19px] font-black leading-tight tracking-[-0.03em]">
+              Tem uma ideia, crítica ou sugestão?
+            </p>
+            <p className="mt-2 text-sm leading-[1.6] text-muted-foreground">
+              Mande pelo SIM — com seu nome ou sem se identificar.
+            </p>
+            <InkButton variant="outline" className="mt-5" asChild>
+              <Link to="/sim">Enviar um SIM ↗</Link>
+            </InkButton>
+          </PaperCard>
         </div>
       </div>
 
