@@ -5,9 +5,24 @@
 | Arquivo | O que faz |
 |---|---|
 | `20260915150000_contact_matrix.sql` | Cria `contact_matrix`: para cada assunto, o contato de cada departamento (vazio = vale para todos). O portal lê as ativas; só admin escreve. |
+| `20260915160000_contact_matrix_grants.sql` | Tira de `anon` o acesso que os privilégios padrão do schema deram à tabela, e deixa em `authenticated` só SELECT/INSERT/UPDATE/DELETE (sem TRUNCATE). |
 
 Pode rodar antes ou depois do deploy: sem a tabela, "Com quem falar" mostra só os contatos do G&G,
 como antes. Depois, o G&G preenche em Gente & Gestão → Matriz de contatos.
+
+> Este projeto é anterior à mudança de abril/2026 do Supabase: toda tabela nova em `public` ganha
+> ALL para `anon` e `authenticated` pelos privilégios padrão. Migration que cria tabela precisa
+> de `REVOKE ALL ... FROM PUBLIC, anon, authenticated` antes dos `GRANT`s que ela quer.
+
+Conferência (só leitura) — deve voltar só `authenticated` com DELETE, INSERT, SELECT, UPDATE:
+
+```sql
+SELECT grantee, string_agg(privilege_type, ', ' ORDER BY privilege_type) AS privilegios
+  FROM information_schema.role_table_grants
+ WHERE table_schema = 'public' AND table_name = 'contact_matrix'
+   AND grantee IN ('anon', 'authenticated')
+ GROUP BY grantee;
+```
 
 ## Pendentes (PR `feat/acesso-cpf`)
 
