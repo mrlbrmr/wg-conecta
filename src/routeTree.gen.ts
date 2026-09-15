@@ -15,6 +15,7 @@ import { Route as PortalRouteImport } from './routes/_portal'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as PortalIndexRouteImport } from './routes/_portal.index'
 import { Route as ColaboradorRecuperarSenhaRouteImport } from './routes/colaborador/recuperar-senha'
+import { Route as ColaboradorNovaSenhaRouteImport } from './routes/colaborador/nova-senha'
 import { Route as ColaboradorConfirmarRouteImport } from './routes/colaborador/confirmar'
 import { Route as ApiBateritoRouteImport } from './routes/api/baterito'
 import { Route as PortalVagasRouteImport } from './routes/_portal.vagas'
@@ -84,6 +85,11 @@ const ColaboradorRecuperarSenhaRoute =
     path: '/colaborador/recuperar-senha',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ColaboradorNovaSenhaRoute = ColaboradorNovaSenhaRouteImport.update({
+  id: '/colaborador/nova-senha',
+  path: '/colaborador/nova-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ColaboradorConfirmarRoute = ColaboradorConfirmarRouteImport.update({
   id: '/colaborador/confirmar',
   path: '/colaborador/confirmar',
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -350,6 +357,7 @@ export interface FileRoutesByTo {
   '/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -397,6 +405,7 @@ export interface FileRoutesById {
   '/_portal/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
+  '/colaborador/nova-senha': typeof ColaboradorNovaSenhaRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/_portal/': typeof PortalIndexRoute
   '/_authenticated/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
@@ -445,6 +454,7 @@ export interface FileRouteTypes {
     | '/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
+    | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
@@ -485,6 +495,7 @@ export interface FileRouteTypes {
     | '/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
+    | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
@@ -531,6 +542,7 @@ export interface FileRouteTypes {
     | '/_portal/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
+    | '/colaborador/nova-senha'
     | '/colaborador/recuperar-senha'
     | '/_portal/'
     | '/_authenticated/admin/colaboradores'
@@ -569,6 +581,7 @@ export interface RootRouteChildren {
   GateRoute: typeof GateRoute
   ApiBateritoRoute: typeof ApiBateritoRoute
   ColaboradorConfirmarRoute: typeof ColaboradorConfirmarRoute
+  ColaboradorNovaSenhaRoute: typeof ColaboradorNovaSenhaRoute
   ColaboradorRecuperarSenhaRoute: typeof ColaboradorRecuperarSenhaRoute
   ApiPublicFilesSplatRoute: typeof ApiPublicFilesSplatRoute
 }
@@ -615,6 +628,13 @@ declare module '@tanstack/react-router' {
       path: '/colaborador/recuperar-senha'
       fullPath: '/colaborador/recuperar-senha'
       preLoaderRoute: typeof ColaboradorRecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/colaborador/nova-senha': {
+      id: '/colaborador/nova-senha'
+      path: '/colaborador/nova-senha'
+      fullPath: '/colaborador/nova-senha'
+      preLoaderRoute: typeof ColaboradorNovaSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/colaborador/confirmar': {
@@ -1038,6 +1058,7 @@ const rootRouteChildren: RootRouteChildren = {
   GateRoute: GateRoute,
   ApiBateritoRoute: ApiBateritoRoute,
   ColaboradorConfirmarRoute: ColaboradorConfirmarRoute,
+  ColaboradorNovaSenhaRoute: ColaboradorNovaSenhaRoute,
   ColaboradorRecuperarSenhaRoute: ColaboradorRecuperarSenhaRoute,
   ApiPublicFilesSplatRoute: ApiPublicFilesSplatRoute,
 }

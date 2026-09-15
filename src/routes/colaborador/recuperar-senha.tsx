@@ -43,6 +43,10 @@ function RecuperarSenhaPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Informe seu e-mail e enviaremos um link para criar uma nova senha.
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Entra com CPF? Não há e-mail para recuperar: peça uma senha nova ao time de Gente &amp;
+            Gestão.
+          </p>
         </div>
 
         <div className="card-paper p-6 md:p-8 bg-surface">

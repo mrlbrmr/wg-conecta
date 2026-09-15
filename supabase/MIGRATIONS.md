@@ -9,7 +9,36 @@
 Pode rodar antes ou depois do deploy: sem a tabela, "Com quem falar" mostra só os contatos do G&G,
 como antes. Depois, o G&G preenche em Gente & Gestão → Matriz de contatos.
 
-## Pendentes (PR `feat/ajustes-pos-testes`)
+## Pendentes (PR `feat/acesso-cpf`)
+
+Login por CPF + senha para quem não tem e-mail corporativo. Duas coisas antes de usar:
+
+**1. Migration:**
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915130000_employee_cpf_logins.sql` | Cria `employee_cpf_logins`: quem entra por CPF, com o HMAC do CPF e os dois últimos dígitos. Só o servidor lê. |
+
+**2. Segredo `CPF_LOGIN_PEPPER` na Vercel** (Settings → Environment Variables, marcar Production
+e Preview). É a chave do HMAC: o CPF nunca é gravado, só o resultado do HMAC com ela. Gere um
+valor aleatório no PowerShell (vai direto para a área de transferência, sem aparecer na tela):
+
+```powershell
+$b = New-Object byte[] 48; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b) | Set-Clipboard
+```
+
+Cole na Vercel e faça um novo deploy. **Não troque esse valor depois do primeiro acesso por CPF
+criado**: com outro segredo, nenhum CPF cadastrado consegue entrar (seria preciso recriar todos
+os acessos). Guarde uma cópia num cofre de senhas.
+
+Sem a migration e o segredo, o resto do portal funciona normalmente; só o login por CPF responde
+"indisponível".
+
+**Uso:** Colaboradores → ⋯ → Dar acesso → **Por CPF**. O painel mostra uma senha provisória uma
+única vez, para entregar à pessoa; no primeiro acesso ela cria a própria. Esqueceu a senha:
+⋯ → Gerar nova senha. CPF digitado errado: ⋯ → Corrigir CPF.
+
+## Aplicadas em 15/09/2026 (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes
 do deploy** do PR. Se as pendências do P1 e do P2, logo abaixo, ainda não rodaram, elas vêm
@@ -63,7 +92,7 @@ A migration de `hide_birthday` precisa rodar **antes do deploy** do PR. O painel
 coluna, e sem ela a tela de Colaboradores dá erro. Depois do deploy, marque "Não exibir
 aniversário no portal" em Colaboradores → editar → Dados pessoais.
 
-## Pendentes (PR `fix/p2-escritas-pelo-servidor`)
+## Aplicadas em 15/09/2026 (PR `fix/p2-escritas-pelo-servidor`)
 
 Rodar depois das duas de cima, também um arquivo por vez. Nenhuma delas depende de deploy: dá
 para rodar antes ou depois do merge.
