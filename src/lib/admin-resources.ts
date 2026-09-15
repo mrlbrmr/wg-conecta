@@ -20,6 +20,7 @@ import {
   Image,
   CalendarDays,
   Timer,
+  Ear,
 } from "lucide-react";
 import { compareChecklistItems, ONBOARDING_STAGES } from "@/lib/onboarding-stages";
 
@@ -638,6 +639,13 @@ export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
     icon: Inbox,
     section: "Gente & Gestão",
     to: "/admin/solicitacoes",
+  },
+  {
+    key: "escuta",
+    label: "Canal de Escuta e SIM",
+    icon: Ear,
+    section: "Gente & Gestão",
+    to: "/admin/escuta",
   },
   {
     key: "colaboradores",

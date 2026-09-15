@@ -1,5 +1,20 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/canal-escuta-sim`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915140000_anonymous_submissions.sql` | Cria `anonymous_submissions` e `anonymous_submission_messages`, a base do Canal de Escuta e do SIM. Sem coluna de autor e sem hora do envio, de propósito. Só o servidor lê. |
+
+Rodar **antes do deploy**: sem as tabelas, o envio pelo Canal de Escuta e pelo SIM dá erro (o
+resto do portal não é afetado).
+
+**Depois do deploy:**
+- Desativar o formulário do SIM no Google Forms que estava em Admin › Formulários / Links
+  rápidos: o SIM agora é em `/sim`.
+- O aviso por e-mail de novo envio usa o mesmo Resend das solicitações (`RESEND_API_KEY` e
+  `GG_NOTIFY_FROM`). O e-mail leva só o canal e o protocolo, nunca o conteúdo.
+
 ## Pendentes (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes

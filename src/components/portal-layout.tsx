@@ -182,6 +182,20 @@ function PortalFooter() {
                 </a>
               ))}
             </div>
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+              <Link
+                to="/canal-de-escuta"
+                className="inline-flex items-center gap-1 text-sm font-bold text-accent hover:underline"
+              >
+                Canal de Escuta <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+              </Link>
+              <Link
+                to="/sim"
+                className="inline-flex items-center gap-1 text-sm font-bold text-accent hover:underline"
+              >
+                SIM · Sugerir melhoria <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+              </Link>
+            </div>
             <p className="mt-3 text-xs text-paper/60 max-w-xs">
               Uso interno. Não compartilhe CPF, documentos ou dados bancários em comunicados e
               mensagens — dados cadastrais só pelo canal de Atualização Cadastral.

@@ -65,4 +65,16 @@ export const GG_LINKS = [
     desc: "Contatos da equipe",
     icon: "Users",
   },
+  {
+    to: "/canal-de-escuta",
+    title: "Canal de Escuta",
+    desc: "Relate uma situação sem se identificar",
+    icon: "Ear",
+  },
+  {
+    to: "/sim",
+    title: "SIM",
+    desc: "Sugira uma melhoria",
+    icon: "Lightbulb",
+  },
 ] as const;

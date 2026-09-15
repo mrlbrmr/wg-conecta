@@ -353,6 +353,75 @@ export type Database = {
         }
         Relationships: []
       }
+      anonymous_submissions: {
+        Row: {
+          access_key_hash: string
+          category: string
+          channel: string
+          id: string
+          payload: Json
+          protocol: string
+          received_on: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_key_hash: string
+          category: string
+          channel: string
+          id?: string
+          payload?: Json
+          protocol: string
+          received_on: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_key_hash?: string
+          category?: string
+          channel?: string
+          id?: string
+          payload?: Json
+          protocol?: string
+          received_on?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      anonymous_submission_messages: {
+        Row: {
+          body: string
+          from_gg: boolean
+          id: string
+          sent_on: string
+          seq: number
+          submission_id: string
+        }
+        Insert: {
+          body: string
+          from_gg: boolean
+          id?: string
+          sent_on: string
+          submission_id: string
+        }
+        Update: {
+          body?: string
+          from_gg?: boolean
+          id?: string
+          sent_on?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anonymous_submission_messages_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "anonymous_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anniversary_congrats: {
         Row: {
           id: string

@@ -18,6 +18,7 @@ import { Route as ColaboradorRecuperarSenhaRouteImport } from './routes/colabora
 import { Route as ColaboradorConfirmarRouteImport } from './routes/colaborador/confirmar'
 import { Route as ApiBateritoRouteImport } from './routes/api/baterito'
 import { Route as PortalVagasRouteImport } from './routes/_portal.vagas'
+import { Route as PortalSimRouteImport } from './routes/_portal.sim'
 import { Route as PortalPerfilRouteImport } from './routes/_portal.perfil'
 import { Route as PortalMuralRouteImport } from './routes/_portal.mural'
 import { Route as PortalIntegracaoRouteImport } from './routes/_portal.integracao'
@@ -25,7 +26,9 @@ import { Route as PortalGenteGestaoRouteImport } from './routes/_portal.gente-ge
 import { Route as PortalFormulariosRouteImport } from './routes/_portal.formularios'
 import { Route as PortalCulturaRouteImport } from './routes/_portal.cultura'
 import { Route as PortalComunicadosRouteImport } from './routes/_portal.comunicados'
+import { Route as PortalCanalDeEscutaRouteImport } from './routes/_portal.canal-de-escuta'
 import { Route as PortalBuscaRouteImport } from './routes/_portal.busca'
+import { Route as PortalAcompanharRouteImport } from './routes/_portal.acompanhar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as PortalMuralIndexRouteImport } from './routes/_portal.mural.index'
 import { Route as PortalGenteGestaoIndexRouteImport } from './routes/_portal.gente-gestao.index'
@@ -50,6 +53,7 @@ import { Route as PortalComunicadosArquivoRouteImport } from './routes/_portal.c
 import { Route as PortalComunicadosIdRouteImport } from './routes/_portal.comunicados.$id'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
+import { Route as AuthenticatedAdminEscutaRouteImport } from './routes/_authenticated/admin.escuta'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedAdminColaboradoresRouteImport } from './routes/_authenticated/admin.colaboradores'
 import { Route as ApiPublicFilesSplatRouteImport } from './routes/api/public/files/$'
@@ -99,6 +103,11 @@ const PortalVagasRoute = PortalVagasRouteImport.update({
   path: '/vagas',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalSimRoute = PortalSimRouteImport.update({
+  id: '/sim',
+  path: '/sim',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PortalPerfilRoute = PortalPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -134,9 +143,19 @@ const PortalComunicadosRoute = PortalComunicadosRouteImport.update({
   path: '/comunicados',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalCanalDeEscutaRoute = PortalCanalDeEscutaRouteImport.update({
+  id: '/canal-de-escuta',
+  path: '/canal-de-escuta',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PortalBuscaRoute = PortalBuscaRouteImport.update({
   id: '/busca',
   path: '/busca',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalAcompanharRoute = PortalAcompanharRouteImport.update({
+  id: '/acompanhar',
+  path: '/acompanhar',
   getParentRoute: () => PortalRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -270,6 +289,12 @@ const AuthenticatedAdminSolicitacoesRoute =
     path: '/solicitacoes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminEscutaRoute =
+  AuthenticatedAdminEscutaRouteImport.update({
+    id: '/escuta',
+    path: '/escuta',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminConfiguracoesRoute =
   AuthenticatedAdminConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -299,7 +324,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
+  '/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/comunicados': typeof PortalComunicadosRouteWithChildren
   '/cultura': typeof PortalCulturaRoute
   '/formularios': typeof PortalFormulariosRouteWithChildren
@@ -307,12 +334,14 @@ export interface FileRoutesByFullPath {
   '/integracao': typeof PortalIntegracaoRoute
   '/mural': typeof PortalMuralRouteWithChildren
   '/perfil': typeof PortalPerfilRoute
+  '/sim': typeof PortalSimRoute
   '/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/escuta': typeof AuthenticatedAdminEscutaRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
@@ -343,16 +372,20 @@ export interface FileRoutesByTo {
   '/': typeof PortalIndexRoute
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
+  '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
+  '/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/cultura': typeof PortalCulturaRoute
   '/integracao': typeof PortalIntegracaoRoute
   '/perfil': typeof PortalPerfilRoute
+  '/sim': typeof PortalSimRoute
   '/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
   '/colaborador/recuperar-senha': typeof ColaboradorRecuperarSenhaRoute
   '/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/escuta': typeof AuthenticatedAdminEscutaRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
@@ -386,7 +419,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/gate': typeof GateRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_portal/acompanhar': typeof PortalAcompanharRoute
   '/_portal/busca': typeof PortalBuscaRoute
+  '/_portal/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/_portal/comunicados': typeof PortalComunicadosRouteWithChildren
   '/_portal/cultura': typeof PortalCulturaRoute
   '/_portal/formularios': typeof PortalFormulariosRouteWithChildren
@@ -394,6 +429,7 @@ export interface FileRoutesById {
   '/_portal/integracao': typeof PortalIntegracaoRoute
   '/_portal/mural': typeof PortalMuralRouteWithChildren
   '/_portal/perfil': typeof PortalPerfilRoute
+  '/_portal/sim': typeof PortalSimRoute
   '/_portal/vagas': typeof PortalVagasRoute
   '/api/baterito': typeof ApiBateritoRoute
   '/colaborador/confirmar': typeof ColaboradorConfirmarRoute
@@ -401,6 +437,7 @@ export interface FileRoutesById {
   '/_portal/': typeof PortalIndexRoute
   '/_authenticated/admin/colaboradores': typeof AuthenticatedAdminColaboradoresRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/escuta': typeof AuthenticatedAdminEscutaRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_portal/comunicados/$id': typeof PortalComunicadosIdRoute
@@ -434,7 +471,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/gate'
     | '/admin'
+    | '/acompanhar'
     | '/busca'
+    | '/canal-de-escuta'
     | '/comunicados'
     | '/cultura'
     | '/formularios'
@@ -442,12 +481,14 @@ export interface FileRouteTypes {
     | '/integracao'
     | '/mural'
     | '/perfil'
+    | '/sim'
     | '/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
+    | '/admin/escuta'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
     | '/comunicados/$id'
@@ -478,16 +519,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/gate'
+    | '/acompanhar'
     | '/busca'
+    | '/canal-de-escuta'
     | '/cultura'
     | '/integracao'
     | '/perfil'
+    | '/sim'
     | '/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
     | '/colaborador/recuperar-senha'
     | '/admin/colaboradores'
     | '/admin/configuracoes'
+    | '/admin/escuta'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
     | '/comunicados/$id'
@@ -520,7 +565,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/gate'
     | '/_authenticated/admin'
+    | '/_portal/acompanhar'
     | '/_portal/busca'
+    | '/_portal/canal-de-escuta'
     | '/_portal/comunicados'
     | '/_portal/cultura'
     | '/_portal/formularios'
@@ -528,6 +575,7 @@ export interface FileRouteTypes {
     | '/_portal/integracao'
     | '/_portal/mural'
     | '/_portal/perfil'
+    | '/_portal/sim'
     | '/_portal/vagas'
     | '/api/baterito'
     | '/colaborador/confirmar'
@@ -535,6 +583,7 @@ export interface FileRouteTypes {
     | '/_portal/'
     | '/_authenticated/admin/colaboradores'
     | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/escuta'
     | '/_authenticated/admin/solicitacoes'
     | '/_authenticated/admin/usuarios'
     | '/_portal/comunicados/$id'
@@ -638,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalVagasRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/_portal/sim': {
+      id: '/_portal/sim'
+      path: '/sim'
+      fullPath: '/sim'
+      preLoaderRoute: typeof PortalSimRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/_portal/perfil': {
       id: '/_portal/perfil'
       path: '/perfil'
@@ -687,11 +743,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalComunicadosRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/_portal/canal-de-escuta': {
+      id: '/_portal/canal-de-escuta'
+      path: '/canal-de-escuta'
+      fullPath: '/canal-de-escuta'
+      preLoaderRoute: typeof PortalCanalDeEscutaRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/_portal/busca': {
       id: '/_portal/busca'
       path: '/busca'
       fullPath: '/busca'
       preLoaderRoute: typeof PortalBuscaRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/_portal/acompanhar': {
+      id: '/_portal/acompanhar'
+      path: '/acompanhar'
+      fullPath: '/acompanhar'
+      preLoaderRoute: typeof PortalAcompanharRouteImport
       parentRoute: typeof PortalRoute
     }
     '/_authenticated/admin': {
@@ -862,6 +932,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSolicitacoesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/escuta': {
+      id: '/_authenticated/admin/escuta'
+      path: '/escuta'
+      fullPath: '/admin/escuta'
+      preLoaderRoute: typeof AuthenticatedAdminEscutaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/configuracoes': {
       id: '/_authenticated/admin/configuracoes'
       path: '/configuracoes'
@@ -896,6 +973,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminColaboradoresRoute: typeof AuthenticatedAdminColaboradoresRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminEscutaRoute: typeof AuthenticatedAdminEscutaRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -905,6 +983,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminColaboradoresRoute: AuthenticatedAdminColaboradoresRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminEscutaRoute: AuthenticatedAdminEscutaRoute,
   AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -1001,7 +1080,9 @@ const PortalMuralRouteWithChildren = PortalMuralRoute._addFileChildren(
 )
 
 interface PortalRouteChildren {
+  PortalAcompanharRoute: typeof PortalAcompanharRoute
   PortalBuscaRoute: typeof PortalBuscaRoute
+  PortalCanalDeEscutaRoute: typeof PortalCanalDeEscutaRoute
   PortalComunicadosRoute: typeof PortalComunicadosRouteWithChildren
   PortalCulturaRoute: typeof PortalCulturaRoute
   PortalFormulariosRoute: typeof PortalFormulariosRouteWithChildren
@@ -1009,13 +1090,16 @@ interface PortalRouteChildren {
   PortalIntegracaoRoute: typeof PortalIntegracaoRoute
   PortalMuralRoute: typeof PortalMuralRouteWithChildren
   PortalPerfilRoute: typeof PortalPerfilRoute
+  PortalSimRoute: typeof PortalSimRoute
   PortalVagasRoute: typeof PortalVagasRoute
   PortalIndexRoute: typeof PortalIndexRoute
   PortalSolicitacoesIdRoute: typeof PortalSolicitacoesIdRoute
 }
 
 const PortalRouteChildren: PortalRouteChildren = {
+  PortalAcompanharRoute: PortalAcompanharRoute,
   PortalBuscaRoute: PortalBuscaRoute,
+  PortalCanalDeEscutaRoute: PortalCanalDeEscutaRoute,
   PortalComunicadosRoute: PortalComunicadosRouteWithChildren,
   PortalCulturaRoute: PortalCulturaRoute,
   PortalFormulariosRoute: PortalFormulariosRouteWithChildren,
@@ -1023,6 +1107,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalIntegracaoRoute: PortalIntegracaoRoute,
   PortalMuralRoute: PortalMuralRouteWithChildren,
   PortalPerfilRoute: PortalPerfilRoute,
+  PortalSimRoute: PortalSimRoute,
   PortalVagasRoute: PortalVagasRoute,
   PortalIndexRoute: PortalIndexRoute,
   PortalSolicitacoesIdRoute: PortalSolicitacoesIdRoute,
