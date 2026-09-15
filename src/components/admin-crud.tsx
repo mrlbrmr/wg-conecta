@@ -99,7 +99,8 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
       }
       const { data, error } = await query;
       if (error) throw new Error(error.message);
-      return (data ?? []) as Row[];
+      const rows = (data ?? []) as Row[];
+      return resource.sortRows ? rows.sort(resource.sortRows) : rows;
     },
   });
 

@@ -35,7 +35,7 @@ import {
 } from "@/lib/culture-queries";
 import { toggleCongrats } from "@/lib/portal-write.functions";
 import { fileUrl } from "@/lib/storage";
-import { MONTHS, formatDate, monthLabel, parseISODate, yearsSince } from "@/lib/tenure";
+import { MONTHS, formatDate, monthLabel, parseISODate, yearsOnAnniversary } from "@/lib/tenure";
 
 type Anniversary = DirectoryEntry & { admission_date: string };
 
@@ -148,19 +148,20 @@ function BirthdaysCard({
           <ul className="flex flex-col gap-4">
             {people.map((p) => (
               <li key={p.id} className="flex items-center gap-4">
+                <UserAvatar name={p.name} photoUrl={p.photo_url} size={44} tone="ink" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-extrabold">{p.name}</span>
+                  {p.unit && (
+                    <span className="block truncate text-xs font-bold uppercase tracking-[0.1em] text-ink/60">
+                      {p.unit}
+                    </span>
+                  )}
+                </span>
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink text-accent">
                   <span className="text-[8px] font-bold uppercase leading-none">dia</span>
                   <span className="text-[15px] font-black leading-none tabular-nums">
                     {p.birthday_day}
                   </span>
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-base font-extrabold">{p.name}</span>
-                  {p.department && (
-                    <span className="block truncate text-xs font-bold uppercase tracking-[0.1em] text-ink/60">
-                      {p.department}
-                    </span>
-                  )}
                 </span>
               </li>
             ))}
@@ -214,8 +215,8 @@ function TenureRow({ person }: { person: Anniversary }) {
   const me = useQuery(currentEmployeeQuery);
   const send = useServerFn(toggleCongrats);
 
-  const years = yearsSince(person.admission_date);
   const thisYear = new Date().getFullYear();
+  const years = yearsOnAnniversary(person.admission_date, thisYear);
   const sent = (congrats.data ?? []).some(
     (c) =>
       c.to_employee_id === person.id && c.year === thisYear && c.from_employee_id === me.data?.id,
@@ -229,21 +230,23 @@ function TenureRow({ person }: { person: Anniversary }) {
 
   return (
     <PaperCard hover className="flex flex-wrap items-center gap-4 p-5 sm:gap-[18px]">
-      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border-[1.5px] border-ink bg-primary text-primary-foreground">
-        <span className="text-xl font-black leading-none tabular-nums">{years}</span>
-        <span className="text-[8px] font-extrabold uppercase leading-none tracking-[0.1em]">
-          {years === 1 ? "ano" : "anos"}
-        </span>
-      </span>
+      <UserAvatar name={person.name} photoUrl={person.photo_url} size={56} tone="muted" />
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[19px] font-black tracking-[-0.03em]">
           {person.name}
         </span>
         <span className="block truncate text-[13px] text-muted-foreground">
-          {[person.department, `desde ${formatDate(person.admission_date)}`]
+          {[person.unit, `desde ${formatDate(person.admission_date)}`]
             .filter(Boolean)
             .join(" · ")}
+        </span>
+      </span>
+
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[1.5px] border-ink bg-primary text-primary-foreground">
+        <span className="text-lg font-black leading-none tabular-nums">{years}</span>
+        <span className="text-[8px] font-extrabold uppercase leading-none tracking-[0.1em]">
+          {years === 1 ? "ano" : "anos"}
         </span>
       </span>
 

@@ -25,16 +25,15 @@ import {
   type ChecklistItem,
 } from "@/lib/profile-queries";
 import { setChecklistItemDone, setMaterialViewed } from "@/lib/portal-write.functions";
+import { ONBOARDING_STAGES } from "@/lib/onboarding-stages";
+import { useTrackEnabled } from "@/hooks/use-track-enabled";
 import { cn } from "@/lib/utils";
 
-/** As cinco etapas da linha do tempo, na ordem do handoff. */
-const STAGES = [
-  { id: "primeiro_dia", label: "1º dia", tone: "ink" as const },
-  { id: "primeira_semana", label: "1ª semana", tone: "paper" as const },
-  { id: "trinta_dias", label: "30 dias", tone: "paper" as const },
-  { id: "sessenta_dias", label: "60 dias", tone: "paper" as const },
-  { id: "noventa_dias", label: "90 dias", tone: "accent" as const },
-];
+/** As cinco etapas da linha do tempo: a primeira em tinta, a última em destaque. */
+const STAGES = ONBOARDING_STAGES.map((s, i, all) => ({
+  ...s,
+  tone: i === 0 ? ("ink" as const) : i === all.length - 1 ? ("accent" as const) : ("paper" as const),
+}));
 
 const MATERIAL_ICON: Record<string, typeof Play> = {
   video: Play,
@@ -49,8 +48,9 @@ export const Route = createFileRoute("/_portal/integracao")({
 });
 
 function IntegracaoPage() {
-  const items = useQuery(checklistItemsQuery);
-  const progress = useQuery(ownProgressQuery);
+  const trackEnabled = useTrackEnabled();
+  const items = useQuery({ ...checklistItemsQuery, enabled: trackEnabled });
+  const progress = useQuery({ ...ownProgressQuery, enabled: trackEnabled });
 
   const list = items.data ?? [];
   const { completed, total, percent, doneIds } = trackProgress(list, progress.data ?? []);
@@ -64,10 +64,18 @@ function IntegracaoPage() {
             Bem-vindo(a). <Signature>Aqui é WG</Signature>.
           </>
         }
-        subtitle="Seus primeiros 90 dias, sem mistério: o que fazer, com quem falar e o que assistir. Dúvida boba também vale — manda pra gente sem cerimônia."
+        subtitle={
+          trackEnabled
+            ? "Seus primeiros 90 dias, sem mistério: o que fazer, com quem falar e o que assistir. Dúvida boba também vale — manda pra gente sem cerimônia."
+            : "Seus primeiros dias, sem mistério: com quem falar e o que assistir. Dúvida boba também vale — manda pra gente sem cerimônia."
+        }
       />
 
-      {items.isLoading || progress.isLoading ? (
+      {!trackEnabled ? (
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-2">
+          <WhoIsWhoCard />
+        </div>
+      ) : items.isLoading || progress.isLoading ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
           <Skeleton className="h-80 w-full" />
           <Skeleton className="h-80 w-full" />
@@ -82,7 +90,7 @@ function IntegracaoPage() {
         </div>
       )}
 
-      <TimelineSection items={list} doneIds={doneIds} />
+      {trackEnabled && <TimelineSection items={list} doneIds={doneIds} />}
       <MaterialsSection />
     </div>
   );

@@ -1,5 +1,46 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/ajustes-pos-testes`)
+
+Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes
+do deploy** do PR. Se as pendências do P1 e do P2, logo abaixo, ainda não rodaram, elas vêm
+primeiro (a ordem é a do nome do arquivo):
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915120000_portal_settings_track_toggle.sql` | Cria `portal_settings.onboarding_track_enabled`, o interruptor "Trilha de integração ativa" de Configurações. Sem ela, salvar Configurações dá erro. |
+| `20260915120100_directory_public_job_title.sql` | A view `employee_directory` passa a devolver o cargo sem senioridade (Jr, Pleno, Sênior, I/II/III…). O cadastro não muda. |
+| `20260915120200_employees_unit_from_department.sql` | Move a filial gravada em `department` para `unit`, com o nome oficial, e deixa o setor vazio para a próxima importação preencher. |
+
+**Antes da terceira, confira o que ela vai mover** (só leitura):
+
+```sql
+SELECT department, unit, count(*) FROM public.employees WHERE active GROUP BY 1, 2 ORDER BY 3 DESC;
+```
+
+Toda linha em que `department` é uma das seis filiais (Campinas, Maringá, Nova Iguaçu, São
+Bernardo do Campo, São José dos Pinhais, São Paulo) vai ter a filial copiada para `unit` e o
+`department` esvaziado. Se aparecer filial escrita de um jeito que a migration não reconhece
+(ex.: "Matriz"), me avise antes de rodar.
+
+**Depois da segunda, confira os cargos** (só leitura):
+
+```sql
+SELECT DISTINCT e.job_title AS no_cadastro, d.job_title AS no_portal
+FROM public.employees e JOIN public.employee_directory d ON d.id = e.id
+WHERE e.job_title IS DISTINCT FROM d.job_title
+ORDER BY 1;
+```
+
+Se algum cargo perdeu mais do que o nível, a view volta ao que era rodando de novo o bloco da
+view de `20260911130000_employees_hide_birthday.sql`.
+
+**Depois do deploy:**
+- Reimportar a planilha do DP com a coluna **Setor** (ou Departamento/Área). A importação só
+  completa campos vazios, então é ela que preenche o `department` que a terceira migration
+  esvaziou. Até lá, "Colegas da área" no Perfil fica vazio para quem ficou sem setor.
+- A trilha fica ligada por padrão. Para desligar: Configurações → Integração.
+
 ## Pendentes (PR `fix/p1-aniversario-e-endurecimento`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem**:

@@ -5,7 +5,14 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Award, Cake, Loader2, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { deleteEmployee, listEmployees, updateEmployee } from "@/lib/employee.functions";
-import { MONTHS, formatDate, parseISODate, tenureFrom, tenureLabel } from "@/lib/tenure";
+import {
+  MONTHS,
+  formatDate,
+  parseISODate,
+  tenureFrom,
+  tenureLabel,
+  yearsOnAnniversary,
+} from "@/lib/tenure";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAdminSearch } from "@/components/admin-search";
@@ -51,6 +58,8 @@ type Person = {
   days: number;
   birthMonth: number;
   years: number;
+  /** Anos que completa no aniversário de casa deste ano. */
+  anniversaryYears: number;
   totalMonths: number;
   anniversaryMonth: boolean;
 };
@@ -169,6 +178,7 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
           days: e.birth_date ? daysUntil(e.birth_date) : Number.MAX_SAFE_INTEGER,
           birthMonth: e.birth_date ? monthOf(e.birth_date) : 0,
           years: t.years,
+          anniversaryYears: adm ? yearsOnAnniversary(adm) : 0,
           totalMonths: t.years * 12 + t.months,
           anniversaryMonth: adm ? monthOf(adm) === month : false,
         };
@@ -487,11 +497,13 @@ function toRow(p: Person, tab: CulturaTab): Row {
       badgeTone: p.days === 0 ? "accent" : "soft",
     };
   }
-  const milestone = p.years >= 5 && p.years % 5 === 0 && p.anniversaryMonth;
+  // Os anos do marco são os do aniversário deste mês, não os completos até hoje.
+  const y = p.anniversaryYears;
+  const milestone = p.anniversaryMonth && y >= 5 && y % 5 === 0;
   return {
     ...p,
     metric: p.emp.admission_date ? tenureLabel(p.emp.admission_date, "") : "—",
-    badge: milestone ? `${p.years} anos este mês` : p.anniversaryMonth ? "aniversário WG" : "",
+    badge: milestone ? `${y} anos este mês` : p.anniversaryMonth ? "aniversário WG" : "",
     badgeTone: milestone ? "accent" : "soft",
   };
 }
@@ -525,12 +537,19 @@ function buildGroups(rows: Person[], tab: CulturaTab, sortKey: SortKey, sortDir:
       list.push(p);
       byMonth.set(p.birthMonth, list);
     }
+    // Meses a partir do atual e, dentro do mês, pelo dia — quem já fez aniversário no mês
+    // fica no lugar dele, não no fim do grupo (a ordem de `rows` é por dias até o próximo).
     const current = new Date().getMonth();
-    return [...byMonth.entries()].map(([m, list]) => ({
-      title: MONTHS[m] + (m === current ? " · este mês" : ""),
-      count: plural(list.length),
-      rows: list.map((p) => toRow(p, tab)),
-    }));
+    const sign = sortDir === "asc" ? 1 : -1;
+    const offset = (m: number) => (m - current + 12) % 12;
+    const dayOf = (p: Person) => (p.emp.birth_date ? parseISODate(p.emp.birth_date).getDate() : 0);
+    return [...byMonth.entries()]
+      .sort(([a], [b]) => sign * (offset(a) - offset(b)))
+      .map(([m, list]) => ({
+        title: MONTHS[m] + (m === current ? " · este mês" : ""),
+        count: plural(list.length),
+        rows: [...list].sort((a, b) => sign * (dayOf(a) - dayOf(b))).map((p) => toRow(p, tab)),
+      }));
   }
 
   // Ascendente = mais antigo primeiro, então as faixas começam em "20 anos ou mais".
@@ -556,7 +575,7 @@ function buildStats(employees: Employee[]): Stat[] {
 
   const anniversaries = withAdmission.filter((e) => monthOf(e.admission_date!) === month);
   const milestones = anniversaries.filter((e) => {
-    const y = tenureFrom(e.admission_date!).years;
+    const y = yearsOnAnniversary(e.admission_date!);
     return y >= 5 && y % 5 === 0;
   });
 

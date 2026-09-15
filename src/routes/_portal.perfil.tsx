@@ -11,6 +11,7 @@ import { RecognizeColleagueForm } from "@/components/recognize-colleague";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { currentEmployeeQuery } from "@/hooks/use-current-employee";
+import { useTrackEnabled } from "@/hooks/use-track-enabled";
 import type { OwnEmployee } from "@/lib/employee.functions";
 import { directoryQuery } from "@/lib/directory-queries";
 import {
@@ -48,7 +49,10 @@ export const Route = createFileRoute("/_portal/perfil")({
 function PerfilPage() {
   const { aba } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const tab: TabId = aba ?? "visao-geral";
+  const trackEnabled = useTrackEnabled();
+  const tabs = TABS.filter((t) => t.id !== "trilha" || trackEnabled);
+  // Com a trilha desligada, um link antigo para `?aba=trilha` cai na visão geral.
+  const tab: TabId = aba && tabs.some((t) => t.id === aba) ? aba : "visao-geral";
 
   const me = useQuery(currentEmployeeQuery);
   const [editing, setEditing] = useState(false);
@@ -105,7 +109,7 @@ function PerfilPage() {
         className="mt-8 flex gap-1 overflow-x-auto border-b-[1.5px] border-ink"
         aria-label="Seções do perfil"
       >
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const active = t.id === tab;
           return (
             <button

@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { compareChecklistItems } from "@/lib/onboarding-stages";
 import {
   listOwnRequestMessages,
   listOwnRequests,
@@ -50,17 +51,13 @@ export const peerRecognitionsQuery = queryOptions({
     ),
 });
 
-/** Trilha padrão de integração, na ordem definida pelo G&G. */
+/** Trilha padrão de integração, em ordem cronológica (etapa e, dentro dela, a ordem do G&G). */
 export const checklistItemsQuery = queryOptions({
   queryKey: ["onboarding_checklist_items"],
   queryFn: async (): Promise<ChecklistItem[]> =>
     ensureList(
-      await supabase
-        .from("onboarding_checklist_items")
-        .select("*")
-        .eq("active", true)
-        .order("order_index"),
-    ),
+      await supabase.from("onboarding_checklist_items").select("*").eq("active", true),
+    ).sort(compareChecklistItems),
 });
 
 /** Itens já concluídos pelo próprio usuário — o RLS restringe ao seu registro. */

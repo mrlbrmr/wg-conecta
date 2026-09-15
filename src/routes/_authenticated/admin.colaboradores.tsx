@@ -52,6 +52,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
 import { fieldLabel, fieldsToFill, matchByName } from "@/lib/employee-match";
+import { DEPARTMENTS, UNITS, normalizeDepartment, normalizeUnit } from "@/lib/org";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAdminSearch } from "@/components/admin-search";
@@ -83,6 +84,7 @@ type ImportRow = {
   email?: string;
   phone?: string;
   department?: string;
+  unit?: string;
   job_title?: string;
   admission_date?: string;
   birth_date?: string;
@@ -1048,9 +1050,9 @@ function EmployeeForm({
         onSubmit({
           name,
           email: email || undefined,
-          department: department.trim() || null,
+          department: normalizeDepartment(department) ?? null,
           job_title: jobTitle.trim() || null,
-          unit: unit.trim() || null,
+          unit: normalizeUnit(unit) ?? null,
           phone: phone.trim() || null,
           birth_date: birthDate || null,
           admission_date: admissionDate || null,
@@ -1085,19 +1087,37 @@ function EmployeeForm({
         {/* Dados profissionais */}
         <FormDivider>Dados profissionais</FormDivider>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Filial / Departamento">
-            <input value={department} onChange={(e) => setDepartment(e.target.value)} className={inp} />
+          {/* Sugestões da lista oficial, sem travar: setor fora da lista ainda pode ser digitado. */}
+          <Field label="Setor / Departamento">
+            <input
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              list="org-departments"
+              placeholder="Logística, Comercial…"
+              className={inp}
+            />
+            <datalist id="org-departments">
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d} />
+              ))}
+            </datalist>
           </Field>
           <Field label="Cargo">
             <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
           </Field>
-          <Field label="Unidade">
+          <Field label="Filial">
             <input
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              placeholder="Matriz SJP, CD Sorocaba…"
+              list="org-units"
+              placeholder="São José dos Pinhais/PR…"
               className={inp}
             />
+            <datalist id="org-units">
+              {UNITS.map((u) => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
           </Field>
           <Field label="Data de admissão">
             <input
@@ -1411,8 +1431,16 @@ function ImportModal({
         const cargo =
           norm["cargo"] || norm["jobtitle"] || norm["funcao"] || norm["funcaocargo"] || norm["ocupacao"];
 
+        // Filial vai para `unit`; setor/área vai para `department`. Antes a filial caía em
+        // `department`, e o portal mostrava cidade no lugar da área.
         const filial =
-          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["department"] || norm["empresa"] || norm["estabelecimento"];
+          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["localdetrabalho"] ||
+          norm["empresa"] || norm["estabelecimento"];
+
+        const setor =
+          norm["setor"] || norm["departamento"] || norm["depto"] || norm["department"] ||
+          norm["area"] || norm["centrodecusto"] || norm["centrocusto"];
+        const dept = normalizeDepartment(setor);
 
         const admissao =
           norm["admissao"] || norm["dtadmissao"] || norm["dataadmissao"] ||
@@ -1431,7 +1459,8 @@ function ImportModal({
           name: toTitleCase(String(nome).trim()),
           email: emailStr && emailStr.includes("@") ? emailStr : undefined,
           phone: parsePhone(telefone),
-          department: filial ? String(filial).trim() : undefined,
+          department: dept && toTitleCase(dept),
+          unit: normalizeUnit(filial),
           job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
           admission_date: parseDateISO(admissao),
           birth_date: parseDateISO(dataNasc),
@@ -1449,7 +1478,7 @@ function ImportModal({
 
       setRows(unique);
       if (unique.length === 0) {
-        alert("Nenhuma linha válida encontrada. Verifique se o arquivo tem as colunas Nome, Cargo e Filial.");
+        alert("Nenhuma linha válida encontrada. Verifique se o arquivo tem as colunas Nome, Cargo, Filial e Setor.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -1479,7 +1508,13 @@ function ImportModal({
             <p className="font-semibold">Colunas reconhecidas automaticamente:</p>
             <p className="text-muted-foreground text-xs font-mono">
               Nome completo / Nome / Quem usa, E-mail, Telefone / Celular, Cargo, Filial /
-              Unidade, Admissão / Data_admissão, Data Nasc. / Data_nascimento
+              Unidade, Setor / Departamento / Área, Admissão / Data_admissão, Data Nasc. /
+              Data_nascimento
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              <strong>Filial</strong> (onde a pessoa trabalha) e <strong>setor</strong> (o que ela
+              faz) são colunas diferentes. A filial é gravada no nome oficial (“SJP” vira “São José
+              dos Pinhais/PR”).
             </p>
             <p className="text-muted-foreground text-xs mt-2">
               Quando existe uma coluna <strong>Nome completo</strong>, é ela que vale — “Quem usa”
@@ -1553,6 +1588,7 @@ function ImportModal({
                         <th className="px-3 py-2">E-mail</th>
                         <th className="px-3 py-2">Telefone</th>
                         <th className="px-3 py-2">Filial</th>
+                        <th className="px-3 py-2">Setor</th>
                         <th className="px-3 py-2">Cargo</th>
                         <th className="px-3 py-2">Admissão</th>
                         <th className="px-3 py-2">Nasc.</th>
@@ -1565,6 +1601,7 @@ function ImportModal({
                           <td className="px-3 py-1.5 font-semibold">{r.name}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.email ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.phone ?? "—"}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{r.unit ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.department ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">

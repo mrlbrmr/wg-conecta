@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { fieldsToFill, matchByName } from "@/lib/employee-match";
+import { publicJobTitle } from "@/lib/job-title";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { normalizeSiteUrl } from "@/lib/site-url";
@@ -452,7 +453,8 @@ export const getOwnEmployee = createServerFn({ method: "GET" })
       name: (row.name as string) ?? "",
       email: (row.email as string | null) ?? null,
       department: (row.department as string | null) ?? null,
-      job_title: (row.job_title as string | null) ?? null,
+      // O portal não mostra senioridade — nem para a própria pessoa. O cargo completo fica no painel.
+      job_title: publicJobTitle(row.job_title as string | null),
       unit: (row.unit as string | null) ?? null,
       extension: (row.extension as string | null) ?? null,
       bio: (row.bio as string | null) ?? null,

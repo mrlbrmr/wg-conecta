@@ -11,6 +11,14 @@ export function yearsSince(date: string | null | undefined): number {
   return Math.max(0, years);
 }
 
+/**
+ * Anos que a pessoa completa no aniversário de casa do ano dado — não na data de hoje.
+ * Em setembro, quem entrou em 30/09/2025 "faz 1 ano" o mês inteiro, inclusive no dia 1º.
+ */
+export function yearsOnAnniversary(date: string, year = new Date().getFullYear()): number {
+  return Math.max(0, year - parseISODate(date).getFullYear());
+}
+
 /** Anos e meses completos desde a data. */
 export function tenureFrom(date: string | null | undefined): { years: number; months: number } {
   if (!date) return { years: 0, months: 0 };

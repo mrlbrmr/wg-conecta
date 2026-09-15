@@ -1137,6 +1137,7 @@ export type Database = {
           gg_contact_text: string
           id: string
           logo_url: string | null
+          onboarding_track_enabled: boolean
           portal_name: string
           primary_color: string
           privacy_notice: string
@@ -1150,6 +1151,7 @@ export type Database = {
           gg_contact_text?: string
           id?: string
           logo_url?: string | null
+          onboarding_track_enabled?: boolean
           portal_name?: string
           primary_color?: string
           privacy_notice?: string
@@ -1163,6 +1165,7 @@ export type Database = {
           gg_contact_text?: string
           id?: string
           logo_url?: string | null
+          onboarding_track_enabled?: boolean
           portal_name?: string
           primary_color?: string
           privacy_notice?: string
