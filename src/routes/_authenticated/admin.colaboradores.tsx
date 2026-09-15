@@ -58,6 +58,7 @@ import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
 import { fieldLabel, fieldsToFill, matchByName } from "@/lib/employee-match";
 import { DEPARTMENTS, UNITS, normalizeDepartment, normalizeUnit } from "@/lib/org";
+import { parseEmployeeWorkbook, type ImportRow } from "@/lib/employee-import";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAdminSearch } from "@/components/admin-search";
@@ -84,16 +85,6 @@ type Employee = {
   photo_url: string | null;
 };
 
-type ImportRow = {
-  name: string;
-  email?: string;
-  phone?: string;
-  department?: string;
-  unit?: string;
-  job_title?: string;
-  admission_date?: string;
-  birth_date?: string;
-};
 
 type StatusFilter = "todos" | "ativos" | "inativos";
 type SortKey = "name" | "manager" | "admission";
@@ -127,23 +118,6 @@ export const Route = createFileRoute("/_authenticated/admin/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores — Portal WG" }] }),
   component: ColaboradoresPage,
 });
-
-// Título em português: mantém artigos/preposições minúsculas
-function toTitleCase(str: string) {
-  const lower = new Set(["da", "de", "do", "das", "dos", "e", "a", "o", "em", "di"]);
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((w, i) => (i === 0 || !lower.has(w)) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
-    .join(" ");
-}
-
-// Converte serial de data do Excel para ISO
-function xlDateToISO(serial: unknown): string | undefined {
-  if (!serial || typeof serial !== "number") return undefined;
-  const d = new Date(Math.round((serial - 25569) * 86400 * 1000));
-  return d.toISOString().split("T")[0];
-}
 
 function ColaboradoresPage() {
   const qc = useQueryClient();
@@ -1550,6 +1524,8 @@ function ImportModal({
   onClose: () => void;
 }) {
   const [rows, setRows] = useState<ImportRow[]>([]);
+  /** Linhas com Situação de desligado — ficam de fora da importação. */
+  const [inactive, setInactive] = useState(0);
   const [fileName, setFileName] = useState("");
   const [parsing, setParsing] = useState(false);
   /**
@@ -1598,121 +1574,17 @@ function ImportModal({
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
-
-      // Normaliza chave de coluna: minúsculo, sem acentos, sem qualquer pontuação/espaço.
-      // "Data Nasc." → "datanasc", "Dt. Admissão" → "dtadmissao", "E-mail" → "email"
-      const nk = (k: string) =>
-        k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/g, "");
-
-      // Telefone chega como número ("11987654321") ou já mascarado. Guarda com máscara
-      // quando dá para reconhecer fixo ou celular; caso contrário, o texto original.
-      const parsePhone = (val: unknown): string | undefined => {
-        if (val === null || val === undefined || val === "") return undefined;
-        const raw = String(val).trim();
-        if (!raw) return undefined;
-        const d = raw.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
-        if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-        if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-        if (d.length < 8) return undefined;
-        return raw.slice(0, 30);
-      };
-
-      // Converte string DD/MM/YYYY, YYYY-MM-DD ou serial Excel → ISO YYYY-MM-DD
-      const parseDateISO = (val: unknown): string | undefined => {
-        if (!val) return undefined;
-        const s = String(val).trim();
-        const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-        if (typeof val === "number") return xlDateToISO(val);
-        return undefined;
-      };
-
-      const parsed: ImportRow[] = [];
-      for (const r of raw) {
-        const norm: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(r)) {
-          norm[nk(k)] = v;
-        }
-
-        // "Nome completo" primeiro: na planilha de e-mails a coluna "Quem usa" traz
-        // apelido ("Adriane") ou caixa de setor ("Financeiro", "NF-e"), e é o nome
-        // completo que casa com o cadastro. Quando ela vem vazia, cai para o resto.
-        const nome =
-          norm["nomecompleto"] ||
-          norm["nomecompletodocolaborador"] ||
-          norm["nome"] ||
-          norm["name"] ||
-          norm["colaborador"] ||
-          norm["quemusai"] ||
-          norm["quemusao"] ||
-          norm["quemusa"];
-        if (!nome || typeof nome !== "string" || nome.trim().length < 2) continue;
-
-        const emailRaw = norm["email"] || norm["email1"] || norm["corretoeletronico"];
-
-        const telefone =
-          norm["telefone"] ||
-          norm["telefone1"] ||
-          norm["celular"] ||
-          norm["whatsapp"] ||
-          norm["fone"] ||
-          norm["tel"] ||
-          norm["contato"];
-
-        const cargo =
-          norm["cargo"] || norm["jobtitle"] || norm["funcao"] || norm["funcaocargo"] || norm["ocupacao"];
-
-        // Filial vai para `unit`; setor/área vai para `department`. Antes a filial caía em
-        // `department`, e o portal mostrava cidade no lugar da área.
-        const filial =
-          norm["filial"] || norm["filiais"] || norm["unidade"] || norm["localdetrabalho"] ||
-          norm["empresa"] || norm["estabelecimento"];
-
-        const setor =
-          norm["setor"] || norm["departamento"] || norm["depto"] || norm["department"] ||
-          norm["area"] || norm["centrodecusto"] || norm["centrocusto"];
-        const dept = normalizeDepartment(setor);
-
-        const admissao =
-          norm["admissao"] || norm["dtadmissao"] || norm["dataadmissao"] ||
-          norm["admissaodaempresa"] || norm["dataadmissaodaempresa"] || norm["admissiondate"];
-
-        const dataNasc =
-          norm["datanasc"] || norm["dtnasc"] || norm["dtnac"] ||
-          norm["datanascimento"] || norm["datadenascimento"] ||
-          norm["nascimento"] || norm["birthdate"] || norm["datanascimentocompleta"];
-
-        const emailStr = emailRaw
-          ? String(emailRaw).trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
-          : undefined;
-
-        parsed.push({
-          name: toTitleCase(String(nome).trim()),
-          email: emailStr && emailStr.includes("@") ? emailStr : undefined,
-          phone: parsePhone(telefone),
-          department: dept && toTitleCase(dept),
-          unit: normalizeUnit(filial),
-          job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
-          admission_date: parseDateISO(admissao),
-          birth_date: parseDateISO(dataNasc),
-        });
-      }
-
-      // Dedupe por nome dentro do arquivo
-      const seen = new Set<string>();
-      const unique = parsed.filter((r) => {
-        const key = r.name.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      setRows(unique);
-      if (unique.length === 0) {
-        alert("Nenhuma linha válida encontrada. Verifique se o arquivo tem as colunas Nome, Cargo, Filial e Setor.");
+      const parsedSheet = parseEmployeeWorkbook(wb);
+      setRows(parsedSheet.rows);
+      setInactive(parsedSheet.inactive);
+      if (!parsedSheet.sheet) {
+        alert(
+          "Não achei a linha de títulos. Ela precisa ter uma coluna Nome (ou Nome completo) nas 20 primeiras linhas de alguma aba.",
+        );
+      } else if (parsedSheet.rows.length === 0) {
+        alert(
+          `A linha de títulos está na linha ${parsedSheet.headerRow} da aba “${parsedSheet.sheet}”, mas nenhuma linha abaixo dela tem nome preenchido.`,
+        );
       }
     } catch (e) {
       alert((e as Error).message);
@@ -1749,6 +1621,11 @@ function ImportModal({
               <strong>Filial</strong> (onde a pessoa trabalha) e <strong>setor</strong> (o que ela
               faz) são colunas diferentes. A filial é gravada no nome oficial (“SJP” vira “São José
               dos Pinhais/PR”).
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              A linha de títulos pode estar em qualquer uma das 20 primeiras linhas, em qualquer
+              aba. Quem está com <strong>Situação</strong> de desligado fica de fora. Colunas que o
+              portal não usa — como Salário — não são lidas e não saem do seu computador.
             </p>
             <p className="text-muted-foreground text-xs mt-2">
               Quando existe uma coluna <strong>Nome completo</strong>, é ela que vale — “Quem usa”
@@ -1795,6 +1672,11 @@ function ImportModal({
                 </Chip>
                 {iguais > 0 && (
                   <Chip tone="soft" className="gap-1.5">{iguais} sem nada a completar</Chip>
+                )}
+                {inactive > 0 && (
+                  <Chip tone="soft" className="gap-1.5" title="Situação: desligado">
+                    {inactive} {inactive === 1 ? "desligado ignorado" : "desligados ignorados"}
+                  </Chip>
                 )}
               </div>
 
