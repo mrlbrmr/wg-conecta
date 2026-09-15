@@ -9,6 +9,11 @@
 -- do mesmo jeito.
 --
 -- Mesmas regras das outras tabelas de conteúdo: o portal lê as ativas, só admin escreve.
+-- `(select auth.uid())` em vez de `auth.uid()`: o Postgres calcula uma vez por consulta, não
+-- uma vez por linha (recomendação do Supabase para policies).
+--
+-- GRANT explícito de propósito: a partir de 30/10/2026 tabela nova em `public` não fica mais
+-- exposta à API de dados sem ele (changelog 45329 do Supabase).
 
 CREATE TABLE IF NOT EXISTS public.contact_matrix (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,11 +39,12 @@ ALTER TABLE public.contact_matrix ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS contact_matrix_read ON public.contact_matrix;
 CREATE POLICY contact_matrix_read ON public.contact_matrix FOR SELECT TO authenticated
-  USING (active OR app_private.is_admin(auth.uid()));
+  USING (active OR app_private.is_admin((select auth.uid())));
 
 DROP POLICY IF EXISTS contact_matrix_admin_write ON public.contact_matrix;
 CREATE POLICY contact_matrix_admin_write ON public.contact_matrix FOR ALL TO authenticated
-  USING (app_private.is_admin(auth.uid())) WITH CHECK (app_private.is_admin(auth.uid()));
+  USING (app_private.is_admin((select auth.uid())))
+  WITH CHECK (app_private.is_admin((select auth.uid())));
 
 DROP TRIGGER IF EXISTS trg_contact_matrix_updated ON public.contact_matrix;
 CREATE TRIGGER trg_contact_matrix_updated BEFORE UPDATE ON public.contact_matrix
