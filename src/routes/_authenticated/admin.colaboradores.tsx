@@ -56,6 +56,7 @@ import { hiddenCpf, isValidCpf, maskCpf } from "@/lib/cpf";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
+import { publicJobTitle } from "@/lib/job-title";
 import { fieldLabel, fieldsToFill, matchByName } from "@/lib/employee-match";
 import { DEPARTMENTS, UNITS, normalizeDepartment, normalizeUnit } from "@/lib/org";
 import { parseEmployeeWorkbook, type ImportRow } from "@/lib/employee-import";
@@ -677,7 +678,9 @@ function ColaboradoresPage() {
                   {/* Cargo e área */}
                   <div className="min-w-0">
                     {emp.job_title && (
-                      <p className="truncate text-[13px] font-bold">{emp.job_title}</p>
+                      <p className="truncate text-[13px] font-bold">
+                        {publicJobTitle(emp.job_title)}
+                      </p>
                     )}
                     {emp.department && (
                       <p className="truncate text-xs text-muted-foreground">{emp.department}</p>
@@ -1719,7 +1722,7 @@ function ImportModal({
                           <td className="px-3 py-1.5 text-muted-foreground">{r.phone ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.unit ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">{r.department ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{r.job_title ?? "—"}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{publicJobTitle(r.job_title) ?? "—"}</td>
                           <td className="px-3 py-1.5 text-muted-foreground">
                             {r.admission_date ? fmtDate(r.admission_date) : "—"}
                           </td>

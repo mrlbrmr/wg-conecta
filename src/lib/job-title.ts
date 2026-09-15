@@ -2,9 +2,10 @@
  * Cargo como o portal mostra: sem senioridade ("Analista Financeiro Pleno" → "Analista
  * Financeiro", "Auxiliar de Logística II" → "Auxiliar de Logística").
  *
- * O cargo completo continua no cadastro (é dado do DP) e aparece no painel do G&G. Só a
- * vitrine do portal esconde o nível. A mesma regra está em SQL na view `employee_directory`
- * (migration `20260915120100_directory_public_job_title.sql`) — mudou aqui, muda lá.
+ * O cargo completo continua no cadastro (é dado do DP) e só aparece no formulário de edição
+ * do painel. Portal e painel mostram tudo sem o nível. A mesma regra está em SQL na view
+ * `employee_directory` (migration `20260915120100_directory_public_job_title.sql`) — mudou
+ * aqui, muda lá.
  */
 
 /** Palavras de nível, em qualquer posição: Jr, Júnior, Pl, Pleno, Sr, Sênior, Trainee. */
