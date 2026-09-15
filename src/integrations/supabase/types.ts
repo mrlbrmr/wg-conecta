@@ -1130,27 +1130,6 @@ export type Database = {
         }
         Relationships: []
       }
-      portal_access: {
-        Row: {
-          access_code_hash: string | null
-          id: string
-          singleton: boolean
-          updated_at: string
-        }
-        Insert: {
-          access_code_hash?: string | null
-          id?: string
-          singleton?: boolean
-          updated_at?: string
-        }
-        Update: {
-          access_code_hash?: string | null
-          id?: string
-          singleton?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
       portal_settings: {
         Row: {
           created_at: string
