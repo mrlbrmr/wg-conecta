@@ -9,6 +9,10 @@ export const Route = createFileRoute("/_portal")({
     if (!data.user) {
       throw redirect({ to: "/gate" });
     }
+    // Entrou com a senha provisória do G&G (acesso por CPF): cria a própria antes de seguir.
+    if (data.user.app_metadata?.must_change_password) {
+      throw redirect({ to: "/colaborador/nova-senha" });
+    }
     return { user: data.user };
   },
   component: () => (

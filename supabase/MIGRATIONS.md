@@ -1,5 +1,34 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/acesso-cpf`)
+
+Login por CPF + senha para quem não tem e-mail corporativo. Duas coisas antes de usar:
+
+**1. Migration** (depois das de `feat/ajustes-pos-testes`, logo abaixo):
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915130000_employee_cpf_logins.sql` | Cria `employee_cpf_logins`: quem entra por CPF, com o HMAC do CPF e os dois últimos dígitos. Só o servidor lê. |
+
+**2. Segredo `CPF_LOGIN_PEPPER` na Vercel** (Settings → Environment Variables, marcar Production
+e Preview). É a chave do HMAC: o CPF nunca é gravado, só o resultado do HMAC com ela. Gere um
+valor aleatório no PowerShell (vai direto para a área de transferência, sem aparecer na tela):
+
+```powershell
+$b = New-Object byte[] 48; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b) | Set-Clipboard
+```
+
+Cole na Vercel e faça um novo deploy. **Não troque esse valor depois do primeiro acesso por CPF
+criado**: com outro segredo, nenhum CPF cadastrado consegue entrar (seria preciso recriar todos
+os acessos). Guarde uma cópia num cofre de senhas.
+
+Sem a migration e o segredo, o resto do portal funciona normalmente; só o login por CPF responde
+"indisponível".
+
+**Uso:** Colaboradores → ⋯ → Dar acesso → **Por CPF**. O painel mostra uma senha provisória uma
+única vez, para entregar à pessoa; no primeiro acesso ela cria a própria. Esqueceu a senha:
+⋯ → Gerar nova senha. CPF digitado errado: ⋯ → Corrigir CPF.
+
 ## Pendentes (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes

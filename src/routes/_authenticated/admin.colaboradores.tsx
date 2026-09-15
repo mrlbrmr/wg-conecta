@@ -6,7 +6,10 @@ import * as XLSX from "xlsx";
 import {
   AlertCircle,
   CheckCircle2,
+  Copy,
+  IdCard,
   ImagePlus,
+  KeyRound,
   Loader2,
   MailCheck,
   MoreHorizontal,
@@ -48,6 +51,8 @@ import {
   updateEmployee,
   updateEmployeePhotoUrl,
 } from "@/lib/employee.functions";
+import { listCpfLogins, resetCpfPassword, setCpfAccess } from "@/lib/cpf-access.functions";
+import { hiddenCpf, isValidCpf, maskCpf } from "@/lib/cpf";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
@@ -156,11 +161,27 @@ function ColaboradoresPage() {
   const doDelete = useServerFn(deleteEmployee);
   const doBulkDelete = useServerFn(bulkDeleteEmployees);
 
+  const doListCpf = useServerFn(listCpfLogins);
+  const doSetCpf = useServerFn(setCpfAccess);
+  const doResetCpf = useServerFn(resetCpfPassword);
+
   const q = useQuery({ queryKey: ["employees"], queryFn: () => doList() });
+  /** Quem entra por CPF → dois últimos dígitos. */
+  const cpfQ = useQuery({ queryKey: ["employee-cpf-logins"], queryFn: () => doListCpf() });
+  const cpfLast2 = useMemo(
+    () => new Map((cpfQ.data ?? []).map((l) => [l.employee_id, l.cpf_last2])),
+    [cpfQ.data],
+  );
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [invitingExisting, setInvitingExisting] = useState<Employee | null>(null);
+  /** Colaborador cujo CPF de acesso está sendo corrigido. */
+  const [changingCpf, setChangingCpf] = useState<Employee | null>(null);
+  /** Senha provisória recém-gerada — aparece uma vez, para o G&G entregar. */
+  const [issued, setIssued] = useState<{ name: string; cpfLast2: string; password: string } | null>(
+    null,
+  );
   const [importing, setImporting] = useState(false);
   const [importingPhotos, setImportingPhotos] = useState(false);
   /** Ids marcados na tabela. Sobrevive à troca de filtro; some ao excluir. */
@@ -189,6 +210,26 @@ function ColaboradoresPage() {
       invalidate();
       setInvitingExisting(null);
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mSetCpf = useMutation({
+    mutationFn: (p: { employee: Employee; cpf: string }) =>
+      doSetCpf({ data: { employeeId: p.employee.id, cpf: p.cpf } }),
+    onSuccess: (res, p) => {
+      setIssued({ name: p.employee.name, cpfLast2: res.cpfLast2, password: res.password });
+      setInvitingExisting(null);
+      setChangingCpf(null);
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["employee-cpf-logins"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mResetCpf = useMutation({
+    mutationFn: (employee: Employee) => doResetCpf({ data: { employeeId: employee.id } }),
+    onSuccess: (res, employee) =>
+      setIssued({ name: employee.name, cpfLast2: res.cpfLast2, password: res.password }),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -698,7 +739,13 @@ function ColaboradoresPage() {
                   {/* Acesso */}
                   <span>
                     {emp.auth_user_id ? (
-                      <Chip tone="accent">Portal</Chip>
+                      cpfLast2.has(emp.id) ? (
+                        <Chip tone="accent" className="gap-1" title="Entra com CPF e senha">
+                          <IdCard className="h-3 w-3" /> CPF
+                        </Chip>
+                      ) : (
+                        <Chip tone="accent">Portal</Chip>
+                      )
                     ) : (
                       <Chip tone="soft" className="gap-1">
                         <ShieldOff className="h-3 w-3" /> Sem acesso
@@ -739,7 +786,19 @@ function ColaboradoresPage() {
                           <Pencil className="mr-2 h-3.5 w-3.5" /> Editar cadastro
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        {emp.auth_user_id ? (
+                        {emp.auth_user_id && cpfLast2.has(emp.id) ? (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => mResetCpf.mutate(emp)}
+                              disabled={mResetCpf.isPending}
+                            >
+                              <KeyRound className="mr-2 h-3.5 w-3.5" /> Gerar nova senha
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setChangingCpf(emp)}>
+                              <IdCard className="mr-2 h-3.5 w-3.5" /> Corrigir CPF
+                            </DropdownMenuItem>
+                          </>
+                        ) : emp.auth_user_id ? (
                           <>
                             <DropdownMenuItem onClick={() => mResend.mutate(emp.id)} disabled={mResend.isPending}>
                               <MailCheck className="mr-2 h-3.5 w-3.5" /> Reenviar convite
@@ -779,7 +838,8 @@ function ColaboradoresPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t-[1.5px] border-ink px-[22px] py-3">
           <span className="text-[11.5px] text-muted-foreground">
-            Uso interno. Nada de CPF, endereço, documentos ou dados bancários por aqui.
+            Uso interno. Nada de endereço, documentos ou dados bancários por aqui — e do CPF de
+            acesso, só os dois últimos dígitos.
           </span>
           <span className="text-[11.5px] font-bold text-muted-foreground tabular-nums">
             {rows.length} de {employees.length} colaboradores
@@ -822,17 +882,37 @@ function ColaboradoresPage() {
           title={`Dar acesso — ${invitingExisting.name}`}
           onClose={() => setInvitingExisting(null)}
         >
+          <GrantAccess
+            onInvite={(email) => mInviteExisting.mutate({ employeeId: invitingExisting.id, email })}
+            inviting={mInviteExisting.isPending}
+            onCpf={(cpf) => mSetCpf.mutate({ employee: invitingExisting, cpf })}
+            creatingCpf={mSetCpf.isPending}
+          />
+        </Modal>
+      )}
+
+      {/* Modal: corrigir o CPF de quem entra por CPF */}
+      {changingCpf && (
+        <Modal title={`Corrigir CPF — ${changingCpf.name}`} onClose={() => setChangingCpf(null)}>
           <div className="px-6 py-5">
             <p className="mb-4 text-sm text-muted-foreground">
-              Informe o e-mail deste colaborador para enviar o convite de acesso ao Portal.
+              O CPF cadastrado termina em {hiddenCpf(cpfLast2.get(changingCpf.id) ?? "??")}.
+              Informe o CPF certo: o acesso passa a ser por ele, e uma senha provisória nova é
+              gerada.
             </p>
-            <InviteExistingForm
-              onSubmit={(email) =>
-                mInviteExisting.mutate({ employeeId: invitingExisting.id, email })
-              }
-              loading={mInviteExisting.isPending}
+            <CpfAccessForm
+              onSubmit={(cpf) => mSetCpf.mutate({ employee: changingCpf, cpf })}
+              loading={mSetCpf.isPending}
+              submitLabel="Corrigir e gerar senha"
             />
           </div>
+        </Modal>
+      )}
+
+      {/* Modal: senha provisória recém-gerada */}
+      {issued && (
+        <Modal title={`Acesso por CPF — ${issued.name}`} onClose={() => setIssued(null)}>
+          <IssuedPassword {...issued} onDone={() => setIssued(null)} />
         </Modal>
       )}
 
@@ -1271,6 +1351,160 @@ function InviteExistingForm({
         <MailCheck className="h-4 w-4" /> Enviar convite
       </InkButton>
     </form>
+  );
+}
+
+/**
+ * "Dar acesso": convite por e-mail, ou CPF + senha provisória para quem não tem e-mail
+ * corporativo (motoristas, logística, operação).
+ */
+function GrantAccess({
+  onInvite,
+  inviting,
+  onCpf,
+  creatingCpf,
+}: {
+  onInvite: (email: string) => void;
+  inviting: boolean;
+  onCpf: (cpf: string) => void;
+  creatingCpf: boolean;
+}) {
+  const [mode, setMode] = useState<"email" | "cpf">("email");
+  const tab = (id: "email" | "cpf", label: string, Icon: typeof MailCheck) => (
+    <button
+      type="button"
+      onClick={() => setMode(id)}
+      aria-pressed={mode === id}
+      className={cn(
+        "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold uppercase tracking-[0.08em] transition-colors",
+        mode === id ? "bg-ink text-paper" : "text-muted-foreground hover:text-ink",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
+  );
+
+  return (
+    <div className="px-6 py-5">
+      <div className="mb-5 flex gap-1 rounded-full border-[1.5px] border-ink bg-surface p-1">
+        {tab("email", "Por e-mail", MailCheck)}
+        {tab("cpf", "Por CPF", IdCard)}
+      </div>
+      {mode === "email" ? (
+        <>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Informe o e-mail deste colaborador para enviar o convite de acesso ao Portal.
+          </p>
+          <InviteExistingForm onSubmit={onInvite} loading={inviting} />
+        </>
+      ) : (
+        <>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Para quem não tem e-mail corporativo. A pessoa entra com o CPF e uma senha provisória,
+            que você entrega pessoalmente; no primeiro acesso ela cria a própria senha. O CPF não
+            fica guardado — só os dois últimos dígitos, para conferência.
+          </p>
+          <CpfAccessForm onSubmit={onCpf} loading={creatingCpf} submitLabel="Criar acesso" />
+        </>
+      )}
+    </div>
+  );
+}
+
+function CpfAccessForm({
+  onSubmit,
+  loading,
+  submitLabel,
+}: {
+  onSubmit: (cpf: string) => void;
+  loading: boolean;
+  submitLabel: string;
+}) {
+  const [cpf, setCpf] = useState("");
+  const valid = isValidCpf(cpf);
+  const complete = cpf.replace(/\D/g, "").length === 11;
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (valid) onSubmit(cpf);
+      }}
+      className="space-y-3"
+    >
+      <Field label="CPF">
+        <input
+          inputMode="numeric"
+          autoComplete="off"
+          required
+          value={cpf}
+          onChange={(e) => setCpf(maskCpf(e.target.value))}
+          placeholder="000.000.000-00"
+          className={inp}
+        />
+      </Field>
+      {complete && !valid && (
+        <p className="text-xs font-bold text-destructive">CPF inválido. Confira os 11 dígitos.</p>
+      )}
+      <InkButton type="submit" disabled={loading || !valid} className="w-full justify-center">
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        <KeyRound className="h-4 w-4" /> {submitLabel}
+      </InkButton>
+    </form>
+  );
+}
+
+/** A senha provisória aparece só aqui, uma vez. Fechou, só gerando outra. */
+function IssuedPassword({
+  name,
+  cpfLast2,
+  password,
+  onDone,
+}: {
+  name: string;
+  cpfLast2: string;
+  password: string;
+  onDone: () => void;
+}) {
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(password);
+      toast.success("Senha copiada.");
+    } catch {
+      toast.error("Não deu para copiar. Anote a senha.");
+    }
+  };
+  return (
+    <div className="space-y-5 px-6 py-5">
+      <div className="rounded-lg border-[1.5px] border-ink bg-accent p-5 text-center">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em]">Senha provisória</p>
+        <p className="mt-2 select-all font-mono text-[28px] font-black tracking-[0.02em]">
+          {password}
+        </p>
+        <button
+          type="button"
+          onClick={copy}
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] underline-offset-2 hover:underline"
+        >
+          <Copy className="h-3.5 w-3.5" /> Copiar
+        </button>
+      </div>
+      <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-[1.6]">
+        <li>
+          Entregue a senha a <strong>{name.split(" ")[0]}</strong> pessoalmente ou por mensagem
+          direta.
+        </li>
+        <li>
+          No portal, a pessoa entra com o <strong>CPF</strong> (final {cpfLast2}) e esta senha.
+        </li>
+        <li>No primeiro acesso, o portal pede para criar a senha definitiva.</li>
+      </ol>
+      <p className="text-xs text-muted-foreground">
+        Esta senha não aparece de novo. Se ela se perder, use “Gerar nova senha”.
+      </p>
+      <InkButton type="button" onClick={onDone} className="w-full justify-center">
+        Pronto
+      </InkButton>
+    </div>
   );
 }
 

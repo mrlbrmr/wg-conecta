@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { KeyRound, Loader2, LogIn, Mail } from "lucide-react";
+import { KeyRound, Loader2, LogIn, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { signOut } from "@/lib/session";
+import { isCpfLoginEmail, isValidCpf, maskCpf } from "@/lib/cpf";
+import { resolveCpfLogin } from "@/lib/cpf-access.functions";
 import { WGLogo } from "@/components/wg-logo";
 import { toast } from "sonner";
 
@@ -13,17 +16,22 @@ export const Route = createFileRoute("/gate")({
 
 function GatePage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const resolveCpf = useServerFn(resolveCpfLogin);
+  /** E-mail ou CPF: quem não tem e-mail corporativo entra com o CPF. */
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  /** E-mail de quem já está conectado neste navegador, se houver. */
+  /** Quem já está conectado neste navegador, se houver. */
   const [signedInAs, setSignedInAs] = useState<string | null>(null);
 
   // Logar por cima de uma sessão aberta misturava as duas contas na mesma aba.
   // Quem já está conectado escolhe: continua ou sai antes.
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      setSignedInAs(data.session?.user.email ?? null);
+      const user = data.session?.user;
+      // Conta de CPF tem e-mail sintético — mostrar o nome em vez dele.
+      const name = user?.user_metadata?.name as string | undefined;
+      setSignedInAs(user ? (isCpfLoginEmail(user.email) ? (name ?? "seu CPF") : (user.email ?? null)) : null);
     });
   }, []);
 
@@ -36,18 +44,32 @@ function GatePage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const value = identifier.trim();
+    const byCpf = !value.includes("@");
+    if (byCpf && !isValidCpf(value)) return toast.error("CPF inválido. Confira os 11 dígitos.");
+
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      const msg =
-        error.message.includes("Invalid login") || error.message.includes("invalid_credentials")
-          ? "E-mail ou senha incorretos."
-          : error.message;
-      return toast.error(msg);
+    try {
+      const email = byCpf ? (await resolveCpf({ data: { cpf: value } })).email : value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        const wrong =
+          error.message.includes("Invalid login") || error.message.includes("invalid_credentials");
+        return toast.error(
+          wrong ? (byCpf ? "CPF ou senha incorretos." : "E-mail ou senha incorretos.") : error.message,
+        );
+      }
+      // Senha provisória do G&G: primeiro cria a própria.
+      if (data.user?.app_metadata?.must_change_password) {
+        return navigate({ to: "/colaborador/nova-senha" });
+      }
+      toast.success("Bem-vindo(a)!");
+      navigate({ to: "/" });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
     }
-    toast.success("Bem-vindo(a)!");
-    navigate({ to: "/" });
   };
 
   return (
@@ -64,7 +86,7 @@ function GatePage() {
             Aqui é <span className="italic text-primary">WG</span>.
           </h1>
           <p className="mt-3 text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-            Entre com o e-mail e a senha enviados pelo time de Gente &amp; Gestão.
+            Entre com seu e-mail ou CPF e a senha enviada pelo time de Gente &amp; Gestão.
           </p>
         </div>
 
@@ -95,17 +117,24 @@ function GatePage() {
             <form onSubmit={onSubmit} className="space-y-4">
               <label className="block">
                 <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                  E-mail
+                  E-mail ou CPF
                 </span>
                 <div className="mt-2 relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
+                  <UserRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink" />
                   <input
                     autoFocus
-                    type="email"
+                    type="text"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={identifier}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      // Só dígitos e pontuação de CPF: aplica a máscara enquanto digita.
+                      setIdentifier(/^[\d.\-\s]*$/.test(v) ? maskCpf(v) : v);
+                    }}
+                    placeholder="seu@email.com ou 000.000.000-00"
                     className="w-full border-[1.5px] border-ink bg-paper pl-11 pr-4 py-3.5 text-base outline-none transition focus:bg-accent-soft"
                   />
                 </div>
@@ -128,7 +157,7 @@ function GatePage() {
               </label>
               <button
                 type="submit"
-                disabled={loading || !email.trim() || !password}
+                disabled={loading || !identifier.trim() || !password}
                 className="w-full btn-ink py-3.5 disabled:opacity-50"
               >
                 {loading ? (
@@ -148,6 +177,7 @@ function GatePage() {
             >
               Esqueci minha senha
             </Link>
+            <span className="mt-1.5 block">Entra com CPF? Peça uma senha nova ao G&amp;G.</span>
           </p>
         </div>
 

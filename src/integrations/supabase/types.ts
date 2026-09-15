@@ -467,6 +467,38 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_cpf_logins: {
+        Row: {
+          cpf_hmac: string
+          cpf_last2: string
+          created_at: string
+          employee_id: string
+          updated_at: string
+        }
+        Insert: {
+          cpf_hmac: string
+          cpf_last2: string
+          created_at?: string
+          employee_id: string
+          updated_at?: string
+        }
+        Update: {
+          cpf_hmac?: string
+          cpf_last2?: string
+          created_at?: string
+          employee_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_cpf_logins_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           bio: string | null

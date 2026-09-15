@@ -90,10 +90,10 @@ export const addEmployee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-type AdminClient = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
+export type AdminClient = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
 /** Conta do Auth por e-mail. A API admin não busca por e-mail, então pagina. */
-async function findAuthUserByEmail(db: AdminClient, email: string) {
+export async function findAuthUserByEmail(db: AdminClient, email: string) {
   const target = email.trim().toLowerCase();
   for (let page = 1; page <= 20; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
@@ -218,8 +218,15 @@ export const updateEmployee = createServerFn({ method: "POST" })
     const authUserId = existing?.auth_user_id as string | null | undefined;
 
     if (authUserId) {
+      // Quem entra por CPF tem e-mail sintético no Auth. Um e-mail de contato preenchido depois
+      // fica só no cadastro — trocar o do Auth derrubaria o login por CPF.
+      const { data: cpfLogin } = await supabaseAdmin
+        .from("employee_cpf_logins")
+        .select("employee_id")
+        .eq("employee_id", data.id)
+        .maybeSingle();
       const authPatch: { email?: string; ban_duration?: string } = {};
-      if (data.email) authPatch.email = data.email;
+      if (data.email && !cpfLogin) authPatch.email = data.email;
       if (data.active === false) authPatch.ban_duration = "876600h";
       if (data.active === true) authPatch.ban_duration = "none";
       if (Object.keys(authPatch).length > 0) {
