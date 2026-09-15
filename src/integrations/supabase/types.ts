@@ -850,6 +850,54 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_matrix: {
+        Row: {
+          active: boolean
+          contact_name: string
+          contact_role: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          extension: string | null
+          id: string
+          notes: string | null
+          order_index: number
+          phone: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          contact_name: string
+          contact_role?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          extension?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number
+          phone?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          contact_name?: string
+          contact_role?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          extension?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number
+          phone?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           active: boolean

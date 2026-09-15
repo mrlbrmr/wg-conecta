@@ -1,10 +1,19 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/matriz-contatos`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915150000_contact_matrix.sql` | Cria `contact_matrix`: para cada assunto, o contato de cada departamento (vazio = vale para todos). O portal lê as ativas; só admin escreve. |
+
+Pode rodar antes ou depois do deploy: sem a tabela, "Com quem falar" mostra só os contatos do G&G,
+como antes. Depois, o G&G preenche em Gente & Gestão → Matriz de contatos.
+
 ## Pendentes (PR `feat/acesso-cpf`)
 
 Login por CPF + senha para quem não tem e-mail corporativo. Duas coisas antes de usar:
 
-**1. Migration** (depois das de `feat/ajustes-pos-testes`, logo abaixo):
+**1. Migration:**
 
 | Arquivo | O que faz |
 |---|---|
@@ -29,7 +38,7 @@ Sem a migration e o segredo, o resto do portal funciona normalmente; só o login
 única vez, para entregar à pessoa; no primeiro acesso ela cria a própria. Esqueceu a senha:
 ⋯ → Gerar nova senha. CPF digitado errado: ⋯ → Corrigir CPF.
 
-## Pendentes (PR `feat/ajustes-pos-testes`)
+## Aplicadas em 15/09/2026 (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes
 do deploy** do PR. Se as pendências do P1 e do P2, logo abaixo, ainda não rodaram, elas vêm
@@ -83,7 +92,7 @@ A migration de `hide_birthday` precisa rodar **antes do deploy** do PR. O painel
 coluna, e sem ela a tela de Colaboradores dá erro. Depois do deploy, marque "Não exibir
 aniversário no portal" em Colaboradores → editar → Dados pessoais.
 
-## Pendentes (PR `fix/p2-escritas-pelo-servidor`)
+## Aplicadas em 15/09/2026 (PR `fix/p2-escritas-pelo-servidor`)
 
 Rodar depois das duas de cima, também um arquivo por vez. Nenhuma delas depende de deploy: dá
 para rodar antes ou depois do merge.

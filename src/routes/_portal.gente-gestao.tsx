@@ -61,8 +61,8 @@ export const GG_LINKS = [
   },
   {
     to: "/gente-gestao/contatos",
-    title: "Fale com G&G",
-    desc: "Contatos da equipe",
+    title: "Com quem falar",
+    desc: "Contatos por assunto e área",
     icon: "Users",
   },
 ] as const;

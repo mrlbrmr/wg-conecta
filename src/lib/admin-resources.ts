@@ -20,8 +20,10 @@ import {
   Image,
   CalendarDays,
   Timer,
+  Network,
 } from "lucide-react";
 import { compareChecklistItems, ONBOARDING_STAGES } from "@/lib/onboarding-stages";
+import { DEPARTMENTS } from "@/lib/org";
 
 export type FieldType =
   | "text"
@@ -436,6 +438,50 @@ export const RESOURCES: ResourceDef[] = [
       { key: "phone", label: "Telefone", type: "text" },
       { key: "photo_url", label: "Foto", type: "image" },
       { key: "order_index", label: "Ordem", type: "number" },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
+    key: "matriz-contatos",
+    label: "Matriz de contatos",
+    labelSingular: "Contato da matriz",
+    icon: Network,
+    table: "contact_matrix",
+    orderBy: { column: "order_index" },
+    sortRows: (a, b) =>
+      String(a.subject ?? "").localeCompare(String(b.subject ?? ""), "pt-BR") ||
+      String(a.department ?? "").localeCompare(String(b.department ?? ""), "pt-BR"),
+    section: "Gente & Gestão",
+    note: "Com quem falar sobre cada assunto, por departamento. O colaborador vê a linha da área dele; sem linha própria, vale a de “Todos”.",
+    rule: "Assunto escrito igual agrupa as linhas: “Férias” e “férias ” viram o mesmo assunto.",
+    displayColumns: [
+      { key: "subject", label: "Assunto" },
+      { key: "department", label: "Departamento" },
+      { key: "contact_name", label: "Contato" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      {
+        key: "subject",
+        label: "Assunto",
+        type: "text",
+        required: true,
+        placeholder: "Férias, Frota, TI, Compras…",
+      },
+      {
+        key: "department",
+        label: "Departamento",
+        type: "select",
+        help: "Deixe em “—” para valer para todos os departamentos.",
+        options: DEPARTMENTS.map((d) => ({ value: d, label: d })),
+      },
+      { key: "contact_name", label: "Nome do contato", type: "text", required: true },
+      { key: "contact_role", label: "Cargo ou área do contato", type: "text" },
+      { key: "extension", label: "Ramal", type: "text" },
+      { key: "phone", label: "Telefone / WhatsApp", type: "text" },
+      { key: "email", label: "E-mail", type: "email" },
+      { key: "notes", label: "Observação", type: "text", placeholder: "Horário, quando procurar…" },
+      { key: "order_index", label: "Ordem do assunto", type: "number" },
       { key: "active", label: "Ativo", type: "boolean" },
     ],
   },
