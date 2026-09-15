@@ -3,7 +3,8 @@
 ## Pendentes (PR `feat/ajustes-pos-testes`)
 
 Rodar no SQL Editor do projeto **`wrldlvcrrslzbrwuwdsr`**, **um arquivo por vez, na ordem, antes
-do deploy** do PR:
+do deploy** do PR. Se as pendências do P1 e do P2, logo abaixo, ainda não rodaram, elas vêm
+primeiro (a ordem é a do nome do arquivo):
 
 | Arquivo | O que faz |
 |---|---|
