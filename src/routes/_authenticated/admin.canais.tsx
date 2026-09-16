@@ -7,18 +7,17 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { Chip, ChoiceChips, InkButton, Kicker, PaperCard } from "@/components/paper";
 import { useAdminSearch } from "@/components/admin-search";
-import {
-  SubmissionConversation,
-  SubmissionFields,
-} from "@/components/channel/submission-thread";
+import { SubmissionConversation, SubmissionFields } from "@/components/channel/submission-thread";
 import {
   CHANNEL_META,
   CHANNELS,
+  ESCUTA_CATEGORIES,
   SIM_KINDS,
   SIM_REASONS,
   SUBMISSION_STATUSES,
   SUBMISSION_STATUS_LABEL,
   SUBMISSION_STATUS_TONE,
+  type Channel,
   type SubmissionStatus,
 } from "@/lib/channel-defs";
 import {
@@ -32,15 +31,15 @@ import { formatDate } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
 
 /**
- * SIM no painel (e, no PR seguinte, o Canal de Escuta).
+ * SIM e Canal de Escuta no painel, um por aba.
  *
- * Envio sem identificação não diz quem escreveu. No identificado, o nome e o contato são os que
+ * Envio sem identificação não diz quem escreveu (o Canal de Escuta é sempre assim). No identificado, o nome e o contato são os que
  * foram gravados no próprio envio. A conversa acontece por aqui: quem enviou vê no Perfil ou em
  * "Acompanhar", pelo protocolo.
  */
 
 export const Route = createFileRoute("/_authenticated/admin/canais")({
-  head: () => ({ meta: [{ title: "SIM — Portal WG" }] }),
+  head: () => ({ meta: [{ title: "SIM e Canal de Escuta — Portal WG" }] }),
   validateSearch: z.object({ canal: z.enum(CHANNELS).optional() }),
   component: ChannelsAdminPage,
 });
@@ -55,9 +54,24 @@ interface Filters {
   reason: string;
   kind: string;
   identified: "" | "sim" | "nao";
+  /** Assunto do Canal de Escuta (o rótulo, que é o que fica em `category`). */
+  category: string;
 }
 
-const NO_FILTERS: Filters = { status: ALL, unit: ALL, reason: ALL, kind: ALL, identified: "" };
+const NO_FILTERS: Filters = {
+  status: ALL,
+  unit: ALL,
+  reason: ALL,
+  kind: ALL,
+  identified: "",
+  category: ALL,
+};
+
+const INTRO: Record<Channel, string> = {
+  sim: "Sugestões, críticas e elogios que chegaram pelo portal. Quem escolheu enviar sem se identificar não aparece em lugar nenhum; quem enviou com o nome recebe um aviso por e-mail quando você responde.",
+  escuta:
+    "Relatos de assédio, discriminação, conduta antiética e segurança. Todos chegam sem autor: nome e contato só aparecem se a pessoa escreveu no relato. A conversa acontece pelo protocolo, em Acompanhar.",
+};
 
 function matches(r: Submission, f: Filters, term: string): boolean {
   if (f.status && r.status !== f.status) return false;
@@ -65,6 +79,7 @@ function matches(r: Submission, f: Filters, term: string): boolean {
   if (f.reason && r.payload.reason !== f.reason) return false;
   if (f.kind && r.payload.kind !== f.kind) return false;
   if (f.identified && r.identified !== (f.identified === "sim")) return false;
+  if (f.category && r.category !== f.category) return false;
   return (
     !term ||
     r.protocol.toLowerCase().includes(term) ||
@@ -85,8 +100,11 @@ function ChannelsAdminPage() {
     queryFn: () => doList({ data: { channel: canal } }),
   });
 
-  // Trocar de canal fecha o envio aberto.
-  useEffect(() => setSelectedId(null), [canal]);
+  // Trocar de canal fecha o envio aberto e limpa os filtros, que são de cada canal.
+  useEffect(() => {
+    setSelectedId(null);
+    setFilters(NO_FILTERS);
+  }, [canal]);
 
   const term = rawTerm.trim().toLowerCase();
   const rows = useMemo(
@@ -97,20 +115,23 @@ function ChannelsAdminPage() {
   const openCount = (q.data ?? []).filter((r) => r.status !== "concluido").length;
   const filtering = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS);
 
-  const setFilter = <K extends keyof Filters>(key: K) => (value: Filters[K]) =>
-    setFilters((f) => ({ ...f, [key]: value }));
+  const setFilter =
+    <K extends keyof Filters>(key: K) =>
+    (value: Filters[K]) =>
+      setFilters((f) => ({ ...f, [key]: value }));
 
   return (
     <div>
-      <Kicker>Gente &amp; Gestão</Kicker>
-      <h1 className="mt-2 text-[34px] font-black leading-none tracking-[-0.04em]">
-        {CHANNEL_META[canal].title}
-      </h1>
-      <p className="mt-2 max-w-[70ch] text-sm leading-[1.6] text-muted-foreground">
-        Sugestões, críticas e elogios que chegaram pelo portal. Quem escolheu enviar sem se
-        identificar não aparece em lugar nenhum; quem enviou com o nome recebe um aviso por e-mail
-        quando você responde.
-      </p>
+      {/* Mesmo cabeçalho das demais telas do painel (AdminCrud). */}
+      <header className="border-b-[1.5px] border-ink pb-5">
+        <Kicker>Gente &amp; Gestão</Kicker>
+        <h1 className="mt-3 text-[28px] font-black leading-[1.02] tracking-[-0.045em] sm:text-[34px] lg:text-[42px]">
+          {CHANNEL_META[canal].title}
+        </h1>
+        <p className="mt-3 max-w-[60ch] text-[15.5px] leading-[1.7] text-muted-foreground">
+          {INTRO[canal]}
+        </p>
+      </header>
 
       {CHANNELS.length > 1 && (
         <div className="mt-6 inline-flex gap-1 rounded-full border-[1.5px] border-ink bg-surface p-1">
@@ -137,39 +158,54 @@ function ChannelsAdminPage() {
           allLabel="Todos os status"
           value={filters.status}
           onChange={setFilter("status")}
-          options={SUBMISSION_STATUSES.map((s) => ({ value: s, label: SUBMISSION_STATUS_LABEL[s] }))}
+          options={SUBMISSION_STATUSES.map((s) => ({
+            value: s,
+            label: SUBMISSION_STATUS_LABEL[s],
+          }))}
         />
-        <FilterSelect
-          label="Local de trabalho"
-          allLabel="Todas as filiais"
-          value={filters.unit}
-          onChange={setFilter("unit")}
-          options={UNITS}
-        />
-        <FilterSelect
-          label="Motivo"
-          allLabel="Todos os motivos"
-          value={filters.reason}
-          onChange={setFilter("reason")}
-          options={SIM_REASONS}
-        />
-        <FilterSelect
-          label="Tipo"
-          allLabel="Interna e externa"
-          value={filters.kind}
-          onChange={setFilter("kind")}
-          options={SIM_KINDS}
-        />
-        <FilterSelect
-          label="Identificação"
-          allLabel="Com e sem nome"
-          value={filters.identified}
-          onChange={setFilter("identified")}
-          options={[
-            { value: "sim", label: "Com nome" },
-            { value: "nao", label: "Anônimos" },
-          ]}
-        />
+        {canal === "escuta" ? (
+          <FilterSelect
+            label="Assunto"
+            allLabel="Todos os assuntos"
+            value={filters.category}
+            onChange={setFilter("category")}
+            options={ESCUTA_CATEGORIES.map((c) => c.label)}
+          />
+        ) : (
+          <>
+            <FilterSelect
+              label="Local de trabalho"
+              allLabel="Todas as filiais"
+              value={filters.unit}
+              onChange={setFilter("unit")}
+              options={UNITS}
+            />
+            <FilterSelect
+              label="Motivo"
+              allLabel="Todos os motivos"
+              value={filters.reason}
+              onChange={setFilter("reason")}
+              options={SIM_REASONS}
+            />
+            <FilterSelect
+              label="Tipo"
+              allLabel="Interna e externa"
+              value={filters.kind}
+              onChange={setFilter("kind")}
+              options={SIM_KINDS}
+            />
+            <FilterSelect
+              label="Identificação"
+              allLabel="Com e sem nome"
+              value={filters.identified}
+              onChange={setFilter("identified")}
+              options={[
+                { value: "sim", label: "Com nome" },
+                { value: "nao", label: "Anônimos" },
+              ]}
+            />
+          </>
+        )}
         {filtering && (
           <button
             type="button"
@@ -225,12 +261,21 @@ function ChannelsAdminPage() {
                     </span>
                     <span className="truncate text-[13.5px] font-bold">{r.category}</span>
                     <span className="truncate text-[12px] text-muted-foreground">
-                      {[formatDate(r.received_on), r.payload.sector, r.payload.unit]
+                      {[
+                        formatDate(r.received_on),
+                        r.payload.sector,
+                        r.payload.unit,
+                        r.payload.where,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
                     <span className="truncate text-[12px] font-bold">
-                      {r.identified ? (r.payload.contact_name ?? "Com nome") : "Anônimo"}
+                      {r.identified
+                        ? (r.payload.contact_name ?? "Com nome")
+                        : r.payload.contact_name
+                          ? `${r.payload.contact_name} (escreveu no relato)`
+                          : "Anônimo"}
                     </span>
                   </button>
                 </li>
@@ -287,29 +332,46 @@ function FilterSelect<T extends string>({
 
 // ── Exportação ────────────────────────────────────────────────────────
 
-const CSV_COLUMNS: [header: string, value: (r: Submission) => string][] = [
+type CsvColumn = [header: string, value: (r: Submission) => string];
+
+const CSV_COMMON: CsvColumn[] = [
   ["Protocolo", (r) => r.protocol],
   ["Data", (r) => formatDate(r.received_on)],
   ["Status", (r) => SUBMISSION_STATUS_LABEL[r.status]],
   ["Identificação", (r) => (r.identified ? "Com nome" : "Anônimo")],
   ["Nome", (r) => r.payload.contact_name ?? ""],
   ["Contato", (r) => r.payload.contact ?? ""],
-  ["Local de trabalho", (r) => r.payload.unit ?? ""],
-  ["Tipo de melhoria", (r) => r.payload.kind ?? ""],
-  ["Setor", (r) => r.payload.sector ?? ""],
-  ["Motivo", (r) => r.payload.reason ?? ""],
-  ["Situação e possível solução", (r) => r.payload.description ?? ""],
 ];
+
+const CSV_COLUMNS: Record<Channel, CsvColumn[]> = {
+  escuta: [
+    ...CSV_COMMON,
+    ["Assunto", (r) => r.category],
+    ["Relato", (r) => r.payload.description ?? ""],
+    ["Onde", (r) => r.payload.where ?? ""],
+    ["Quando", (r) => r.payload.when ?? ""],
+    ["Pessoas envolvidas", (r) => r.payload.involved ?? ""],
+  ],
+  sim: [
+    ...CSV_COMMON,
+    ["Local de trabalho", (r) => r.payload.unit ?? ""],
+    ["Tipo de melhoria", (r) => r.payload.kind ?? ""],
+    ["Setor", (r) => r.payload.sector ?? ""],
+    ["Motivo", (r) => r.payload.reason ?? ""],
+    ["Situação e possível solução", (r) => r.payload.description ?? ""],
+  ],
+};
 
 /**
  * Ponto e vírgula e BOM: é o que o Excel em português abre direto, com acentos. Texto que começa
  * com = + - @ ganha um apóstrofo, senão o Excel executa como fórmula o que o colaborador digitou.
  */
-function downloadCsv(rows: Submission[], channel: string) {
+function downloadCsv(rows: Submission[], channel: Channel) {
+  const columns = CSV_COLUMNS[channel];
   const cell = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
   const lines = [
-    CSV_COLUMNS.map(([h]) => cell(h)).join(";"),
-    ...rows.map((r) => CSV_COLUMNS.map(([, get]) => cell(get(r))).join(";")),
+    columns.map(([h]) => cell(h)).join(";"),
+    ...rows.map((r) => columns.map(([, get]) => cell(get(r))).join(";")),
   ];
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -357,7 +419,10 @@ function SubmissionDetail({ submission: s }: { submission: Submission }) {
         </div>
         <ChoiceChips
           label="Status"
-          options={SUBMISSION_STATUSES.map((v) => ({ value: v, label: SUBMISSION_STATUS_LABEL[v] }))}
+          options={SUBMISSION_STATUSES.map((v) => ({
+            value: v,
+            label: SUBMISSION_STATUS_LABEL[v],
+          }))}
           value={s.status}
           onChange={(v) => changeStatus.mutate(v)}
         />
