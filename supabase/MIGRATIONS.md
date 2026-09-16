@@ -1,5 +1,96 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/tela-setores`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916150000_departments.sql` | Cria `departments`, a lista de setores que o G&G edita em Gente & Gestão → Setores, já com os 6 setores atuais. Renomear um setor troca o nome também em `employees`, `contact_matrix` e no setor dos envios do SIM (trigger). |
+
+Rodar **antes do deploy**. Sem a tabela, o portal usa a lista fixa do código, mas a tela Setores
+do painel dá erro.
+
+Conferências (só leitura), uma por vez:
+
+```sql
+-- Os 6 setores, em ordem.
+SELECT name, order_index, active FROM public.departments ORDER BY order_index;
+```
+
+```sql
+-- Não deve voltar nenhuma linha: anon sem acesso.
+SELECT grantee, privilege_type FROM information_schema.role_table_grants
+ WHERE table_schema = 'public' AND table_name = 'departments' AND grantee IN ('anon', 'PUBLIC');
+```
+
+## Pendentes (PR `fix/setor-gente-gestao`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916140000_setor_gente_gestao.sql` | Troca o setor "Gestão de Pessoas" por "Gente & Gestão" em `employees`, `contact_matrix` e no setor dos envios do SIM. |
+
+Pode rodar antes ou depois do deploy. Conferência (só leitura) — depois, deve voltar 0:
+
+```sql
+SELECT count(*) FROM public.employees WHERE department = 'Gestão de Pessoas';
+```
+
+## Pendentes (PR `fix/cadastro-perfil`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916120000_units_siglas.sql` | Troca as filiais gravadas como sigla pelo nome oficial: `RJ` → Nova Iguaçu/RJ, `SP` → São Paulo/SP, `SUM` → Sumaré/SP (em `employees` e `internal_jobs`). |
+
+Pode rodar antes ou depois do deploy. Conferência (só leitura), antes e depois — depois, as
+siglas não devem mais aparecer:
+
+```sql
+SELECT unit, count(*) FROM public.employees GROUP BY unit ORDER BY 2 DESC;
+```
+
+E, para ver se a regra de "Meu time" cobre os cargos reais de liderança:
+
+```sql
+SELECT DISTINCT job_title FROM public.employees
+ WHERE active AND job_title ~* '(coord|superv|encarreg)' ORDER BY 1;
+```
+
+## Pendentes (PR `feat/sim`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260915170000_channel_submissions.sql` | Cria `channel_submissions` e `channel_submission_messages`, a base do SIM (e, depois, do Canal de Escuta). Envio sem identificação não tem autor nem hora; o identificado (só no SIM) guarda o colaborador do login. Só o servidor lê. |
+
+Rodar **antes do deploy**: sem as tabelas, o envio do SIM, o Acompanhar e a tela do painel dão
+erro (o resto do portal não é afetado).
+
+Conferências (só leitura), uma por vez:
+
+```sql
+-- Não deve voltar nenhuma linha: nem anon nem authenticated têm acesso.
+SELECT table_name, grantee, privilege_type
+  FROM information_schema.role_table_grants
+ WHERE table_schema = 'public'
+   AND table_name IN ('channel_submissions', 'channel_submission_messages')
+   AND grantee IN ('anon', 'authenticated', 'PUBLIC');
+```
+
+```sql
+-- Depois dos primeiros envios: anônimos sem autor e com chave; identificados com autor e sem chave.
+SELECT author_employee_id IS NOT NULL AS identificado,
+       access_key_hash IS NOT NULL AS tem_chave,
+       count(*)
+  FROM public.channel_submissions
+ GROUP BY 1, 2;
+```
+
+**Depois do deploy:**
+- Tirar o Google Forms do SIM de Admin › Formulários e de Links rápidos, se estiver lá: o SIM
+  agora é em `/sim`.
+- Os avisos por e-mail (ao G&G, de envio novo; a quem enviou com o nome, de resposta e de
+  conclusão) usam o Resend das solicitações (`RESEND_API_KEY` e `GG_NOTIFY_FROM`). Levam só o
+  protocolo e o link, nunca o conteúdo. Quem entra por CPF não recebe e-mail e acompanha pelo
+  Perfil.
+
 ## Pendentes (PR `feat/matriz-contatos`)
 
 | Arquivo | O que faz |
@@ -184,7 +275,8 @@ SELECT tablename, policyname FROM pg_policies WHERE policyname LIKE '%write\_aut
 inteiro. Ele é idempotente.
 
 **D) Conferência de `employees`** (só leitura). Depois do bloco C, `authenticated` deve ter
-`UPDATE` só nas colunas `bio`, `extension`, `email`, `photo_url` e `updated_at`. A lista abaixo
+`UPDATE` só nas colunas `bio`, `extension`, `email`, `photo_url` e `updated_at` (desde
+`20260911150000` nem isso: bio, ramal e foto são gravados pelo servidor). A lista abaixo
 deve voltar vazia:
 
 ```sql

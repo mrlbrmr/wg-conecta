@@ -11,6 +11,7 @@ import {
   type RequestFormSlug,
 } from "@/lib/form-defs";
 import { normalizeSiteUrl } from "@/lib/site-url";
+import { extensionSchema } from "@/lib/extension";
 import type { Json, Tables } from "@/integrations/supabase/types";
 
 const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
@@ -79,12 +80,11 @@ export const updateOwnBio = createServerFn({ method: "POST" })
 
 export const updateOwnContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(z.object({ extension: z.string().max(20).nullish() }))
+  .validator(z.object({ extension: extensionSchema }))
   .handler(async ({ data, context }) => {
     const db = await admin();
     const id = await employeeIdOf((context as { userId: string }).userId);
-    const extension = data.extension?.trim() || null;
-    fail((await db.from("employees").update({ extension }).eq("id", id)).error);
+    fail((await db.from("employees").update({ extension: data.extension ?? null }).eq("id", id)).error);
     return { ok: true };
   });
 

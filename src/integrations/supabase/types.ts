@@ -353,6 +353,86 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_submissions: {
+        Row: {
+          access_key_hash: string | null
+          author_employee_id: string | null
+          category: string
+          channel: string
+          id: string
+          payload: Json
+          protocol: string
+          received_on: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_key_hash?: string | null
+          author_employee_id?: string | null
+          category: string
+          channel: string
+          id?: string
+          payload?: Json
+          protocol: string
+          received_on: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_key_hash?: string | null
+          author_employee_id?: string | null
+          category?: string
+          channel?: string
+          id?: string
+          payload?: Json
+          protocol?: string
+          received_on?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_submissions_author_employee_id_fkey"
+            columns: ["author_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_submission_messages: {
+        Row: {
+          body: string
+          from_gg: boolean
+          id: string
+          sent_on: string
+          seq: number
+          submission_id: string
+        }
+        Insert: {
+          body: string
+          from_gg: boolean
+          id?: string
+          sent_on: string
+          submission_id: string
+        }
+        Update: {
+          body?: string
+          from_gg?: boolean
+          id?: string
+          sent_on?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_submission_messages_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "channel_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anniversary_congrats: {
         Row: {
           id: string
@@ -894,6 +974,33 @@ export type Database = {
           order_index?: number
           phone?: string | null
           subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
           updated_at?: string
         }
         Relationships: []

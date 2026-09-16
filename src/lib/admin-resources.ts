@@ -21,9 +21,10 @@ import {
   CalendarDays,
   Timer,
   Network,
+  Lightbulb,
+  Shapes,
 } from "lucide-react";
 import { compareChecklistItems, ONBOARDING_STAGES } from "@/lib/onboarding-stages";
-import { DEPARTMENTS } from "@/lib/org";
 
 export type FieldType =
   | "text"
@@ -48,6 +49,8 @@ export interface FieldDef {
   placeholder?: string;
   options?: { value: string; label: string }[];
   help?: string;
+  /** Opções vindas do banco em vez de `options` (ex.: setores da tabela `departments`). */
+  optionsFrom?: "departments";
 }
 
 export interface ResourceDef {
@@ -442,6 +445,28 @@ export const RESOURCES: ResourceDef[] = [
     ],
   },
   {
+    key: "setores",
+    label: "Setores",
+    labelSingular: "Setor",
+    icon: Shapes,
+    table: "departments",
+    orderBy: { column: "order_index" },
+    section: "Gente & Gestão",
+    note: "Os setores que aparecem no cadastro de colaboradores e na matriz de contatos.",
+    actionLabel: "Novo setor ↗",
+    rule: "Renomear um setor troca o nome também nos colaboradores e na matriz de contatos. Para tirar um setor das listas, desmarque “Ativo” em vez de excluir: quem já está nele continua com o nome.",
+    displayColumns: [
+      { key: "name", label: "Setor" },
+      { key: "order_index", label: "Ordem" },
+      { key: "active", label: "Ativo" },
+    ],
+    fields: [
+      { key: "name", label: "Nome do setor", type: "text", required: true, placeholder: "Compras, TI, Frota…" },
+      { key: "order_index", label: "Ordem", type: "number", help: "Menor aparece primeiro nas listas." },
+      { key: "active", label: "Ativo", type: "boolean" },
+    ],
+  },
+  {
     key: "matriz-contatos",
     label: "Matriz de contatos",
     labelSingular: "Contato da matriz",
@@ -473,7 +498,7 @@ export const RESOURCES: ResourceDef[] = [
         label: "Departamento",
         type: "select",
         help: "Deixe em “—” para valer para todos os departamentos.",
-        options: DEPARTMENTS.map((d) => ({ value: d, label: d })),
+        optionsFrom: "departments",
       },
       { key: "contact_name", label: "Nome do contato", type: "text", required: true },
       { key: "contact_role", label: "Cargo ou área do contato", type: "text" },
@@ -684,6 +709,13 @@ export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
     icon: Inbox,
     section: "Gente & Gestão",
     to: "/admin/solicitacoes",
+  },
+  {
+    key: "canais",
+    label: "SIM · Melhorias",
+    icon: Lightbulb,
+    section: "Gente & Gestão",
+    to: "/admin/canais",
   },
   {
     key: "colaboradores",
