@@ -62,6 +62,7 @@ import { parseEmployeeWorkbook, type ImportRow } from "@/lib/employee-import";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { OrgSelect } from "@/components/org-select";
+import { useDepartments } from "@/lib/departments";
 import { useAdminSearch } from "@/components/admin-search";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -1074,6 +1075,7 @@ function EmployeeForm({
   onCancel: () => void;
   loading: boolean;
 }) {
+  const departments = useDepartments();
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [department, setDepartment] = useState(initial?.department ?? "");
@@ -1108,7 +1110,7 @@ function EmployeeForm({
         onSubmit({
           name,
           email: email || undefined,
-          department: normalizeDepartment(department) ?? null,
+          department: normalizeDepartment(department, departments) ?? null,
           job_title: jobTitle.trim() || null,
           unit: normalizeUnit(unit) ?? null,
           phone: phone.trim() || null,
@@ -1521,6 +1523,7 @@ function ImportModal({
   loading: boolean;
   onClose: () => void;
 }) {
+  const departments = useDepartments();
   const [rows, setRows] = useState<ImportRow[]>([]);
   /** Linhas com Situação de desligado — ficam de fora da importação. */
   const [inactive, setInactive] = useState(0);
@@ -1572,7 +1575,7 @@ function ImportModal({
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
-      const parsedSheet = parseEmployeeWorkbook(wb);
+      const parsedSheet = parseEmployeeWorkbook(wb, departments);
       setRows(parsedSheet.rows);
       setInactive(parsedSheet.inactive);
       if (!parsedSheet.sheet) {

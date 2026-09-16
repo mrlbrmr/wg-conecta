@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
 import { contactMatrixQuery, matrixDepartments, matrixFor, type MatrixRow } from "@/lib/contact-matrix";
-import { DEPARTMENTS } from "@/lib/org";
+import { useDepartments } from "@/lib/departments";
 import { contactsQuery } from "@/lib/portal-queries";
 
 export const Route = createFileRoute("/_portal/gente-gestao/contatos")({
@@ -20,12 +20,13 @@ function ContatosPage() {
   const matrix = useQuery(contactMatrixQuery);
   const gg = useQuery(contactsQuery);
 
+  const officialDepartments = useDepartments();
   const rows = matrix.data ?? [];
   const departments = useMemo(() => {
     const all = new Map<string, string>();
-    for (const d of [...DEPARTMENTS, ...matrixDepartments(rows)]) all.set(d.toLowerCase(), d);
+    for (const d of [...officialDepartments, ...matrixDepartments(rows)]) all.set(d.toLowerCase(), d);
     return [...all.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [rows]);
+  }, [rows, officialDepartments]);
 
   // Começa na área de quem está logado; dá para ver a de outra área.
   const [department, setDepartment] = useState("");

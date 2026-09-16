@@ -17,6 +17,10 @@ export const UNITS = [
   "Sumaré/SP",
 ] as const;
 
+/**
+ * Lista inicial de setores. A lista que vale é a da tabela `departments` (ver
+ * `src/lib/departments.ts`); esta fica de reserva e como semente da migration.
+ */
 export const DEPARTMENTS = [
   "Assistência Técnica",
   "Comercial",
@@ -82,9 +86,18 @@ const DEPARTMENT_ALIASES = new Map<string, (typeof DEPARTMENTS)[number]>([
   ["logistica", "Logística"],
 ]);
 
-/** Setor no nome oficial quando é um dos conhecidos; os demais voltam como vieram. */
-export function normalizeDepartment(raw: unknown): string | undefined {
+/**
+ * Setor no nome oficial quando é um dos conhecidos; os demais voltam como vieram.
+ *
+ * `known` é a lista atual de setores (a da tabela `departments`, que o G&G edita). Sem ela,
+ * vale a lista fixa acima.
+ */
+export function normalizeDepartment(
+  raw: unknown,
+  known: readonly string[] = DEPARTMENTS,
+): string | undefined {
   const value = raw == null ? "" : String(raw).trim();
   if (!value) return undefined;
-  return DEPARTMENT_ALIASES.get(fold(value)) ?? value;
+  const key = fold(value);
+  return known.find((d) => fold(d) === key) ?? DEPARTMENT_ALIASES.get(key) ?? value;
 }
