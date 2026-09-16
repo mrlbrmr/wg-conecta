@@ -5,6 +5,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Award, Cake, Loader2, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { deleteEmployee, listEmployees, updateEmployee } from "@/lib/employee.functions";
+import { publicJobTitle } from "@/lib/job-title";
 import {
   MONTHS,
   formatDate,
@@ -176,7 +177,7 @@ export function CulturaAdmin({ tab }: { tab: CulturaTab }) {
         const t = adm ? tenureFrom(adm) : { years: 0, months: 0 };
         return {
           emp: e,
-          roleLine: [e.job_title, e.department].filter(Boolean).join(" · "),
+          roleLine: [publicJobTitle(e.job_title), e.department].filter(Boolean).join(" · "),
           unit: e.unit ?? "—",
           admission: adm ? formatDate(adm) : "—",
           days: e.birth_date ? daysUntil(e.birth_date) : Number.MAX_SAFE_INTEGER,

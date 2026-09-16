@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { publicJobTitle } from "@/lib/job-title";
 
 /**
  * Diretório interno — a view `employee_directory` já filtra colaboradores
@@ -16,7 +17,10 @@ function ensureList<T>(res: { data: T[] | null; error: { message: string } | nul
 }
 
 export async function fetchDirectory(): Promise<DirectoryEntry[]> {
-  return ensureList(await supabase.from("employee_directory").select("*").order("name"));
+  const rows = ensureList(await supabase.from("employee_directory").select("*").order("name"));
+  // A view já devolve o cargo sem senioridade; limpar de novo aqui garante que o portal nunca
+  // mostre o nível, mesmo num banco em que a migration da view ainda não rodou.
+  return rows.map((e) => ({ ...e, job_title: publicJobTitle(e.job_title) }));
 }
 
 export const directoryQuery = queryOptions({
