@@ -1,5 +1,17 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `fix/setor-gente-gestao`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916140000_setor_gente_gestao.sql` | Troca o setor "Gestão de Pessoas" por "Gente & Gestão" em `employees`, `contact_matrix` e no setor dos envios do SIM. |
+
+Pode rodar antes ou depois do deploy. Conferência (só leitura) — depois, deve voltar 0:
+
+```sql
+SELECT count(*) FROM public.employees WHERE department = 'Gestão de Pessoas';
+```
+
 ## Pendentes (PR `fix/cadastro-perfil`)
 
 | Arquivo | O que faz |
