@@ -6,7 +6,9 @@ import {
   CHANNEL_META,
   CHANNEL_OF_PREFIX,
   CHANNELS,
+  ESCUTA_CATEGORY_LABEL,
   SUBMISSION_STATUSES,
+  escutaSchema,
   normalizeAccessKey,
   normalizeProtocol,
   simSchema,
@@ -20,7 +22,7 @@ import type { Json } from "@/integrations/supabase/types";
 const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 
 /**
- * SIM (e, no PR seguinte, Canal de Escuta).
+ * SIM e Canal de Escuta.
  *
  * Regra da casa no envio sem identificação: **nada que ligue o envio a quem escreveu**. O login
  * é exigido (é canal interno), mas o id serve só para conferir que é colaborador ativo — não é
@@ -29,7 +31,10 @@ const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
  *
  * No envio identificado, o autor e o nome vêm do login, aqui no servidor — a tela não manda nome.
  *
- * O SIM vai só para o time de Gente & Gestão: a leitura e a resposta são das funções com
+ * O Canal de Escuta é **sempre** sem identificação: o autor nunca é gravado, mesmo que a pessoa
+ * escreva nome e contato no relato.
+ *
+ * Os dois canais vão só para o time de Gente & Gestão: a leitura e a resposta são das funções com
  * `requireAdmin`, e o painel é exclusivo do G&G. Nenhum outro setor recebe o envio.
  */
 
@@ -99,7 +104,10 @@ async function notifyGG(channel: Channel, subject: string, text: string) {
  * Aviso a quem enviou identificado: só o protocolo e o link, como no aviso ao G&G. Quem entra por
  * CPF tem e-mail sintético, sem caixa postal — esses acompanham pelo Perfil.
  */
-async function notifyAuthor(submission: { id: string; protocol: string; author_employee_id: string | null }, text: string) {
+async function notifyAuthor(
+  submission: { id: string; protocol: string; author_employee_id: string | null },
+  text: string,
+) {
   if (!submission.author_employee_id) return;
   try {
     const db = await admin();
@@ -190,15 +198,29 @@ export const submitToChannel = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const me = await activeEmployee(userIdOf(context));
 
-    const parsed = simSchema.safeParse(data.payload);
-    if (!parsed.success) {
-      throw new Error(parsed.error.issues[0]?.message ?? "Confere os campos do formulário?");
-    }
-    const { contact, ...fields } = parsed.data;
+    let author: { id: string; name: string } | null = null;
+    let payload: Record<string, string>;
+    let category: string;
 
-    // Identificado: nome do cadastro e contato que a pessoa confirmou. Anônimo: nada disso.
-    const author = data.identified ? me : null;
-    const payload = author ? { ...fields, contact_name: author.name, contact } : fields;
+    if (data.channel === "escuta") {
+      const parsed = escutaSchema.safeParse(data.payload);
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? "Confere os campos do formulário?");
+      }
+      // Nunca identificado: `me` serviu só para conferir que é colaborador ativo.
+      payload = parsed.data;
+      category = ESCUTA_CATEGORY_LABEL[parsed.data.category] ?? parsed.data.category;
+    } else {
+      const parsed = simSchema.safeParse(data.payload);
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? "Confere os campos do formulário?");
+      }
+      const { contact, ...fields } = parsed.data;
+      // Identificado: nome do cadastro e contato que a pessoa confirmou. Anônimo: nada disso.
+      author = data.identified ? me : null;
+      payload = author ? { ...fields, contact_name: author.name, contact } : fields;
+      category = fields.reason;
+    }
     const key = author ? null : `${await randomCode(4)}-${await randomCode(4)}`;
     const accessKeyHash = key ? await sha256(key) : null;
 
@@ -214,7 +236,7 @@ export const submitToChannel = createServerFn({ method: "POST" })
           protocol,
           access_key_hash: accessKeyHash,
           author_employee_id: author?.id ?? null,
-          category: fields.reason,
+          category,
           payload: payload as Json,
           received_on: todayBR(),
         })
@@ -271,7 +293,11 @@ export const replyByKey = createServerFn({ method: "POST" })
     const row = await findByProtocolAndKey(data.protocol, data.key);
     if (row.status === "concluido") throw new Error(CLOSED);
     await insertMessage(row.id, false, data.body);
-    await notifyGG(row.channel as Channel, `nova mensagem em ${row.protocol}`, "Quem enviou respondeu.");
+    await notifyGG(
+      row.channel as Channel,
+      `nova mensagem em ${row.protocol}`,
+      "Quem enviou respondeu.",
+    );
     return { ok: true };
   });
 
@@ -322,7 +348,11 @@ export const replyMySubmission = createServerFn({ method: "POST" })
     const row = await findMine(userIdOf(context), data.id);
     if (row.status === "concluido") throw new Error(CLOSED);
     await insertMessage(row.id, false, data.body);
-    await notifyGG(row.channel as Channel, `nova mensagem em ${row.protocol}`, "Quem enviou respondeu.");
+    await notifyGG(
+      row.channel as Channel,
+      `nova mensagem em ${row.protocol}`,
+      "Quem enviou respondeu.",
+    );
     return { ok: true };
   });
 
@@ -335,7 +365,9 @@ export const listChannelSubmissions = createServerFn({ method: "GET" })
     const db = await admin();
     const { data: rows, error } = await db
       .from("channel_submissions")
-      .select("id, channel, protocol, category, payload, status, received_on, updated_at, author_employee_id")
+      .select(
+        "id, channel, protocol, category, payload, status, received_on, updated_at, author_employee_id",
+      )
       .eq("channel", data.channel)
       .order("received_on", { ascending: false })
       .order("protocol");

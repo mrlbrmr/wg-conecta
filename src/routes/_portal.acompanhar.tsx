@@ -29,7 +29,7 @@ function AcompanharPage() {
   return (
     <div>
       <PageHeading
-        kicker="SIM · Acompanhar"
+        kicker="SIM e Canal de Escuta · Acompanhar"
         title="Acompanhar."
         subtitle="Com o protocolo e a chave que você recebeu ao enviar, veja a resposta do G&G e continue a conversa — sem se identificar."
       />
@@ -47,7 +47,7 @@ function AcompanharPage() {
               label="Protocolo"
               value={protocol}
               onChange={(e) => setProtocol(normalizeProtocol(e.target.value))}
-              placeholder="SIM-XXXXXX"
+              placeholder="SIM-XXXXXX ou ESC-XXXXXX"
               autoComplete="off"
               className="font-mono uppercase"
             />
@@ -68,9 +68,13 @@ function AcompanharPage() {
               </p>
             )}
             <p className="text-xs leading-[1.6] text-muted-foreground">
-              Perdeu a chave? Não há como recuperar. Se precisar,{" "}
+              Perdeu a chave? Não há como recuperar. Se precisar, envie de novo pelo{" "}
               <Link to="/sim" className="font-bold text-primary hover:underline">
-                envie de novo
+                SIM
+              </Link>{" "}
+              ou pelo{" "}
+              <Link to="/canal-de-escuta" className="font-bold text-primary hover:underline">
+                Canal de Escuta
               </Link>
               . Enviou com seu nome? Está em{" "}
               <Link
