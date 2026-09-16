@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { ProfileRequestQueue } from "@/components/admin/profile-request-queue";
 import { RequestQueue } from "@/components/admin/request-queue";
-import { pendingProfileRequestsQuery } from "@/lib/admin-queries";
-import { openRequestsQuery } from "@/lib/admin-queries";
+import { AdminPageHeader } from "@/components/paper";
+import { openRequestsQuery, pendingProfileRequestsQuery } from "@/lib/admin-queries";
+import { cn } from "@/lib/utils";
 
 /**
  * Fila única do G&G.
@@ -41,31 +42,39 @@ function SolicitacoesPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F5F2E9] -m-6 p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight text-black">Solicitações</h1>
-        <p className="text-sm text-gray-700">
-          Tudo que o time pediu pelo portal — formulários e atualizações de cadastro.
-        </p>
-      </div>
+    <div>
+      <AdminPageHeader
+        section="Gente & Gestão"
+        title="Solicitações"
+        description="Tudo que o time pediu pelo portal — formulários e atualizações de cadastro."
+      />
 
-      <div className="mb-5 inline-flex items-center gap-1 rounded-lg border-2 border-black bg-white p-1">
+      <div
+        role="tablist"
+        aria-label="Filas"
+        className="mt-6 inline-flex flex-wrap gap-1 rounded-full border-[1.5px] border-ink bg-surface p-1"
+      >
         {QUEUES.map((qq) => {
           const active = fila === qq.value;
           return (
             <button
               key={qq.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => navigate({ search: { fila: qq.value }, replace: true })}
-              className={`rounded px-4 py-1.5 text-sm transition-all ${
-                active ? "bg-black text-white font-bold" : "text-gray-700 hover:text-black"
-              }`}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-extrabold uppercase tracking-[0.08em] transition-colors",
+                active ? "bg-ink text-paper" : "text-muted-foreground hover:text-ink",
+              )}
             >
               {qq.label}
               {badge[qq.value] ? (
                 <span
-                  className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
-                    active ? "bg-[#8FD152] text-black" : "bg-black/10 text-black"
-                  }`}
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[11px] font-black tabular-nums",
+                    active ? "bg-accent text-ink" : "bg-ink/10 text-ink",
+                  )}
                 >
                   {badge[qq.value]}
                 </span>
@@ -75,7 +84,9 @@ function SolicitacoesPage() {
         })}
       </div>
 
-      {fila === "formularios" ? <RequestQueue /> : <ProfileRequestQueue />}
+      <div className="mt-6">
+        {fila === "formularios" ? <RequestQueue /> : <ProfileRequestQueue />}
+      </div>
     </div>
   );
 }

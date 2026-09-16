@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { GGBackLink } from "@/components/gg-page-view";
 import { Chip, FilterPills, PageHeading, PaperCard } from "@/components/paper";
 import { RichText } from "@/components/rich-text";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,7 @@ function FaqPage() {
 
   return (
     <div>
+      <GGBackLink />
       <PageHeading
         kicker="Gente & Gestão"
         title="Dúvidas frequentes."

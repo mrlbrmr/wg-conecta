@@ -2,11 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Mail, Phone } from "lucide-react";
+import { GGBackLink } from "@/components/gg-page-view";
 import { Chip, Kicker, PageHeading, PaperCard } from "@/components/paper";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
-import { contactMatrixQuery, matrixDepartments, matrixFor, type MatrixRow } from "@/lib/contact-matrix";
+import {
+  contactMatrixQuery,
+  matrixDepartments,
+  matrixFor,
+  type MatrixRow,
+} from "@/lib/contact-matrix";
 import { useDepartments } from "@/lib/departments";
 import { contactsQuery } from "@/lib/portal-queries";
 
@@ -24,7 +30,8 @@ function ContatosPage() {
   const rows = matrix.data ?? [];
   const departments = useMemo(() => {
     const all = new Map<string, string>();
-    for (const d of [...officialDepartments, ...matrixDepartments(rows)]) all.set(d.toLowerCase(), d);
+    for (const d of [...officialDepartments, ...matrixDepartments(rows)])
+      all.set(d.toLowerCase(), d);
     return [...all.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [rows, officialDepartments]);
 
@@ -40,6 +47,7 @@ function ContatosPage() {
 
   return (
     <div>
+      <GGBackLink />
       <PageHeading
         kicker="Gente & Gestão"
         title="Com quem falar."
@@ -50,7 +58,9 @@ function ContatosPage() {
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Kicker>{isMine ? "Para a sua área" : department ? "Para a área" : "Para todos"}</Kicker>
+              <Kicker>
+                {isMine ? "Para a sua área" : department ? "Para a área" : "Para todos"}
+              </Kicker>
               <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] sm:text-3xl">
                 {department || "Escolha uma área"}
               </h2>
@@ -151,7 +161,9 @@ function MatrixContact({ contact: c }: { contact: MatrixRow }) {
       <p className="text-[15px] font-extrabold">{c.contact_name}</p>
       {c.contact_role && <p className="text-[13px] text-muted-foreground">{c.contact_role}</p>}
       <ContactLinks email={c.email} phone={c.phone} extension={c.extension} />
-      {c.notes && <p className="mt-2 text-[12.5px] leading-[1.5] text-muted-foreground">{c.notes}</p>}
+      {c.notes && (
+        <p className="mt-2 text-[12.5px] leading-[1.5] text-muted-foreground">{c.notes}</p>
+      )}
     </li>
   );
 }
@@ -170,13 +182,19 @@ function ContactLinks({
     <div className="mt-2 flex flex-wrap gap-2">
       {extension && <Chip tone="soft">Ramal {extension}</Chip>}
       {phone && (
-        <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="chip inline-flex items-center gap-1">
+        <a
+          href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+          className="chip inline-flex items-center gap-1"
+        >
           <Phone className="h-3 w-3" />
           {phone}
         </a>
       )}
       {email && (
-        <a href={`mailto:${email}`} className="chip inline-flex max-w-full items-center gap-1 truncate">
+        <a
+          href={`mailto:${email}`}
+          className="chip inline-flex max-w-full items-center gap-1 truncate"
+        >
           <Mail className="h-3 w-3 shrink-0" />
           <span className="truncate">{email}</span>
         </a>

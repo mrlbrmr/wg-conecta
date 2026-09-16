@@ -46,16 +46,16 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function statusBadge(status: string) {
-  const base = "inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-black border";
+  const base = "inline-flex items-center rounded px-2.5 py-0.5 text-xs font-bold text-ink border";
   switch (status) {
     case "em_analise":
-      return `${base} bg-amber-200 border-black/40`;
+      return `${base} bg-warning/30 border-ink/40`;
     case "respondida":
-      return `${base} bg-sky-100 border-black/30`;
+      return `${base} bg-primary-softer border-ink/30`;
     case "concluida":
-      return `${base} bg-[#8FD152]/40 border-black/40`;
+      return `${base} bg-accent/40 border-ink/40`;
     default:
-      return `${base} bg-white border-black/30`;
+      return `${base} bg-surface border-ink/30`;
   }
 }
 
@@ -63,10 +63,10 @@ function statusBadge(status: string) {
 function priorityBadge(priority: string | null) {
   if (!priority || priority === "normal") return null;
   const tone =
-    priority === "urgente" ? "bg-red-100 border-red-400" : "bg-orange-100 border-black/30";
+    priority === "urgente" ? "bg-destructive/10 border-destructive" : "bg-warning/20 border-ink/30";
   return (
     <span
-      className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold text-black ${tone}`}
+      className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold text-ink ${tone}`}
     >
       {PRIORITY_LABEL[priority as Priority] ?? priority}
     </span>
@@ -115,30 +115,32 @@ export function RequestQueue() {
 
   return (
     <div>
-      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-black/20">
+      <div className="bg-surface rounded-lg border-[1.5px] border-ink shadow-paper overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-center gap-4 px-4 py-3 border-b border-ink/20">
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink/40 pointer-events-none" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por protocolo, nome ou assunto…"
-              className="w-full rounded-lg border-2 border-black/20 bg-white pl-9 pr-4 py-2 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-black/10"
+              className="w-full rounded-lg border-[1.5px] border-ink/20 bg-surface pl-9 pr-4 py-2 text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-ink/10"
             />
           </div>
-          <div className="inline-flex items-center gap-1 rounded-lg bg-black/5 p-1 border border-black/20">
+          <div className="inline-flex items-center gap-1 rounded-lg bg-ink/5 p-1 border border-ink/20">
             {(Object.keys(TAB_STATUS) as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`rounded px-3 py-1 text-sm transition-all ${
                   tab === t
-                    ? "bg-white border border-black text-black font-bold"
-                    : "text-gray-700 hover:text-black"
+                    ? "bg-surface border border-ink text-ink font-bold"
+                    : "text-muted-foreground hover:text-ink"
                 }`}
               >
                 {TAB_LABEL[t]}
-                <span className={`ml-1.5 text-xs ${tab === t ? "text-black/60" : "text-gray-500"}`}>
+                <span
+                  className={`ml-1.5 text-xs ${tab === t ? "text-ink/60" : "text-muted-foreground"}`}
+                >
                   {counts[t]}
                 </span>
               </button>
@@ -149,11 +151,11 @@ export function RequestQueue() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/20 bg-black/5">
+              <tr className="border-b border-ink/20 bg-ink/5">
                 {["Protocolo", "Colaborador", "Solicitação", "Prazo", "Status", ""].map((h, i) => (
                   <th
                     key={h || i}
-                    className={`px-6 py-3 text-xs font-bold uppercase tracking-wider text-black ${
+                    className={`px-6 py-3 text-xs font-bold uppercase tracking-wider text-ink ${
                       i === 5 ? "text-right" : "text-left"
                     }`}
                   >
@@ -166,13 +168,13 @@ export function RequestQueue() {
               {q.isLoading && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#2F8F4A]" />
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               )}
               {!q.isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-700 text-sm">
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground text-sm">
                     {requests.length === 0
                       ? "Nenhuma solicitação recebida até agora."
                       : "Nenhum resultado para os filtros aplicados."}
@@ -182,9 +184,9 @@ export function RequestQueue() {
               {filtered.map((r) => (
                 <tr
                   key={r.id}
-                  className="border-b border-black/20 last:border-0 hover:bg-[#F5F2E9]/50 transition-colors"
+                  className="border-b border-ink/20 last:border-0 hover:bg-accent-soft/50 transition-colors"
                 >
-                  <td className="px-6 py-4 font-bold tabular-nums text-black">{r.protocol}</td>
+                  <td className="px-6 py-4 font-bold tabular-nums text-ink">{r.protocol}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {r.employee?.photo_url ? (
@@ -201,27 +203,36 @@ export function RequestQueue() {
                         </span>
                       )}
                       <div className="min-w-0">
-                        <div className="font-medium text-black">
+                        <div className="font-medium text-ink">
                           {r.employee?.name ?? "Colaborador removido"}
                         </div>
                         {r.employee?.department && (
-                          <div className="text-xs text-gray-700">{r.employee.department}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.employee.department}
+                          </div>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-black">{r.title}</span>
+                      <span className="font-medium text-ink">{r.title}</span>
                       {priorityBadge(r.priority)}
                       {r.attachment_path && (
-                        <Paperclip className="h-3.5 w-3.5 text-gray-600" aria-label="Com anexo" />
+                        <Paperclip
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          aria-label="Com anexo"
+                        />
                       )}
                     </div>
-                    {r.subject && <div className="text-xs text-gray-700">{r.subject}</div>}
+                    {r.subject && <div className="text-xs text-muted-foreground">{r.subject}</div>}
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={isOverdue(r) ? "font-bold text-red-700" : "text-gray-700"}>
+                    <span
+                      className={
+                        isOverdue(r) ? "font-bold text-destructive" : "text-muted-foreground"
+                      }
+                    >
                       {r.due_date ? fmtDate(r.due_date) : "—"}
                       {isOverdue(r) && " · vencido"}
                     </span>
@@ -234,7 +245,7 @@ export function RequestQueue() {
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setOpen(r)}
-                      className="rounded-lg border-2 border-black bg-white px-3 py-1.5 text-xs font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
+                      className="rounded-lg border-[1.5px] border-ink bg-surface px-3 py-1.5 text-xs font-bold text-ink shadow-[2px_2px_0_var(--color-ink)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all"
                     >
                       Abrir
                     </button>
@@ -319,21 +330,21 @@ function RequestModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
+      className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[95vh] flex flex-col"
+        className="w-full max-w-2xl bg-surface rounded-t-lg md:rounded-lg border-[1.5px] border-ink shadow-elevated max-h-[95vh] flex flex-col"
       >
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-lg">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 tabular-nums">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground tabular-nums">
               Protocolo {request.protocol}
               {request.subject ? ` · ${request.subject}` : ""}
             </p>
-            <h2 className="text-base font-semibold text-slate-900 truncate">{request.title}</h2>
-            <p className="text-xs text-slate-500 truncate">
+            <h2 className="text-base font-semibold text-ink truncate">{request.title}</h2>
+            <p className="text-xs text-muted-foreground truncate">
               {request.employee?.name ?? "Colaborador removido"}
               {request.employee?.department ? ` · ${request.employee.department}` : ""} · enviada em{" "}
               {fmtDateTime(request.created_at)}
@@ -341,7 +352,7 @@ function RequestModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="rounded-lg p-1.5 text-muted-foreground hover:text-ink hover:bg-accent-soft transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -349,13 +360,15 @@ function RequestModal({
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
           {entries.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-slate-200">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
                 <tbody>
                   {entries.map((e) => (
-                    <tr key={e.label} className="border-b border-slate-100 align-top last:border-0">
-                      <td className="px-4 py-2.5 w-48 font-semibold text-slate-600">{e.label}</td>
-                      <td className="px-4 py-2.5 whitespace-pre-line text-slate-900">{e.value}</td>
+                    <tr key={e.label} className="border-b border-border align-top last:border-0">
+                      <td className="px-4 py-2.5 w-48 font-semibold text-muted-foreground">
+                        {e.label}
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-pre-line text-ink">{e.value}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -366,28 +379,30 @@ function RequestModal({
           {request.attachment_path && (
             <button
               onClick={openAttachment}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-3.5 py-2 text-sm font-semibold text-ink hover:bg-accent-soft"
             >
               <Paperclip className="h-4 w-4" /> Abrir anexo
             </button>
           )}
 
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">Conversa</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Conversa
+            </h3>
             {messages.isLoading ? (
-              <Loader2 className="mt-3 h-4 w-4 animate-spin text-[#2F8F4A]" />
+              <Loader2 className="mt-3 h-4 w-4 animate-spin text-primary" />
             ) : (messages.data ?? []).length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Nenhuma mensagem ainda. Sua resposta abre a conversa.
               </p>
             ) : (
               <ul className="mt-3 space-y-3">
                 {(messages.data ?? []).map((m) => (
-                  <li key={m.id} className="rounded-xl bg-slate-50 p-3">
-                    <div className="text-xs font-bold text-slate-600">
+                  <li key={m.id} className="rounded-lg bg-surface-muted p-3">
+                    <div className="text-xs font-bold text-muted-foreground">
                       {m.author_name ?? "Gente & Gestão"} · {fmtDateTime(m.created_at)}
                     </div>
-                    <p className="mt-1 whitespace-pre-line text-sm text-slate-900">{m.body}</p>
+                    <p className="mt-1 whitespace-pre-line text-sm text-ink">{m.body}</p>
                   </li>
                 ))}
               </ul>
@@ -395,23 +410,23 @@ function RequestModal({
           </div>
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Responder</span>
+            <span className="text-sm font-medium text-muted-foreground">Responder</span>
             <textarea
               rows={3}
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               placeholder="A resposta aparece para o colaborador no portal."
-              className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </label>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex flex-wrap justify-end gap-2 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 flex flex-wrap justify-end gap-2 rounded-b-lg">
           {request.status !== "concluida" && (
             <button
               onClick={() => mConclude.mutate()}
               disabled={mConclude.isPending}
-              className="inline-flex items-center gap-2 rounded-lg border-2 border-black bg-[#8FD152] px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all disabled:opacity-50 disabled:shadow-none"
+              className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-ink bg-accent px-4 py-2 text-sm font-bold text-ink shadow-[2px_2px_0_var(--color-ink)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all disabled:opacity-50 disabled:shadow-none"
             >
               {mConclude.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               <Check className="h-4 w-4" /> Concluir
@@ -420,7 +435,7 @@ function RequestModal({
           <button
             onClick={() => mReply.mutate()}
             disabled={mReply.isPending || reply.trim().length < 2}
-            className="inline-flex items-center gap-2 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all disabled:opacity-50 disabled:shadow-none"
+            className="inline-flex items-center gap-2 rounded-lg border-[1.5px] border-ink bg-surface px-4 py-2 text-sm font-bold text-ink shadow-[2px_2px_0_var(--color-ink)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] transition-all disabled:opacity-50 disabled:shadow-none"
           >
             {mReply.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             <Send className="h-4 w-4" /> Enviar resposta
