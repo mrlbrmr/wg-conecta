@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, Save, Upload } from "lucide-react";
+import { Loader2, Mail, Save, Upload } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTestEmail } from "@/lib/email.functions";
 import { portalSettingsQuery, type PortalSettings } from "@/lib/portal-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, fileUrl } from "@/lib/storage";
@@ -29,10 +31,17 @@ function ConfigPage() {
         privacy_notice: form.privacy_notice, gg_contact_text: form.gg_contact_text,
         footer_message: form.footer_message,
         onboarding_track_enabled: form.onboarding_track_enabled ?? true,
+        employee_emails_enabled: form.employee_emails_enabled ?? true,
       }).eq("singleton", true);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => { toast.success("Configurações salvas."); qc.invalidateQueries({ queryKey: ["portal_settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const doTest = useServerFn(sendTestEmail);
+  const test = useMutation({
+    mutationFn: () => doTest(),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -97,6 +106,41 @@ function ConfigPage() {
             className="mt-0.5 shrink-0"
           />
         </label>
+      </section>
+
+      <section className="card-soft p-6 space-y-4">
+        <h2 className="font-bold">E-mails</h2>
+        <label className="flex items-start justify-between gap-6 cursor-pointer">
+          <span>
+            <span className="block text-sm font-bold">Avisos por e-mail aos colaboradores</span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              Resposta ou mudança de status de solicitação, pedido de atualização cadastral
+              decidido e comunicado publicado. Quem entra por CPF ou não tem e-mail não recebe.
+              Os avisos ao G&amp;G continuam mesmo desligado.
+            </span>
+          </span>
+          <Switch
+            checked={form.employee_emails_enabled ?? true}
+            onCheckedChange={(v) => setForm(s => ({ ...s, employee_emails_enabled: v }))}
+            className="mt-0.5 shrink-0"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => test.mutate()}
+            disabled={test.isPending}
+            className="inline-flex items-center gap-2 rounded-full border border-input px-4 py-2 text-sm font-bold hover:bg-secondary disabled:opacity-50"
+          >
+            {test.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            Enviar e-mail de teste para mim
+          </button>
+          {test.data && (
+            <span className={test.data.ok ? "text-sm text-muted-foreground" : "text-sm font-semibold text-destructive"}>
+              {test.data.message}
+            </span>
+          )}
+        </div>
       </section>
 
       <div>

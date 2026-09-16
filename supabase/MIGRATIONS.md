@@ -1,5 +1,35 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/emails`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916130000_email_notifications.sql` | Cria `portal_settings.employee_emails_enabled`, o interruptor dos e-mails a colaboradores, e `announcements.email_sent_at`, que impede que um comunicado seja avisado duas vezes. |
+
+Rodar **antes do deploy**. Sem as colunas, a tela de Configurações e a publicação de comunicado dão
+erro ao salvar.
+
+**Por que o G&G não recebia nada.** Antes, sem as variáveis, o código não enviava e não avisava.
+Agora o log da Vercel mostra `[email] envio ignorado: ...`. Confira nesta ordem:
+1. Vercel → Settings → Environment Variables: `RESEND_API_KEY` e `GG_NOTIFY_FROM` (por exemplo,
+   `Portal WG <portal@wgbaterias.com.br>`), marcadas em Production. Depois de criar ou alterar,
+   faça **Redeploy**.
+2. Resend → Domains: o domínio do remetente precisa estar **Verified**. Sem isso, o Resend só
+   entrega para o e-mail dono da conta e recusa os demais com erro 403.
+3. Painel → Usuários admin: os admins precisam estar ativos e ter e-mail.
+4. Painel → Configurações → "Enviar e-mail de teste para mim": mostra o motivo exato quando falha.
+
+**O que cada aviso leva:**
+- Solicitação respondida ou com status novo: protocolo, título e link. A conversa fica no portal.
+- Pedido cadastral aprovado ou recusado: resultado, observação do G&G e link.
+- Comunicado publicado: título, resumo e link, com um envio por pessoa. Vale só para quem está
+  ativo e tem e-mail real, e sai uma vez por comunicado. Publicação com data futura não dispara
+  (não há agendamento).
+- O plano gratuito do Resend envia até 100 e-mails por dia e 3.000 por mês. Se houver mais
+  colaboradores com e-mail do que isso, um comunicado passa do limite e é preciso um plano pago.
+- Quem entra por CPF nunca recebe, e o interruptor de Configurações desliga todos os e-mails a
+  colaboradores (inclusive a resposta do SIM). Os avisos ao G&G continuam.
+
 ## Pendentes (PR `feat/sim`)
 
 | Arquivo | O que faz |

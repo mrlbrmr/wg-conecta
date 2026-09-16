@@ -13,7 +13,6 @@ import {
   type Channel,
   type SubmissionStatus,
 } from "@/lib/channel-defs";
-import { CPF_LOGIN_DOMAIN } from "@/lib/cpf";
 import { normalizeSiteUrl } from "@/lib/site-url";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -94,25 +93,22 @@ async function notifyGG(channel: Channel, subject: string, text: string) {
 
 /**
  * Aviso a quem enviou identificado: só o protocolo e o link, como no aviso ao G&G. Quem entra por
- * CPF tem e-mail sintético, sem caixa postal — esses acompanham pelo Perfil.
+ * CPF tem e-mail sintético, sem caixa postal — esses acompanham pelo Perfil (`notifyEmployee`
+ * pula esses, e respeita o interruptor de Configurações).
  */
 async function notifyAuthor(submission: { id: string; protocol: string; author_employee_id: string | null }, text: string) {
   if (!submission.author_employee_id) return;
   try {
-    const db = await admin();
-    const { data } = await db
-      .from("employees")
-      .select("email")
-      .eq("id", submission.author_employee_id)
-      .maybeSingle();
-    const email = data?.email?.trim();
-    if (!email || email.toLowerCase().endsWith(`@${CPF_LOGIN_DOMAIN}`)) return;
-    const { sendEmail } = await import("@/lib/notify.server");
-    await sendEmail(
-      [email],
+    const { notifyEmployee, emailLayout } = await import("@/lib/notify.server");
+    await notifyEmployee(
+      submission.author_employee_id,
       `Seu SIM ${submission.protocol} — ${text}`,
-      `<p>${text} no seu SIM <strong>${submission.protocol}</strong>.</p>` +
-        `<p><a href="${SITE_URL}/sim/${submission.id}">Ver no portal</a></p>`,
+      emailLayout({
+        title: `${text} no seu SIM`,
+        body: `<p>Protocolo <strong>${submission.protocol}</strong>. O conteúdo fica só no portal.</p>`,
+        cta: "Ver no portal",
+        href: `${SITE_URL}/sim/${submission.id}`,
+      }),
     );
   } catch {
     // Mesmo motivo do aviso ao G&G.

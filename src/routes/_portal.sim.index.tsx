@@ -18,7 +18,7 @@ import { useCurrentEmployee } from "@/hooks/use-current-employee";
 import { SIM_KINDS, SIM_REASONS, SIM_SECTORS, simSchema } from "@/lib/channel-defs";
 import { submitToChannel } from "@/lib/channel.functions";
 import { mySubmissionsQuery } from "@/lib/channel-queries";
-import { CPF_LOGIN_DOMAIN } from "@/lib/cpf";
+import { isCpfLoginEmail } from "@/lib/cpf";
 import { UNITS } from "@/lib/org";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ function SimPage() {
     ? (me.data!.unit as Unit)
     : "";
   // Quem entra por CPF tem e-mail sintético, sem caixa postal: não serve de contato.
-  const myEmail = me.data?.email?.endsWith(`@${CPF_LOGIN_DOMAIN}`) ? "" : (me.data?.email ?? "");
+  const myEmail = isCpfLoginEmail(me.data?.email) ? "" : (me.data?.email ?? "");
 
   // O local de trabalho já vem com a filial do cadastro; dá para trocar.
   const unit = form.unit || myUnit;

@@ -738,6 +738,7 @@ export type Database = {
           attachment_url: string | null
           category: string | null
           content: string | null
+          email_sent_at: string | null
           created_at: string
           expires_at: string | null
           id: string
@@ -759,6 +760,7 @@ export type Database = {
           attachment_url?: string | null
           category?: string | null
           content?: string | null
+          email_sent_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -780,6 +782,7 @@ export type Database = {
           attachment_url?: string | null
           category?: string | null
           content?: string | null
+          email_sent_at?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -1298,6 +1301,7 @@ export type Database = {
           id: string
           logo_url: string | null
           onboarding_track_enabled: boolean
+          employee_emails_enabled: boolean
           portal_name: string
           primary_color: string
           privacy_notice: string
@@ -1312,6 +1316,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           onboarding_track_enabled?: boolean
+          employee_emails_enabled?: boolean
           portal_name?: string
           primary_color?: string
           privacy_notice?: string
@@ -1326,6 +1331,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           onboarding_track_enabled?: boolean
+          employee_emails_enabled?: boolean
           portal_name?: string
           primary_color?: string
           privacy_notice?: string

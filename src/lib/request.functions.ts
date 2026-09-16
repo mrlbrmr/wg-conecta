@@ -19,6 +19,45 @@ async function db() {
 export const REQUEST_STATUSES = ["em_analise", "respondida", "concluida"] as const;
 export type PortalRequestStatus = (typeof REQUEST_STATUSES)[number];
 
+const STATUS_TEXT: Record<PortalRequestStatus, string> = {
+  em_analise: "voltou para análise",
+  respondida: "recebeu uma resposta",
+  concluida: "foi concluída",
+};
+
+/**
+ * Aviso ao colaborador de que a solicitação andou. Só protocolo, título e status — a
+ * conversa fica no portal. Nunca derruba a ação do G&G.
+ */
+async function notifyRequester(requestId: string, status: PortalRequestStatus) {
+  try {
+    const supabase = await db();
+    const { data: request } = await supabase
+      .from("requests")
+      .select("id, protocol, title, employee_id")
+      .eq("id", requestId)
+      .maybeSingle();
+    if (!request?.employee_id) return;
+    const { notifyEmployee, emailLayout, escapeHtml, SITE_URL } = await import(
+      "@/lib/notify.server"
+    );
+    await notifyEmployee(
+      request.employee_id,
+      `Sua solicitação ${request.protocol} ${STATUS_TEXT[status]}`,
+      emailLayout({
+        title: `Sua solicitação ${STATUS_TEXT[status]}`,
+        body:
+          `<p><strong>${escapeHtml(request.title)}</strong> — protocolo ${request.protocol}.</p>` +
+          `<p>Os detalhes estão no portal.</p>`,
+        cta: "Ver solicitação",
+        href: `${SITE_URL}/solicitacoes/${request.id}`,
+      }),
+    );
+  } catch (e) {
+    console.error("[request] aviso por e-mail ao colaborador falhou", e);
+  }
+}
+
 export interface AdminRequest {
   id: string;
   protocol: number;
@@ -169,6 +208,8 @@ export const replyToRequest = createServerFn({ method: "POST" })
       .eq("status", "em_analise");
     if (error) throw new Error(error.message);
 
+    // Todo recado do G&G avisa, mesmo em solicitação já concluída.
+    await notifyRequester(data.request_id, "respondida");
     return { ok: true };
   });
 
@@ -177,11 +218,15 @@ export const setRequestStatus = createServerFn({ method: "POST" })
   .validator(z.object({ request_id: z.string().uuid(), status: z.enum(REQUEST_STATUSES) }))
   .handler(async ({ data }) => {
     const supabase = await db();
-    const { error } = await supabase
+    // Só avisa se o status mudou de fato: escolher o mesmo status de novo não gera e-mail.
+    const { data: changed, error } = await supabase
       .from("requests")
       .update({ status: data.status })
-      .eq("id", data.request_id);
+      .eq("id", data.request_id)
+      .neq("status", data.status)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (changed && changed.length > 0) await notifyRequester(data.request_id, data.status);
     return { ok: true };
   });
 
