@@ -195,7 +195,8 @@ function TenureSection({
       {people.length === 0 ? (
         <PaperCard tone="soft" className="mt-4 p-6">
           <p className="text-[15px] leading-[1.65] text-muted-foreground">
-            Ninguém completa tempo de casa neste mês.
+            Ninguém faz marco de tempo de casa neste mês. A gente comemora 3, 5, 7 e 10 anos de WG
+            e, depois, a cada 5 anos.
           </p>
         </PaperCard>
       ) : (
@@ -237,9 +238,7 @@ function TenureRow({ person }: { person: Anniversary }) {
           {person.name}
         </span>
         <span className="block truncate text-[13px] text-muted-foreground">
-          {[person.unit, `desde ${formatDate(person.admission_date)}`]
-            .filter(Boolean)
-            .join(" · ")}
+          {[person.unit, `desde ${formatDate(person.admission_date)}`].filter(Boolean).join(" · ")}
         </span>
       </span>
 

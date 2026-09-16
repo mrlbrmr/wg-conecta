@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
 import { z } from "zod";
-import { Award, Calendar, CircleCheck } from "lucide-react";
+import { Award, Calendar, CircleCheck, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { Chip, IconBubble, InkButton, Kicker, PaperCard, ProgressBar } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
@@ -13,7 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { currentEmployeeQuery } from "@/hooks/use-current-employee";
 import { useTrackEnabled } from "@/hooks/use-track-enabled";
 import type { OwnEmployee } from "@/lib/employee.functions";
-import { directoryQuery } from "@/lib/directory-queries";
+import { directoryQuery, type DirectoryEntry } from "@/lib/directory-queries";
+import { receivedCongratsQuery } from "@/lib/culture-queries";
 import {
   checklistItemsQuery,
   ownProgressQuery,
@@ -26,7 +27,7 @@ import {
 import { updateOwnBio, updateOwnContact, updateOwnPhoto } from "@/lib/portal-write.functions";
 import { isTeamLead } from "@/lib/job-title";
 import { uploadEmployeePhoto } from "@/lib/storage";
-import { formatDate, formatDayMonth, tenureLabel } from "@/lib/tenure";
+import { formatDate, formatDayMonth, tenureLabel, yearsOnAnniversary } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
 import { PRIVACY_NOTE } from "@/lib/form-defs";
 import { SUBMISSION_STATUS_LABEL, SUBMISSION_STATUS_TONE } from "@/lib/channel-defs";
@@ -322,6 +323,7 @@ function OverviewTab({
 
       <div className="grid gap-6">
         <RecordCard employee={employee} />
+        <CongratsCard employee={employee} byId={byId} />
         <MonthCard employee={employee} />
       </div>
     </div>
@@ -402,8 +404,7 @@ function AboutMe({
 
 const RECORD_ROW =
   "flex items-baseline justify-between gap-4 border-b border-border py-[11px] last:border-b-0";
-const RECORD_LABEL =
-  "text-[11px] font-extrabold uppercase tracking-[0.12em] text-muted-foreground";
+const RECORD_LABEL = "text-[11px] font-extrabold uppercase tracking-[0.12em] text-muted-foreground";
 
 function RecordCard({ employee }: { employee: Employee }) {
   const rows: [string, string][] = [
@@ -517,6 +518,79 @@ function ExtensionRow({ employee }: { employee: Employee }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Quem deu parabéns pelo tempo de casa (o botão fica na Cultura, nos marcos de 3, 5, 7 e 10
+ * anos e depois de 5 em 5). Sem nenhum parabéns, o card não aparece.
+ */
+function CongratsCard({
+  employee,
+  byId,
+}: {
+  employee: Employee;
+  byId: Map<string, DirectoryEntry>;
+}) {
+  const congrats = useQuery(receivedCongratsQuery(employee.id));
+  const rows = congrats.data ?? [];
+  if (rows.length === 0) return null;
+
+  const latestYear = rows[0].year;
+  const latest = rows.filter((c) => c.year === latestYear);
+  const older = new Map<number, number>();
+  for (const c of rows) if (c.year !== latestYear) older.set(c.year, (older.get(c.year) ?? 0) + 1);
+  const years = employee.admission_date
+    ? yearsOnAnniversary(employee.admission_date, latestYear)
+    : 0;
+
+  return (
+    <PaperCard className="p-6 md:p-[26px]">
+      <div className="flex items-center gap-3">
+        <IconBubble size={40}>
+          <PartyPopper />
+        </IconBubble>
+        <Kicker>Parabéns pelo tempo de casa</Kicker>
+      </div>
+      <p className="mt-4 text-[15px] leading-[1.6] text-pretty">
+        {years > 0 ? (
+          <>
+            Em {latestYear}, pelos seus <strong>{years} anos de WG</strong>,{" "}
+          </>
+        ) : (
+          <>Em {latestYear}, </>
+        )}
+        {latest.length === 1
+          ? "1 colega te deu parabéns:"
+          : `${latest.length} colegas te deram parabéns:`}
+      </p>
+      <ul className="mt-4 flex flex-col gap-3">
+        {latest.map((c) => {
+          const from = byId.get(c.from_employee_id);
+          return (
+            <li key={c.id} className="flex items-center gap-3">
+              <UserAvatar
+                name={from?.name ?? "Colega"}
+                photoUrl={from?.photo_url}
+                size={32}
+                tone="muted"
+              />
+              <span className="min-w-0 flex-1 truncate text-[15px] font-bold">
+                {from?.name ?? "Colega que saiu da WG"}
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {formatDate(c.created_at)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {older.size > 0 && (
+        <p className="mt-4 border-t border-border pt-3 text-xs leading-[1.6] text-muted-foreground">
+          Anos anteriores: {[...older].map(([year, n]) => `${year} (${n})`).join(" · ")}
+        </p>
+      )}
+    </PaperCard>
   );
 }
 
