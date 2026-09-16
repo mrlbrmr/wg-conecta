@@ -8,6 +8,7 @@ import { deleteEmployee, listEmployees, updateEmployee } from "@/lib/employee.fu
 import {
   MONTHS,
   formatDate,
+  isTenureMilestone,
   parseISODate,
   tenureFrom,
   tenureLabel,
@@ -503,7 +504,7 @@ function toRow(p: Person, tab: CulturaTab): Row {
   }
   // Os anos do marco são os do aniversário deste mês, não os completos até hoje.
   const y = p.anniversaryYears;
-  const milestone = p.anniversaryMonth && y >= 5 && y % 5 === 0;
+  const milestone = p.anniversaryMonth && isTenureMilestone(y);
   return {
     ...p,
     metric: p.emp.admission_date ? tenureLabel(p.emp.admission_date, "") : "—",
@@ -580,7 +581,7 @@ function buildStats(employees: Employee[]): Stat[] {
   const anniversaries = withAdmission.filter((e) => monthOf(e.admission_date!) === month);
   const milestones = anniversaries.filter((e) => {
     const y = yearsOnAnniversary(e.admission_date!);
-    return y >= 5 && y % 5 === 0;
+    return isTenureMilestone(y);
   });
 
   const avgYears = withAdmission.length
@@ -601,7 +602,7 @@ function buildStats(employees: Employee[]): Stat[] {
     {
       label: "Aniversários de casa",
       value: String(anniversaries.length),
-      note: `${milestones.length} marco(s) de 5 anos`,
+      note: `${milestones.length} marco(s) de tempo de casa`,
     },
     {
       label: "Tempo médio de casa",
