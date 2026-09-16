@@ -23,9 +23,10 @@ import {
   REQUEST_STATUS_LABEL,
   REQUEST_STATUS_TONE,
 } from "@/lib/profile-queries";
-import { updateOwnBio, updateOwnPhoto } from "@/lib/portal-write.functions";
+import { updateOwnBio, updateOwnContact, updateOwnPhoto } from "@/lib/portal-write.functions";
+import { isTeamLead } from "@/lib/job-title";
 import { uploadEmployeePhoto } from "@/lib/storage";
-import { formatDate, formatDayMonth, tenureLabel, MONTHS } from "@/lib/tenure";
+import { formatDate, formatDayMonth, tenureLabel } from "@/lib/tenure";
 import { cn } from "@/lib/utils";
 import { PRIVACY_NOTE } from "@/lib/form-defs";
 import { SUBMISSION_STATUS_LABEL, SUBMISSION_STATUS_TONE } from "@/lib/channel-defs";
@@ -399,6 +400,11 @@ function AboutMe({
   );
 }
 
+const RECORD_ROW =
+  "flex items-baseline justify-between gap-4 border-b border-border py-[11px] last:border-b-0";
+const RECORD_LABEL =
+  "text-[11px] font-extrabold uppercase tracking-[0.12em] text-muted-foreground";
+
 function RecordCard({ employee }: { employee: Employee }) {
   const rows: [string, string][] = [
     ["Admissão", formatDate(employee.admission_date)],
@@ -406,8 +412,6 @@ function RecordCard({ employee }: { employee: Employee }) {
     ["Área", employee.department ?? "—"],
     ["Unidade", employee.unit ?? "—"],
     ["Aniversário", formatDayMonth(employee.birthday_day, employee.birthday_month)],
-    ["Ramal", employee.extension ?? "—"],
-    ["E-mail", employee.email ?? "—"],
   ];
 
   return (
@@ -415,18 +419,20 @@ function RecordCard({ employee }: { employee: Employee }) {
       <Kicker>Minha ficha</Kicker>
       <dl className="mt-4">
         {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex items-baseline justify-between gap-4 border-b border-border py-[11px] last:border-b-0"
-          >
-            <dt className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-muted-foreground">
-              {label}
-            </dt>
+          <div key={label} className={RECORD_ROW}>
+            <dt className={RECORD_LABEL}>{label}</dt>
             <dd className="min-w-0 truncate text-right text-[15px] font-bold tabular-nums">
               {value}
             </dd>
           </div>
         ))}
+        <ExtensionRow employee={employee} />
+        <div className={RECORD_ROW}>
+          <dt className={RECORD_LABEL}>E-mail</dt>
+          <dd className="min-w-0 truncate text-right text-[15px] font-bold">
+            {employee.email ?? "—"}
+          </dd>
+        </div>
       </dl>
       <InkButton variant="outline" className="mt-5 w-full" asChild>
         <Link to="/formularios/$slug" params={{ slug: "atualizacao-cadastral" }}>
@@ -438,24 +444,88 @@ function RecordCard({ employee }: { employee: Employee }) {
   );
 }
 
+/** Ramal editável pelo próprio colaborador, direto na ficha. */
+function ExtensionRow({ employee }: { employee: Employee }) {
+  const qc = useQueryClient();
+  const saveContact = useServerFn(updateOwnContact);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(employee.extension ?? "");
+
+  const mutation = useMutation({
+    mutationFn: () => saveContact({ data: { extension: draft } }),
+    onSuccess: () => {
+      toast.success(draft ? "Ramal atualizado!" : "Ramal removido.");
+      qc.invalidateQueries({ queryKey: ["current-employee"] });
+      qc.invalidateQueries({ queryKey: ["employee_directory"] });
+      setEditing(false);
+    },
+    onError: () => toast.error("Não conseguimos salvar agora. Tenta de novo em instantes?"),
+  });
+
+  if (!editing) {
+    return (
+      <div className={RECORD_ROW}>
+        <dt className={RECORD_LABEL}>Ramal</dt>
+        <dd className="flex min-w-0 items-baseline gap-3 text-[15px] font-bold tabular-nums">
+          <span className="truncate">{employee.extension ?? "—"}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(employee.extension ?? "");
+              setEditing(true);
+            }}
+            className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.12em] text-primary hover:underline"
+          >
+            {employee.extension ? "Editar" : "Adicionar"}
+          </button>
+        </dd>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className={cn(RECORD_ROW, "items-center")}
+      onSubmit={(e) => {
+        e.preventDefault();
+        mutation.mutate();
+      }}
+    >
+      <label htmlFor="own-extension" className={RECORD_LABEL}>
+        Ramal
+      </label>
+      <div className="flex min-w-0 items-center gap-2">
+        <input
+          id="own-extension"
+          autoFocus
+          inputMode="numeric"
+          maxLength={20}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+          placeholder="Só números"
+          className="h-9 w-28 min-w-0 rounded-lg border-[1.5px] border-ink bg-surface px-3 text-right text-[15px] font-bold tabular-nums outline-none"
+        />
+        <InkButton type="submit" className="h-9 px-3" disabled={mutation.isPending}>
+          {mutation.isPending ? "Salvando…" : "Salvar"}
+        </InkButton>
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="text-[13px] font-bold text-muted-foreground hover:text-ink"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Só aparece no mês do aniversário — nos outros meses o card some. */
 function MonthCard({ employee }: { employee: Employee }) {
-  const month = MONTHS[new Date().getMonth()];
-  const birthdayThisMonth = employee.birthday_month === new Date().getMonth() + 1;
-  const anniversaryThisMonth =
-    employee.admission_date != null &&
-    Number(employee.admission_date.slice(5, 7)) === new Date().getMonth() + 1;
+  if (employee.birthday_month !== new Date().getMonth() + 1) return null;
 
-  const headline = birthdayThisMonth
-    ? "Seu aniversário é este mês."
-    : anniversaryThisMonth
-      ? "Seu aniversário de casa é este mês."
-      : `Bom ${month} pra você.`;
-
-  const text = birthdayThisMonth
-    ? `Dia ${formatDayMonth(employee.birthday_day, employee.birthday_month)} o time todo vai saber. Bolo por sua conta?`
-    : anniversaryThisMonth
-      ? `${tenureLabel(employee.admission_date)} — e a gente agradece por cada um deles.`
-      : "Nada marcado pra você neste mês. Dá uma olhada no calendário interno em Cultura WG.";
+  const headline = "Seu aniversário é este mês.";
+  const text = `Dia ${formatDayMonth(employee.birthday_day, employee.birthday_month)} o time todo vai saber. Bolo por sua conta?`;
 
   return (
     <PaperCard tone="accent" className="p-6 md:p-[26px]">
@@ -482,13 +552,22 @@ function TeamTab({ employee }: { employee: Employee }) {
   const managers = managerIds
     .map((id) => all.find((e) => e.id === id))
     .filter((e): e is NonNullable<typeof e> => Boolean(e));
-  const peers = all.filter(
-    (e) =>
-      e.id !== employee.id &&
-      !managerIds.includes(e.id) &&
-      employee.department != null &&
-      e.department === employee.department,
-  );
+  const sameDepartment = (e: (typeof all)[number]) =>
+    employee.department != null && e.department === employee.department;
+  // Coordenação e supervisão contam como colegas de time, mesmo sendo a gestão direta.
+  // Encarregado não entra por essa regra (`isTeamLead` recusa).
+  const isLeadOfTeam = (e: (typeof all)[number]) =>
+    isTeamLead(e.job_title) &&
+    (managerIds.includes(e.id) ||
+      sameDepartment(e) ||
+      (employee.manager_id != null && e.manager_id === employee.manager_id));
+  const peers = all
+    .filter(
+      (e) =>
+        e.id !== employee.id &&
+        (isLeadOfTeam(e) || (!managerIds.includes(e.id) && sameDepartment(e))),
+    )
+    .sort((a, b) => Number(isLeadOfTeam(b)) - Number(isLeadOfTeam(a)));
 
   if (directory.isLoading) return <Skeleton className="mt-6 h-64 w-full" />;
 

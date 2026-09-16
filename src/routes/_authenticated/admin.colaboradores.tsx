@@ -57,10 +57,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmtDate } from "@/lib/employee-ui";
 import { formatDate } from "@/lib/tenure";
 import { fieldLabel, fieldsToFill, matchByName } from "@/lib/employee-match";
-import { DEPARTMENTS, UNITS, normalizeDepartment, normalizeUnit } from "@/lib/org";
+import { normalizeDepartment, normalizeUnit } from "@/lib/org";
 import { parseEmployeeWorkbook, type ImportRow } from "@/lib/employee-import";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
+import { OrgSelect } from "@/components/org-select";
 import { useAdminSearch } from "@/components/admin-search";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -74,6 +75,7 @@ type Employee = {
   job_title: string | null;
   unit: string | null;
   phone: string | null;
+  extension: string | null;
   birth_date: string | null;
   hide_birthday: boolean;
   admission_date: string | null;
@@ -1051,6 +1053,7 @@ type EmployeeFormValues = {
   job_title: string | null;
   unit: string | null;
   phone: string | null;
+  extension: string | null;
   birth_date: string | null;
   admission_date: string | null;
   manager_id: string | null;
@@ -1077,6 +1080,7 @@ function EmployeeForm({
   const [jobTitle, setJobTitle] = useState(initial?.job_title ?? "");
   const [unit, setUnit] = useState(initial?.unit ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [extension, setExtension] = useState(initial?.extension ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(initial?.admission_date ?? "");
   const [managerId, setManagerId] = useState(initial?.manager_id ?? "");
@@ -1108,6 +1112,7 @@ function EmployeeForm({
           job_title: jobTitle.trim() || null,
           unit: normalizeUnit(unit) ?? null,
           phone: phone.trim() || null,
+          extension: extension || null,
           birth_date: birthDate || null,
           admission_date: admissionDate || null,
           manager_id: managerId || null,
@@ -1141,37 +1146,29 @@ function EmployeeForm({
         {/* Dados profissionais */}
         <FormDivider>Dados profissionais</FormDivider>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Sugestões da lista oficial, sem travar: setor fora da lista ainda pode ser digitado. */}
           <Field label="Setor / Departamento">
-            <input
+            <OrgSelect
+              kind="department"
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              list="org-departments"
-              placeholder="Logística, Comercial…"
+              onChange={setDepartment}
               className={inp}
             />
-            <datalist id="org-departments">
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d} />
-              ))}
-            </datalist>
           </Field>
           <Field label="Cargo">
             <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inp} />
           </Field>
           <Field label="Filial">
+            <OrgSelect kind="unit" value={unit} onChange={setUnit} className={inp} />
+          </Field>
+          <Field label="Ramal">
             <input
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              list="org-units"
-              placeholder="São José dos Pinhais/PR…"
+              inputMode="numeric"
+              maxLength={20}
+              value={extension}
+              onChange={(e) => setExtension(e.target.value.replace(/\D/g, ""))}
+              placeholder="Só números"
               className={inp}
             />
-            <datalist id="org-units">
-              {UNITS.map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
           </Field>
           <Field label="Data de admissão">
             <input
@@ -1492,6 +1489,7 @@ const EMPTY_EMPLOYEE: Employee = {
   job_title: null,
   unit: null,
   phone: null,
+  extension: null,
   birth_date: null,
   hide_birthday: false,
   admission_date: null,

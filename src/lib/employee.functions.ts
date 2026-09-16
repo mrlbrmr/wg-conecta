@@ -5,6 +5,7 @@ import { publicJobTitle } from "@/lib/job-title";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 import { normalizeSiteUrl } from "@/lib/site-url";
+import { extensionSchema } from "@/lib/extension";
 
 const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 const CONFIRM_URL = `${SITE_URL}/colaborador/confirmar`;
@@ -61,6 +62,7 @@ export const addEmployee = createServerFn({ method: "POST" })
       job_title: z.string().max(120).nullish(),
       unit: z.string().max(120).nullish(),
       phone: z.string().max(30).nullish(),
+      extension: extensionSchema,
       birth_date: z.string().nullish(),
       admission_date: z.string().nullish(),
       manager_id: z.string().uuid().nullish(),
@@ -79,6 +81,7 @@ export const addEmployee = createServerFn({ method: "POST" })
       job_title: data.job_title ?? null,
       unit: data.unit ?? null,
       phone: data.phone ?? null,
+      extension: data.extension ?? null,
       birth_date: data.birth_date ?? null,
       admission_date: data.admission_date ?? null,
       manager_id: data.manager_id ?? null,
@@ -198,6 +201,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       job_title: z.string().max(120).nullish(),
       unit: z.string().max(120).nullish(),
       phone: z.string().max(30).nullish(),
+      extension: extensionSchema,
       birth_date: z.string().nullish(),
       admission_date: z.string().nullish(),
       manager_id: z.string().uuid().nullish(),
@@ -243,6 +247,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
       ...(data.job_title !== undefined && { job_title: data.job_title }),
       ...(data.unit !== undefined && { unit: data.unit }),
       ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.extension !== undefined && { extension: data.extension }),
       ...(data.birth_date !== undefined && { birth_date: data.birth_date }),
       ...(data.admission_date !== undefined && { admission_date: data.admission_date }),
       ...(data.manager_id !== undefined && { manager_id: data.manager_id }),
@@ -256,7 +261,7 @@ export const updateEmployee = createServerFn({ method: "POST" })
   });
 
 const EMPLOYEE_COLUMNS =
-  "id, auth_user_id, name, email, department, job_title, unit, phone, birth_date, hide_birthday, admission_date, manager_id, co_manager_id, active, invited_at, created_at, photo_url";
+  "id, auth_user_id, name, email, department, job_title, unit, phone, extension, birth_date, hide_birthday, admission_date, manager_id, co_manager_id, active, invited_at, created_at, photo_url";
 
 export const listEmployees = createServerFn({ method: "GET" })
   .middleware([requireAdmin])

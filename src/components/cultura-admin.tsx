@@ -15,6 +15,8 @@ import {
 } from "@/lib/tenure";
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
+import { OrgSelect } from "@/components/org-select";
+import { normalizeDepartment, normalizeUnit } from "@/lib/org";
 import { useAdminSearch } from "@/components/admin-search";
 import {
   AlertDialog,
@@ -41,6 +43,7 @@ type Employee = {
   job_title: string | null;
   department: string | null;
   unit: string | null;
+  extension?: string | null;
   birth_date: string | null;
   /** Não comemora: fica fora da aba de aniversários e do KPI, como no portal. */
   hide_birthday: boolean;
@@ -663,6 +666,7 @@ function SkeletonRows() {
 }
 
 type EditValues = {
+  extension: string | null;
   name: string;
   job_title: string | null;
   department: string | null;
@@ -687,6 +691,7 @@ function EditDialog({
   const [jobTitle, setJobTitle] = useState(employee.job_title ?? "");
   const [department, setDepartment] = useState(employee.department ?? "");
   const [unit, setUnit] = useState(employee.unit ?? "");
+  const [extension, setExtension] = useState(employee.extension ?? "");
   const [birthDate, setBirthDate] = useState(employee.birth_date ?? "");
   const [admissionDate, setAdmissionDate] = useState(employee.admission_date ?? "");
   const [hideBirthday, setHideBirthday] = useState(employee.hide_birthday ?? false);
@@ -723,8 +728,9 @@ function EditDialog({
             onSubmit({
               name,
               job_title: jobTitle || null,
-              department: department || null,
-              unit: unit || null,
+              department: normalizeDepartment(department) ?? null,
+              unit: normalizeUnit(unit) ?? null,
+              extension: extension || null,
               birth_date: birthDate || null,
               admission_date: admissionDate || null,
               hide_birthday: hideBirthday,
@@ -747,18 +753,24 @@ function EditDialog({
                 className={FIELD}
               />
             </Field>
-            <Field label="Departamento">
-              <input
+            <Field label="Setor">
+              <OrgSelect
+                kind="department"
                 value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                onChange={setDepartment}
                 className={FIELD}
               />
             </Field>
-            <Field label="Unidade">
+            <Field label="Filial">
+              <OrgSelect kind="unit" value={unit} onChange={setUnit} className={FIELD} />
+            </Field>
+            <Field label="Ramal">
               <input
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="Matriz SJP, CD Sorocaba…"
+                inputMode="numeric"
+                maxLength={20}
+                value={extension}
+                onChange={(e) => setExtension(e.target.value.replace(/\D/g, ""))}
+                placeholder="Só números"
                 className={FIELD}
               />
             </Field>

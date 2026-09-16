@@ -14,6 +14,7 @@ export const UNITS = [
   "São Bernardo do Campo/SP",
   "São José dos Pinhais/PR",
   "São Paulo/SP",
+  "Sumaré/SP",
 ] as const;
 
 export const DEPARTMENTS = [
@@ -44,16 +45,27 @@ const UNIT_ALIASES: [string, (typeof UNITS)[number]][] = [
   ["saojosedospinhais", "São José dos Pinhais/PR"],
   ["sjp", "São José dos Pinhais/PR"],
   ["saopaulo", "São Paulo/SP"],
+  ["sumare", "Sumaré/SP"],
 ];
+
+/** Siglas da planilha do DP. Só valem sozinhas: "sp" como pedaço casaria com "Campinas/SP". */
+const UNIT_CODES = new Map<string, (typeof UNITS)[number]>([
+  ["rj", "Nova Iguaçu/RJ"],
+  ["sp", "São Paulo/SP"],
+  ["sum", "Sumaré/SP"],
+]);
 
 /**
  * Filial no nome oficial. Reconhece variações da planilha ("SAO JOSE DOS PINHAIS",
- * "Filial Campinas", "SJP"); o que não reconhece volta como veio, para não perder o dado.
+ * "Filial Campinas", "SJP", "RJ", "SUM"); o que não reconhece volta como veio, para não
+ * perder o dado.
  */
 export function normalizeUnit(raw: unknown): string | undefined {
   const value = raw == null ? "" : String(raw).trim();
   if (!value) return undefined;
   const key = fold(value);
+  const byCode = UNIT_CODES.get(key);
+  if (byCode) return byCode;
   return UNIT_ALIASES.find(([alias]) => key.includes(alias))?.[1] ?? value;
 }
 
