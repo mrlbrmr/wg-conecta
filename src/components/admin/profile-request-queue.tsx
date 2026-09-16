@@ -16,6 +16,7 @@ import {
   type RequestStatus,
 } from "@/lib/profile-fields";
 import { avatarColor, fmtDateTime, initials } from "@/lib/employee-ui";
+import { publicJobTitle } from "@/lib/job-title";
 import { toast } from "sonner";
 
 type Tab = "pendentes" | "aprovadas" | "rejeitadas" | "todas";
@@ -298,7 +299,7 @@ function ReviewModal({
               {request.employee?.name ?? "Colaborador removido"}
             </h2>
             <p className="text-xs text-muted-foreground truncate">
-              {[request.employee?.job_title, request.employee?.department]
+              {[publicJobTitle(request.employee?.job_title), request.employee?.department]
                 .filter(Boolean)
                 .join(" · ") || "Sem cargo/filial informados"}
             </p>
