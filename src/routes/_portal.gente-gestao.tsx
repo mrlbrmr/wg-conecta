@@ -71,4 +71,10 @@ export const GG_LINKS = [
     desc: "Ideia, crítica ou sugestão",
     icon: "Lightbulb",
   },
+  {
+    to: "/canal-de-escuta",
+    title: "Canal de Escuta",
+    desc: "Relate algo que não está certo, sem se identificar",
+    icon: "Ear",
+  },
 ] as const;

@@ -19,6 +19,15 @@ export function yearsOnAnniversary(date: string, year = new Date().getFullYear()
   return Math.max(0, year - parseISODate(date).getFullYear());
 }
 
+/**
+ * Marcos de tempo de casa que o portal parabeniza: 3, 5, 7 e 10 anos e, depois, de 5 em 5
+ * (15, 20, 25…).
+ */
+export function isTenureMilestone(years: number): boolean {
+  if (years <= 10) return years === 3 || years === 5 || years === 7 || years === 10;
+  return years % 5 === 0;
+}
+
 /** Anos e meses completos desde a data. */
 export function tenureFrom(date: string | null | undefined): { years: number; months: number } {
   if (!date) return { years: 0, months: 0 };

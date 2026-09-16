@@ -9,7 +9,7 @@ import {
   Settings, Code, Monitor, Smartphone, Wifi,
   Sparkles, Coffee, AlertCircle, Info, Shield, ShieldCheck, CheckCircle, Tag, Key,
   Wrench, Image, Camera, Video, Music, Scissors, Share2, Copy, RefreshCw,
-  Lightbulb,
+  Lightbulb, Ear,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,5 +24,5 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Settings, Code, Monitor, Smartphone, Wifi,
   Sparkles, Coffee, AlertCircle, Info, Shield, ShieldCheck, CheckCircle, Tag, Key,
   Wrench, Image, Camera, Video, Music, Scissors, Share2, Copy, RefreshCw,
-  Lightbulb,
+  Lightbulb, Ear,
 };

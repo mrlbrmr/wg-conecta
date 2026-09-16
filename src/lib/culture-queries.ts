@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { DirectoryEntry } from "@/lib/directory-queries";
-import { parseISODate, yearsOnAnniversary } from "@/lib/tenure";
+import { isTenureMilestone, parseISODate, yearsOnAnniversary } from "@/lib/tenure";
 
 export type CulturePhoto = Tables<"culture_photos">;
 export type CultureEvent = Tables<"culture_events">;
@@ -41,6 +41,21 @@ export const congratsQuery = queryOptions({
     ensureList(await supabase.from("anniversary_congrats").select("*")),
 });
 
+/** Parabéns de tempo de casa que a pessoa recebeu, do ano mais recente para o mais antigo. */
+export const receivedCongratsQuery = (employeeId: string) =>
+  queryOptions({
+    queryKey: ["anniversary_congrats", "received", employeeId],
+    queryFn: async (): Promise<AnniversaryCongrat[]> =>
+      ensureList(
+        await supabase
+          .from("anniversary_congrats")
+          .select("*")
+          .eq("to_employee_id", employeeId)
+          .order("year", { ascending: false })
+          .order("created_at", { ascending: false }),
+      ),
+  });
+
 /** Aniversariantes do mês de referência (1–12). */
 export function birthdaysInMonth(entries: DirectoryEntry[], month: number) {
   return entries
@@ -49,8 +64,9 @@ export function birthdaysInMonth(entries: DirectoryEntry[], month: number) {
 }
 
 /**
- * Aniversários de casa do mês — quem completa pelo menos um ano no aniversário deste ano.
- * Os anos são os do aniversário, não os de hoje: quem faz 1 ano no fim do mês já aparece.
+ * Aniversários de casa do mês — só quem faz marco (3, 5, 7, 10 anos e, depois, de 5 em 5) no
+ * aniversário deste ano. Os anos são os do aniversário, não os de hoje: quem faz 3 anos no fim
+ * do mês já aparece.
  */
 export function anniversariesInMonth(entries: DirectoryEntry[], month: number) {
   return entries
@@ -58,7 +74,7 @@ export function anniversariesInMonth(entries: DirectoryEntry[], month: number) {
     .filter(
       (e) =>
         parseISODate(e.admission_date).getMonth() + 1 === month &&
-        yearsOnAnniversary(e.admission_date) > 0,
+        isTenureMilestone(yearsOnAnniversary(e.admission_date)),
     )
     .sort(
       (a, b) => parseISODate(a.admission_date).getDate() - parseISODate(b.admission_date).getDate(),

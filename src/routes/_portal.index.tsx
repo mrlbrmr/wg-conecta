@@ -9,7 +9,10 @@ import {
   Award,
   Sparkles,
   Coffee,
+  Lightbulb,
+  Ear,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ICON_MAP } from "@/lib/icon-map";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
@@ -74,6 +77,16 @@ function HomePage() {
             Buscar
           </button>
         </form>
+      </section>
+
+      {/* Canais do G&G — lado a lado, logo no início */}
+      <section
+        className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        aria-label="Fale com o G&G"
+      >
+        {GG_CHANNELS.map((c) => (
+          <ChannelCard key={c.to} {...c} />
+        ))}
       </section>
 
       {/* MURAL — bento editorial */}
@@ -232,7 +245,7 @@ function HomePage() {
 
           {/* Comunicados secundários — cartões editoriais */}
           {announcements.isLoading
-            ? [0, 1].map((i) => (
+            ? [0, 1, 2].map((i) => (
                 <div
                   key={i}
                   className="col-span-12 sm:col-span-6 lg:col-span-4 card-paper p-6 space-y-4"
@@ -244,7 +257,7 @@ function HomePage() {
                   <Skeleton className="h-11 w-full rounded-full mt-2" />
                 </div>
               ))
-            : rest.slice(0, 2).map((a) => (
+            : rest.map((a) => (
                 <article
                   key={a.id}
                   className="col-span-12 sm:col-span-6 lg:col-span-4 card-paper card-paper-hover p-6 flex flex-col"
@@ -287,29 +300,6 @@ function HomePage() {
                   </Link>
                 </article>
               ))}
-
-          {/* RECADO DE G&G */}
-          <article className="col-span-12 sm:col-span-6 lg:col-span-4 card-paper card-paper-hover bg-primary text-primary-foreground p-6 flex flex-col">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
-              <Coffee className="h-4 w-4" />
-              Recado do G&amp;G
-            </div>
-
-            <h3 className="mt-4 text-xl sm:text-2xl font-black leading-[1.1] tracking-tight">
-              A gente responde o mais rápido possível.
-            </h3>
-
-            <p className="mt-3 text-sm text-primary-foreground/80 leading-relaxed flex-1">
-              Benefício, férias, documento, dúvida boba — manda pra gente sem cerimônia.
-            </p>
-
-            <Link
-              to="/gente-gestao/contatos"
-              className="mt-6 inline-flex w-full sm:w-auto self-stretch sm:self-start items-center justify-center gap-2 rounded-full bg-accent text-ink px-4 py-3 text-xs font-black uppercase tracking-wider border-[1.5px] border-accent hover:bg-paper hover:border-paper transition"
-            >
-              Falar com o time <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
-            </Link>
-          </article>
         </div>
 
         <Link
@@ -384,5 +374,75 @@ function HomePage() {
         </div>
       </section>
     </>
+  );
+}
+
+type GGChannel = {
+  to: "/gente-gestao/contatos" | "/sim" | "/canal-de-escuta";
+  kicker: string;
+  title: string;
+  text: string;
+  cta: string;
+  Icon: LucideIcon;
+  /** Classes do cartão e do botão, por canal. */
+  card: string;
+  button: string;
+  kickerColor: string;
+};
+
+const GG_CHANNELS: GGChannel[] = [
+  {
+    to: "/gente-gestao/contatos",
+    kicker: "Recado do G&G",
+    title: "A gente responde o mais rápido possível.",
+    text: "Benefício, férias, documento, dúvida boba — manda pra gente sem cerimônia.",
+    cta: "Falar com o time",
+    Icon: Coffee,
+    card: "bg-primary text-primary-foreground",
+    button: "bg-accent text-ink border-accent hover:bg-paper hover:border-paper",
+    kickerColor: "text-accent",
+  },
+  {
+    to: "/sim",
+    kicker: "SIM · Melhorias",
+    title: "Tem uma ideia, crítica ou sugestão?",
+    text: "Mande pelo SIM, com seu nome ou sem se identificar. O G&G lê e responde.",
+    cta: "Enviar um SIM",
+    Icon: Lightbulb,
+    card: "bg-accent text-ink",
+    button: "bg-ink text-paper border-ink hover:bg-surface hover:text-ink",
+    kickerColor: "text-ink",
+  },
+  {
+    to: "/canal-de-escuta",
+    kicker: "Canal de Escuta",
+    title: "Viu algo que não está certo?",
+    text: "Assédio, discriminação, conduta antiética ou risco à segurança. Relato sigiloso, sem se identificar.",
+    cta: "Fazer um relato",
+    Icon: Ear,
+    card: "bg-ink text-paper",
+    button: "bg-accent text-ink border-accent hover:bg-paper hover:border-paper",
+    kickerColor: "text-accent",
+  },
+];
+
+function ChannelCard({ to, kicker, title, text, cta, Icon, card, button, kickerColor }: GGChannel) {
+  return (
+    <article className={`card-paper card-paper-hover flex flex-col p-6 ${card}`}>
+      <div
+        className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] ${kickerColor}`}
+      >
+        <Icon className="h-4 w-4" />
+        {kicker}
+      </div>
+      <h3 className="mt-4 text-xl font-black leading-[1.1] tracking-tight sm:text-2xl">{title}</h3>
+      <p className="mt-3 flex-1 text-sm leading-relaxed opacity-80">{text}</p>
+      <Link
+        to={to}
+        className={`mt-6 inline-flex w-full items-center justify-center gap-2 self-stretch rounded-full border-[1.5px] px-4 py-3 text-xs font-black uppercase tracking-wider transition sm:w-auto sm:self-start ${button}`}
+      >
+        {cta} <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+      </Link>
+    </article>
   );
 }

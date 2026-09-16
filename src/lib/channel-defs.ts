@@ -2,8 +2,7 @@ import { z } from "zod";
 import { UNITS } from "@/lib/org";
 
 /**
- * Canais de escuta do portal — hoje o SIM (Sistema Interno de Melhorias); o Canal de Escuta
- * entra no PR seguinte, na mesma base.
+ * Canais do portal: o SIM (Sistema Interno de Melhorias) e o Canal de Escuta, na mesma base.
  *
  * Gravam em `channel_submissions` (ver `supabase/migrations/20260915170000_channel_submissions.sql`).
  * No SIM a pessoa escolhe:
@@ -11,10 +10,14 @@ import { UNITS } from "@/lib/org";
  * - **sem se identificar**: nenhuma coluna liga o envio a ela, e o acompanhamento é por
  *   protocolo + chave, entregues só a quem enviou.
  *
+ * No Canal de Escuta o envio **nunca** tem autor (a constraint
+ * `channel_submissions_escuta_sem_autor` garante). Nome e contato só existem se a pessoa digitar
+ * no próprio relato, e o acompanhamento é sempre por protocolo + chave.
+ *
  * Fica fora de `*.functions.ts` porque a tela e o servidor validam com o mesmo schema.
  */
 
-export const CHANNELS = ["sim"] as const;
+export const CHANNELS = ["sim", "escuta"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 export const CHANNEL_META: Record<
@@ -27,9 +30,15 @@ export const CHANNEL_META: Record<
     prefix: "SIM",
     received: "Seu SIM chegou ao time de Gente & Gestão.",
   },
+  escuta: {
+    title: "Canal de Escuta",
+    short: "Canal de Escuta",
+    prefix: "ESC",
+    received: "Seu relato chegou ao time de Gente & Gestão.",
+  },
 };
 
-export const CHANNEL_OF_PREFIX: Record<string, Channel> = { SIM: "sim" };
+export const CHANNEL_OF_PREFIX: Record<string, Channel> = { SIM: "sim", ESC: "escuta" };
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().default("");
 
@@ -59,6 +68,41 @@ export const simSchema = z.object({
   contact: optionalText(200),
 });
 
+// ── Canal de Escuta ───────────────────────────────────────────────────
+
+export const ESCUTA_CATEGORIES = [
+  { value: "assedio_moral", label: "Assédio moral" },
+  { value: "assedio_sexual", label: "Assédio sexual" },
+  { value: "discriminacao", label: "Discriminação ou preconceito" },
+  { value: "conduta", label: "Conduta antiética, fraude ou desvio" },
+  { value: "seguranca", label: "Segurança do trabalho" },
+  { value: "outro", label: "Outro assunto" },
+] as const;
+
+const ESCUTA_VALUES = ESCUTA_CATEGORIES.map((c) => c.value) as [
+  (typeof ESCUTA_CATEGORIES)[number]["value"],
+  ...(typeof ESCUTA_CATEGORIES)[number]["value"][],
+];
+
+export const ESCUTA_CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  ESCUTA_CATEGORIES.map((c) => [c.value, c.label]),
+);
+
+/** Nome e contato são opcionais e ficam só no texto do relato — nunca viram autor. */
+export const escutaSchema = z.object({
+  category: z.enum(ESCUTA_VALUES, { errorMap: () => ({ message: "Escolha o assunto." }) }),
+  description: z
+    .string()
+    .trim()
+    .min(20, "Conte um pouco mais — pelo menos algumas linhas.")
+    .max(5000, "O relato passou de 5.000 caracteres."),
+  where: optionalText(200),
+  when: optionalText(120),
+  involved: optionalText(500),
+  contact_name: optionalText(120),
+  contact: optionalText(200),
+});
+
 // ── Leitura ───────────────────────────────────────────────────────────
 
 const LABELS: Record<Channel, [key: string, label: string][]> = {
@@ -72,6 +116,15 @@ const LABELS: Record<Channel, [key: string, label: string][]> = {
     ["reason", "Motivo"],
     ["description", "Situação e possível solução"],
   ],
+  escuta: [
+    ["contact_name", "Nome"],
+    ["contact", "Contato"],
+    ["category", "Assunto"],
+    ["description", "Relato"],
+    ["where", "Onde"],
+    ["when", "Quando"],
+    ["involved", "Pessoas envolvidas"],
+  ],
 };
 
 /** Campos preenchidos, na ordem do formulário e com rótulo. */
@@ -79,7 +132,9 @@ export function renderSubmission(channel: Channel, payload: Record<string, unkno
   return LABELS[channel]
     .map(([key, label]) => {
       const raw = payload[key];
-      const value = typeof raw === "string" ? raw.trim() : raw == null ? "" : String(raw);
+      let value = typeof raw === "string" ? raw.trim() : raw == null ? "" : String(raw);
+      // O assunto do Canal de Escuta é gravado como código ("assedio_moral").
+      if (channel === "escuta" && key === "category") value = ESCUTA_CATEGORY_LABEL[value] ?? value;
       return { key, label, value };
     })
     .filter((e) => e.value);

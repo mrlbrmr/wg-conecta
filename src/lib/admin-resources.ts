@@ -723,7 +723,7 @@ export const SIDEBAR_EXTRA: SidebarExtraDef[] = [
   },
   {
     key: "canais",
-    label: "SIM · Melhorias",
+    label: "SIM e Canal de Escuta",
     icon: Lightbulb,
     section: "Gente & Gestão",
     to: "/admin/canais",

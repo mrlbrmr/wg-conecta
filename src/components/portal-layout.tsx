@@ -188,6 +188,12 @@ function PortalFooter() {
             >
               SIM · Ideia, crítica ou sugestão <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
             </Link>
+            <Link
+              to="/canal-de-escuta"
+              className="mt-2 flex items-center gap-1 text-sm font-bold text-accent hover:underline"
+            >
+              Canal de Escuta · Relato sigiloso <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+            </Link>
             <p className="mt-3 text-xs text-paper/60 max-w-xs">
               Uso interno. Não compartilhe CPF, documentos ou dados bancários em comunicados e
               mensagens — dados cadastrais só pelo canal de Atualização Cadastral.

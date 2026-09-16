@@ -26,6 +26,7 @@ import { Route as PortalGenteGestaoRouteImport } from './routes/_portal.gente-ge
 import { Route as PortalFormulariosRouteImport } from './routes/_portal.formularios'
 import { Route as PortalCulturaRouteImport } from './routes/_portal.cultura'
 import { Route as PortalComunicadosRouteImport } from './routes/_portal.comunicados'
+import { Route as PortalCanalDeEscutaRouteImport } from './routes/_portal.canal-de-escuta'
 import { Route as PortalBuscaRouteImport } from './routes/_portal.busca'
 import { Route as PortalAcompanharRouteImport } from './routes/_portal.acompanhar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -143,6 +144,11 @@ const PortalCulturaRoute = PortalCulturaRouteImport.update({
 const PortalComunicadosRoute = PortalComunicadosRouteImport.update({
   id: '/comunicados',
   path: '/comunicados',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalCanalDeEscutaRoute = PortalCanalDeEscutaRouteImport.update({
+  id: '/canal-de-escuta',
+  path: '/canal-de-escuta',
   getParentRoute: () => PortalRoute,
 } as any)
 const PortalBuscaRoute = PortalBuscaRouteImport.update({
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
+  '/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/comunicados': typeof PortalComunicadosRouteWithChildren
   '/cultura': typeof PortalCulturaRoute
   '/formularios': typeof PortalFormulariosRouteWithChildren
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/gate': typeof GateRoute
   '/acompanhar': typeof PortalAcompanharRoute
   '/busca': typeof PortalBuscaRoute
+  '/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/cultura': typeof PortalCulturaRoute
   '/integracao': typeof PortalIntegracaoRoute
   '/perfil': typeof PortalPerfilRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_portal/acompanhar': typeof PortalAcompanharRoute
   '/_portal/busca': typeof PortalBuscaRoute
+  '/_portal/canal-de-escuta': typeof PortalCanalDeEscutaRoute
   '/_portal/comunicados': typeof PortalComunicadosRouteWithChildren
   '/_portal/cultura': typeof PortalCulturaRoute
   '/_portal/formularios': typeof PortalFormulariosRouteWithChildren
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/acompanhar'
     | '/busca'
+    | '/canal-de-escuta'
     | '/comunicados'
     | '/cultura'
     | '/formularios'
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/gate'
     | '/acompanhar'
     | '/busca'
+    | '/canal-de-escuta'
     | '/cultura'
     | '/integracao'
     | '/perfil'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_portal/acompanhar'
     | '/_portal/busca'
+    | '/_portal/canal-de-escuta'
     | '/_portal/comunicados'
     | '/_portal/cultura'
     | '/_portal/formularios'
@@ -766,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/comunicados'
       fullPath: '/comunicados'
       preLoaderRoute: typeof PortalComunicadosRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/_portal/canal-de-escuta': {
+      id: '/_portal/canal-de-escuta'
+      path: '/canal-de-escuta'
+      fullPath: '/canal-de-escuta'
+      preLoaderRoute: typeof PortalCanalDeEscutaRouteImport
       parentRoute: typeof PortalRoute
     }
     '/_portal/busca': {
@@ -1121,6 +1140,7 @@ const PortalMuralRouteWithChildren = PortalMuralRoute._addFileChildren(
 interface PortalRouteChildren {
   PortalAcompanharRoute: typeof PortalAcompanharRoute
   PortalBuscaRoute: typeof PortalBuscaRoute
+  PortalCanalDeEscutaRoute: typeof PortalCanalDeEscutaRoute
   PortalComunicadosRoute: typeof PortalComunicadosRouteWithChildren
   PortalCulturaRoute: typeof PortalCulturaRoute
   PortalFormulariosRoute: typeof PortalFormulariosRouteWithChildren
@@ -1139,6 +1159,7 @@ interface PortalRouteChildren {
 const PortalRouteChildren: PortalRouteChildren = {
   PortalAcompanharRoute: PortalAcompanharRoute,
   PortalBuscaRoute: PortalBuscaRoute,
+  PortalCanalDeEscutaRoute: PortalCanalDeEscutaRoute,
   PortalComunicadosRoute: PortalComunicadosRouteWithChildren,
   PortalCulturaRoute: PortalCulturaRoute,
   PortalFormulariosRoute: PortalFormulariosRouteWithChildren,
