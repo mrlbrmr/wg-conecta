@@ -10,7 +10,6 @@ import {
   normalizeAccessKey,
   normalizeProtocol,
   simSchema,
-  simSectors,
   type Channel,
   type SubmissionStatus,
 } from "@/lib/channel-defs";
@@ -29,6 +28,9 @@ const SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
  * arquivo.
  *
  * No envio identificado, o autor e o nome vêm do login, aqui no servidor — a tela não manda nome.
+ *
+ * O SIM vai só para o time de Gente & Gestão: a leitura e a resposta são das funções com
+ * `requireAdmin`, e o painel é exclusivo do G&G. Nenhum outro setor recebe o envio.
  */
 
 async function admin() {
@@ -120,14 +122,6 @@ async function notifyAuthor(submission: { id: string; protocol: string; author_e
   }
 }
 
-/** O setor é um dos ativos da tabela `departments` (ou "Outro"). Sem a tabela, vale a lista fixa. */
-async function validSector(sector: string): Promise<boolean> {
-  const db = await admin();
-  const { data, error } = await db.from("departments").select("name").eq("active", true);
-  const names = error || !data?.length ? undefined : data.map((d) => d.name);
-  return simSectors(names).includes(sector);
-}
-
 const DETAIL_COLUMNS =
   "id, channel, protocol, category, payload, status, received_on, author_employee_id" as const;
 
@@ -201,7 +195,6 @@ export const submitToChannel = createServerFn({ method: "POST" })
       throw new Error(parsed.error.issues[0]?.message ?? "Confere os campos do formulário?");
     }
     const { contact, ...fields } = parsed.data;
-    if (!(await validSector(fields.sector))) throw new Error("Escolha o setor.");
 
     // Identificado: nome do cadastro e contato que a pessoa confirmou. Anônimo: nada disso.
     const author = data.identified ? me : null;

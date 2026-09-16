@@ -452,9 +452,9 @@ export const RESOURCES: ResourceDef[] = [
     table: "departments",
     orderBy: { column: "order_index" },
     section: "Gente & Gestão",
-    note: "Os setores que aparecem no cadastro de colaboradores, na matriz de contatos e no SIM.",
+    note: "Os setores que aparecem no cadastro de colaboradores e na matriz de contatos.",
     actionLabel: "Novo setor ↗",
-    rule: "Renomear um setor troca o nome também nos colaboradores, na matriz de contatos e nos envios do SIM. Para tirar um setor das listas, desmarque “Ativo” em vez de excluir: quem já está nele continua com o nome.",
+    rule: "Renomear um setor troca o nome também nos colaboradores e na matriz de contatos. Para tirar um setor das listas, desmarque “Ativo” em vez de excluir: quem já está nele continua com o nome.",
     displayColumns: [
       { key: "name", label: "Setor" },
       { key: "order_index", label: "Ordem" },

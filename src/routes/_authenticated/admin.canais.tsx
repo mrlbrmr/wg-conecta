@@ -16,13 +16,11 @@ import {
   CHANNELS,
   SIM_KINDS,
   SIM_REASONS,
-  simSectors,
   SUBMISSION_STATUSES,
   SUBMISSION_STATUS_LABEL,
   SUBMISSION_STATUS_TONE,
   type SubmissionStatus,
 } from "@/lib/channel-defs";
-import { useDepartments } from "@/lib/departments";
 import {
   listChannelMessages,
   listChannelSubmissions,
@@ -54,18 +52,16 @@ const ALL = "";
 interface Filters {
   status: SubmissionStatus | typeof ALL;
   unit: string;
-  sector: string;
   reason: string;
   kind: string;
   identified: "" | "sim" | "nao";
 }
 
-const NO_FILTERS: Filters = { status: ALL, unit: ALL, sector: ALL, reason: ALL, kind: ALL, identified: "" };
+const NO_FILTERS: Filters = { status: ALL, unit: ALL, reason: ALL, kind: ALL, identified: "" };
 
 function matches(r: Submission, f: Filters, term: string): boolean {
   if (f.status && r.status !== f.status) return false;
   if (f.unit && r.payload.unit !== f.unit) return false;
-  if (f.sector && r.payload.sector !== f.sector) return false;
   if (f.reason && r.payload.reason !== f.reason) return false;
   if (f.kind && r.payload.kind !== f.kind) return false;
   if (f.identified && r.identified !== (f.identified === "sim")) return false;
@@ -97,16 +93,6 @@ function ChannelsAdminPage() {
     () => (q.data ?? []).filter((r) => matches(r, filters, term)),
     [q.data, filters, term],
   );
-  // Setores atuais e, para os envios antigos, os que já não estão na lista.
-  const departments = useDepartments();
-  const sectorOptions = useMemo(() => {
-    const names = simSectors(departments);
-    for (const r of q.data ?? []) {
-      const s = r.payload.sector;
-      if (s && !names.includes(s)) names.push(s);
-    }
-    return names;
-  }, [departments, q.data]);
   const selected = (q.data ?? []).find((r) => r.id === selectedId) ?? null;
   const openCount = (q.data ?? []).filter((r) => r.status !== "concluido").length;
   const filtering = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS);
@@ -159,13 +145,6 @@ function ChannelsAdminPage() {
           value={filters.unit}
           onChange={setFilter("unit")}
           options={UNITS}
-        />
-        <FilterSelect
-          label="Setor"
-          allLabel="Todos os setores"
-          value={filters.sector}
-          onChange={setFilter("sector")}
-          options={sectorOptions}
         />
         <FilterSelect
           label="Motivo"
