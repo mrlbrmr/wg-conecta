@@ -22,7 +22,7 @@ export const DEPARTMENTS = [
   "Comercial",
   "Faturamento",
   "Financeiro",
-  "Gestão de Pessoas",
+  "Gente & Gestão",
   "Logística",
 ] as const;
 
@@ -74,10 +74,11 @@ const DEPARTMENT_ALIASES = new Map<string, (typeof DEPARTMENTS)[number]>([
   ["assistencia", "Assistência Técnica"],
   ["at", "Assistência Técnica"],
   ["vendas", "Comercial"],
-  ["gentegestao", "Gestão de Pessoas"],
-  ["gg", "Gestão de Pessoas"],
-  ["rh", "Gestão de Pessoas"],
-  ["recursoshumanos", "Gestão de Pessoas"],
+  ["gestaodepessoas", "Gente & Gestão"],
+  ["genteegestao", "Gente & Gestão"],
+  ["gg", "Gente & Gestão"],
+  ["rh", "Gente & Gestão"],
+  ["recursoshumanos", "Gente & Gestão"],
   ["logistica", "Logística"],
 ]);
 
