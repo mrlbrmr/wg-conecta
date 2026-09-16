@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Search, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyAnnouncementPublished } from "@/lib/email.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { FieldDef, ResourceDef } from "@/lib/admin-resources";
 import { fileUrl, uploadFile } from "@/lib/storage";
@@ -338,6 +340,7 @@ function EditDialog({
 }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Row>({ ...initial });
+  const notifyPublished = useServerFn(notifyAnnouncementPublished);
   useEffect(() => setForm({ ...initial }), [initial]);
 
   const markerFields = MARKERS.filter((m) => resource.fields.some((f) => f.key === m.key));
@@ -352,8 +355,12 @@ function EditDialog({
           payload[f.key] = null;
       });
 
-      if (payload.id) {
-        const id = payload.id as string;
+      // Marcação do aviso por e-mail é do servidor: um formulário aberto antes do envio não
+      // pode apagá-la ao salvar.
+      delete (payload as { email_sent_at?: unknown }).email_sent_at;
+
+      let id = payload.id as string | undefined;
+      if (id) {
         const patch = { ...payload };
         delete (patch as { id?: unknown }).id;
         const { error } = await supabase
@@ -363,14 +370,29 @@ function EditDialog({
         if (error) throw new Error(error.message);
       } else {
         delete (payload as { id?: unknown }).id;
-        const { error } = await supabase.from(resource.table as never).insert(payload as never);
+        const { data, error } = await supabase
+          .from(resource.table as never)
+          .insert(payload as never)
+          .select("id")
+          .single();
         if (error) throw new Error(error.message);
+        id = (data as { id: string }).id;
       }
+      return { id, published: payload.status === "publicado" };
     },
-    onSuccess: (_d, status) => {
+    onSuccess: async (saved, status) => {
       toast.success(status === "rascunho" ? "Salvo como rascunho." : "Publicado!");
       qc.invalidateQueries({ queryKey: ["admin-list", resource.table] });
       onClose();
+      if (resource.notifyOnPublish && saved.published) {
+        try {
+          const r = await notifyPublished({ data: { id: saved.id } });
+          if (r.sent > 0) toast.success(`Aviso enviado por e-mail para ${r.sent} colaborador(es).`);
+          else if (r.reason) toast.info(`Sem aviso por e-mail: ${r.reason.replace(/\.$/, "")}.`);
+        } catch (e) {
+          toast.error(`Publicado, mas o aviso por e-mail falhou: ${(e as Error).message}`);
+        }
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });

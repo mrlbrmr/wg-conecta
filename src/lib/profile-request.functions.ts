@@ -125,6 +125,30 @@ function patchFromChanges(changes: ProfileChanges): Record<string, string | null
   return patch;
 }
 
+/** Aviso ao colaborador de que o pedido cadastral foi decidido. Nunca derruba a revisão. */
+async function notifyReviewed(employeeId: string, approved: boolean, note: string | null) {
+  try {
+    const { notifyEmployee, emailLayout, escapeHtml } = await import("@/lib/notify.server");
+    const result = approved ? "aprovado" : "não aprovado";
+    await notifyEmployee(
+      employeeId,
+      `Seu pedido de atualização cadastral foi ${result}`,
+      emailLayout({
+        title: `Pedido de atualização cadastral ${result}`,
+        body:
+          (approved
+            ? "<p>Seus dados já estão atualizados no portal.</p>"
+            : "<p>O time de Gente &amp; Gestão não aplicou as mudanças pedidas.</p>") +
+          (note ? `<p>Observação do G&amp;G: ${escapeHtml(note)}</p>` : ""),
+        cta: "Ver no portal",
+        href: `${SITE_URL}/formularios/atualizacao-cadastral`,
+      }),
+    );
+  } catch (e) {
+    console.error("[profile-request] aviso por e-mail ao colaborador falhou", e);
+  }
+}
+
 /** employees.email é UNIQUE e espelha a credencial de login. */
 async function assertEmailAvailable(email: string, employeeId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -382,6 +406,7 @@ export const approveProfileUpdateRequest = createServerFn({ method: "POST" })
       .eq("id", request.id);
     if (error) throw new Error(error.message);
 
+    await notifyReviewed(employee.id, true, data.reviewer_note || null);
     return { ok: true, applied: Object.keys(patch).length };
   });
 
@@ -406,8 +431,9 @@ export const rejectProfileUpdateRequest = createServerFn({ method: "POST" })
       })
       .eq("id", data.id)
       .eq("status", "pendente")
-      .select("id");
+      .select("id, employee_id");
     if (error) throw new Error(error.message);
     if (!updated || updated.length === 0) throw new Error("Esta solicitação já foi revisada.");
+    await notifyReviewed(updated[0].employee_id, false, data.reviewer_note);
     return { ok: true };
   });

@@ -67,6 +67,8 @@ export interface ResourceDef {
   note?: string;
   /** Rótulo do botão de ação primária. */
   actionLabel?: string;
+  /** Ao publicar, avisa os colaboradores por e-mail (uma vez por registro). */
+  notifyOnPublish?: boolean;
   /** Regra da seção, exibida abaixo da tabela. */
   rule?: string;
 }
@@ -78,6 +80,7 @@ export const RESOURCES: ResourceDef[] = [
     labelSingular: "Comunicado",
     icon: Megaphone,
     table: "announcements",
+    notifyOnPublish: true,
     orderBy: { column: "published_at", ascending: false },
     section: "Comunicação",
     displayColumns: [
