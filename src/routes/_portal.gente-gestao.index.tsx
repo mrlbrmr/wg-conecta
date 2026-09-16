@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Users } from "lucide-react";
 import { Chip, IconBubble, InkButton, Kicker, PageHeading, PaperCard } from "@/components/paper";
+import { RichText } from "@/components/rich-text";
 import { UserAvatar } from "@/components/user-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ICON_MAP } from "@/lib/icon-map";
@@ -258,9 +259,10 @@ function FaqSection() {
                   </span>
                 </button>
                 {expanded && (
-                  <p className="max-w-[62ch] pb-5 text-base leading-[1.7] text-muted-foreground text-pretty">
-                    {item.answer}
-                  </p>
+                  <RichText
+                    value={item.answer}
+                    className="max-w-[62ch] pb-5 text-base text-muted-foreground"
+                  />
                 )}
               </div>
             );

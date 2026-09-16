@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FieldDef, ResourceDef } from "@/lib/admin-resources";
 import { fileUrl, uploadFile } from "@/lib/storage";
 import { ICON_MAP } from "@/lib/icon-map";
-import { Chip, FilterPills, InkButton, Kicker, PaperCard } from "@/components/paper";
+import { AdminPageHeader, Chip, FilterPills, InkButton, PaperCard } from "@/components/paper";
 import { useAdminSearch } from "@/components/admin-search";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { useDepartments } from "@/lib/departments";
@@ -150,21 +150,19 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
 
   return (
     <div>
-      <header className="flex flex-wrap items-end justify-between gap-4 border-b-[1.5px] border-ink pb-5">
-        <div>
-          <Kicker>{resource.section ?? "Painel"}</Kicker>
-          <h1 className="mt-3 text-[28px] font-black leading-[1.02] tracking-[-0.045em] sm:text-[34px] lg:text-[42px]">
-            {resource.label}
-          </h1>
-          <p className="mt-3 max-w-[60ch] text-[15.5px] leading-[1.7] text-muted-foreground">
-            {resource.note ??
-              `Publicado aqui aparece no portal na hora. Ordene, edite ou arquive ${resource.label.toLowerCase()}.`}
-          </p>
-        </div>
-        <InkButton onClick={openNew}>
-          {resource.actionLabel ?? `Novo ${resource.labelSingular.toLowerCase()} ↗`}
-        </InkButton>
-      </header>
+      <AdminPageHeader
+        section={resource.section ?? "Painel"}
+        title={resource.label}
+        description={
+          resource.note ??
+          `Publicado aqui aparece no portal na hora. Ordene, edite ou arquive ${resource.label.toLowerCase()}.`
+        }
+        action={
+          <InkButton onClick={openNew}>
+            {resource.actionLabel ?? `Novo ${resource.labelSingular.toLowerCase()} ↗`}
+          </InkButton>
+        }
+      />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <FilterPills options={FILTERS} value={filter} onChange={(v) => setFilter(v)} />
