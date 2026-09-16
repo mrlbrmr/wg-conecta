@@ -16,6 +16,7 @@ import {
 import { Chip, InkButton, Kicker, KpiCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
 import { OrgSelect } from "@/components/org-select";
+import { useDepartments } from "@/lib/departments";
 import { normalizeDepartment, normalizeUnit } from "@/lib/org";
 import { useAdminSearch } from "@/components/admin-search";
 import {
@@ -687,6 +688,7 @@ function EditDialog({
   onClose: () => void;
   onSubmit: (v: EditValues) => void;
 }) {
+  const departments = useDepartments();
   const [name, setName] = useState(employee.name);
   const [jobTitle, setJobTitle] = useState(employee.job_title ?? "");
   const [department, setDepartment] = useState(employee.department ?? "");
@@ -728,7 +730,7 @@ function EditDialog({
             onSubmit({
               name,
               job_title: jobTitle || null,
-              department: normalizeDepartment(department) ?? null,
+              department: normalizeDepartment(department, departments) ?? null,
               unit: normalizeUnit(unit) ?? null,
               extension: extension || null,
               birth_date: birthDate || null,

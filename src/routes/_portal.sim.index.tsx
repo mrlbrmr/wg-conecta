@@ -15,7 +15,8 @@ import {
 } from "@/components/paper";
 import { SubmissionReceipt } from "@/components/channel/submission-receipt";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
-import { SIM_KINDS, SIM_REASONS, SIM_SECTORS, simSchema } from "@/lib/channel-defs";
+import { SIM_KINDS, SIM_REASONS, simSchema, simSectors } from "@/lib/channel-defs";
+import { useDepartments } from "@/lib/departments";
 import { submitToChannel } from "@/lib/channel.functions";
 import { mySubmissionsQuery } from "@/lib/channel-queries";
 import { CPF_LOGIN_DOMAIN } from "@/lib/cpf";
@@ -34,7 +35,7 @@ const EMPTY = {
   contact: "",
   unit: "" as Unit | "",
   kind: "" as (typeof SIM_KINDS)[number] | "",
-  sector: "" as (typeof SIM_SECTORS)[number] | "",
+  sector: "",
   reason: "" as (typeof SIM_REASONS)[number] | "",
   description: "",
 };
@@ -45,6 +46,7 @@ function SimPage() {
   const submit = useServerFn(submitToChannel);
   const qc = useQueryClient();
   const me = useCurrentEmployee();
+  const sectors = simSectors(useDepartments());
   const [mode, setMode] = useState<Mode | "">("");
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -160,7 +162,7 @@ function SimPage() {
                   />
                   <ChoiceChips
                     label="Para qual setor?"
-                    options={SIM_SECTORS}
+                    options={sectors}
                     value={form.sector}
                     onChange={set("sector")}
                     error={errors.sector}

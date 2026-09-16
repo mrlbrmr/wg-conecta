@@ -8,6 +8,7 @@ import { fileUrl, uploadFile } from "@/lib/storage";
 import { ICON_MAP } from "@/lib/icon-map";
 import { Chip, FilterPills, InkButton, Kicker, PaperCard } from "@/components/paper";
 import { useAdminSearch } from "@/components/admin-search";
+import { useDepartments } from "@/lib/departments";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +38,8 @@ type FilterId = (typeof FILTERS)[number]["value"];
 function defaultFor(f: FieldDef): unknown {
   switch (f.type) {
     case "boolean":
-      return false;
+      // Registro novo nasce ativo; os demais marcadores (fixar, destaque…) começam desligados.
+      return f.key === "active";
     case "number":
       return 0;
     case "tags":
@@ -115,6 +117,8 @@ export function AdminCrud({ resource }: { resource: ResourceDef }) {
     onSuccess: () => {
       toast.success("Registro excluído.");
       qc.invalidateQueries({ queryKey: ["admin-list", resource.table] });
+      // Setores alimentam as listas do portal e do painel.
+      if (resource.table === "departments") qc.invalidateQueries({ queryKey: ["departments"] });
       setConfirming(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -370,6 +374,8 @@ function EditDialog({
     onSuccess: (_d, status) => {
       toast.success(status === "rascunho" ? "Salvo como rascunho." : "Publicado!");
       qc.invalidateQueries({ queryKey: ["admin-list", resource.table] });
+      // Setores alimentam as listas do portal e do painel.
+      if (resource.table === "departments") qc.invalidateQueries({ queryKey: ["departments"] });
       onClose();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -484,6 +490,7 @@ function FieldInput({
   folder: string;
 }) {
   const [uploading, setUploading] = useState(false);
+  const departments = useDepartments();
 
   if (field.type === "boolean") {
     return (
@@ -526,7 +533,7 @@ function FieldInput({
             className={INPUT}
           >
             <option value="">—</option>
-            {field.options?.map((o) => (
+            {selectOptions(field, value, departments).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -721,4 +728,22 @@ function IconPicker({ value, onChange }: { value: string; onChange: (v: unknown)
       )}
     </div>
   );
+}
+
+/**
+ * Opções de um campo select. As que vêm do banco (`optionsFrom`) mantêm o valor gravado
+ * mesmo quando ele saiu da lista, para salvar o registro não apagar o dado.
+ */
+function selectOptions(
+  field: FieldDef,
+  value: unknown,
+  departments: string[],
+): { value: string; label: string }[] {
+  if (field.optionsFrom !== "departments") return field.options ?? [];
+  const current = String(value ?? "");
+  const names = current && !departments.includes(current) ? [...departments, current] : departments;
+  return names.map((d) => ({
+    value: d,
+    label: d === current && !departments.includes(d) ? `${d} (fora da lista)` : d,
+  }));
 }

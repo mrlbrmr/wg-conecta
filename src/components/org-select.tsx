@@ -1,7 +1,9 @@
-import { DEPARTMENTS, UNITS } from "@/lib/org";
+import { UNITS } from "@/lib/org";
+import { useDepartments } from "@/lib/departments";
 
 /**
- * Setor ou filial escolhidos na lista oficial (`src/lib/org.ts`).
+ * Setor ou filial escolhidos na lista oficial: setores da tabela `departments` (editável em
+ * Gente & Gestão → Setores), filiais de `src/lib/org.ts`.
  *
  * Valor antigo fora da lista continua como opção, marcado, para que abrir e salvar o
  * cadastro não apague o dado sem querer. Trocando, ele some da lista.
@@ -19,7 +21,8 @@ export function OrgSelect({
   className?: string;
   id?: string;
 }) {
-  const options: readonly string[] = kind === "department" ? DEPARTMENTS : UNITS;
+  const departments = useDepartments();
+  const options: readonly string[] = kind === "department" ? departments : UNITS;
   const legacy = value && !options.includes(value) ? value : null;
 
   return (

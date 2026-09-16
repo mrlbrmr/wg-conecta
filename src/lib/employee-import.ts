@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { normalizeDepartment, normalizeUnit } from "@/lib/org";
+import { DEPARTMENTS, normalizeDepartment, normalizeUnit } from "@/lib/org";
 
 /**
  * Leitura da planilha do DP para a importação de colaboradores.
@@ -142,7 +142,11 @@ const pick = (rec: Record<string, unknown>, keys: string[]) => {
   return undefined;
 };
 
-export function parseEmployeeWorkbook(wb: XLSX.WorkBook): ParsedSheet {
+/** `departments`: setores atuais (tabela `departments`), para gravar o setor no nome oficial. */
+export function parseEmployeeWorkbook(
+  wb: XLSX.WorkBook,
+  departments: readonly string[] = DEPARTMENTS,
+): ParsedSheet {
   for (const sheet of wb.SheetNames) {
     const table = readTable(wb.Sheets[sheet]);
     if (!table) continue;
@@ -172,15 +176,16 @@ export function parseEmployeeWorkbook(wb: XLSX.WorkBook): ParsedSheet {
         "empresa",
         "estabelecimento",
       ]);
-      const dept = normalizeDepartment(
-        pick(rec, ["setor", "departamento", "depto", "department", "area", "centrodecusto", "centrocusto"]),
-      );
+      const rawDept = pick(rec, ["setor", "departamento", "depto", "department", "area", "centrodecusto", "centrocusto"]);
+      const dept = normalizeDepartment(rawDept, departments);
+      // Setor conhecido já vem no nome oficial; o desconhecido só ganha maiúsculas.
+      const knownDept = dept !== undefined && departments.includes(dept);
 
       parsed.push({
         name: toTitleCase(nome.trim().replace(/\s+/g, " ")),
         email: email && email.includes("@") ? email : undefined,
         phone: parsePhone(pick(rec, ["telefone", "telefone1", "celular", "whatsapp", "fone", "tel", "contato"])),
-        department: dept && toTitleCase(dept),
+        department: dept && (knownDept ? dept : toTitleCase(dept)),
         unit: normalizeUnit(filial),
         job_title: cargo ? toTitleCase(String(cargo).trim()) : undefined,
         admission_date: parseDateISO(

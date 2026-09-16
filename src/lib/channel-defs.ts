@@ -36,7 +36,13 @@ const optionalText = (max: number) => z.string().trim().max(max).optional().defa
 // ── SIM ───────────────────────────────────────────────────────────────
 
 export const SIM_KINDS = ["Interna", "Externa"] as const;
-export const SIM_SECTORS = [...DEPARTMENTS, "Outro"] as const;
+/** Setor "fora da lista" do SIM. Os demais vêm da tabela `departments` (`simSectors`). */
+export const SIM_OTHER_SECTOR = "Outro";
+
+/** Opções de setor do SIM: os setores ativos e, por último, "Outro". */
+export function simSectors(departments: readonly string[] = DEPARTMENTS): string[] {
+  return [...departments.filter((d) => d !== SIM_OTHER_SECTOR), SIM_OTHER_SECTOR];
+}
 export const SIM_REASONS = [
   "Melhoria de processo",
   "Melhoria de estrutura",
@@ -51,7 +57,8 @@ export const SIM_REASONS = [
 export const simSchema = z.object({
   unit: z.enum(UNITS, { errorMap: () => ({ message: "Escolha o local de trabalho." }) }),
   kind: z.enum(SIM_KINDS, { errorMap: () => ({ message: "Escolha o tipo de melhoria." }) }),
-  sector: z.enum(SIM_SECTORS, { errorMap: () => ({ message: "Escolha o setor." }) }),
+  // A lista muda pelo painel; o servidor confere se o setor existe (`submitToChannel`).
+  sector: z.string().trim().min(1, "Escolha o setor.").max(120, "Escolha o setor."),
   reason: z.enum(SIM_REASONS, { errorMap: () => ({ message: "Escolha o motivo." }) }),
   description: z
     .string()

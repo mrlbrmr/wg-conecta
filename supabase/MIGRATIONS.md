@@ -1,5 +1,27 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/tela-setores`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916150000_departments.sql` | Cria `departments`, a lista de setores que o G&G edita em Gente & Gestão → Setores, já com os 6 setores atuais. Renomear um setor troca o nome também em `employees`, `contact_matrix` e no setor dos envios do SIM (trigger). |
+
+Rodar **antes do deploy**. Sem a tabela, o portal usa a lista fixa do código, mas a tela Setores
+do painel dá erro.
+
+Conferências (só leitura), uma por vez:
+
+```sql
+-- Os 6 setores, em ordem.
+SELECT name, order_index, active FROM public.departments ORDER BY order_index;
+```
+
+```sql
+-- Não deve voltar nenhuma linha: anon sem acesso.
+SELECT grantee, privilege_type FROM information_schema.role_table_grants
+ WHERE table_schema = 'public' AND table_name = 'departments' AND grantee IN ('anon', 'PUBLIC');
+```
+
 ## Pendentes (PR `fix/setor-gente-gestao`)
 
 | Arquivo | O que faz |
