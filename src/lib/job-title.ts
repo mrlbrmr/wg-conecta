@@ -25,3 +25,14 @@ export function publicJobTitle(title: string | null | undefined): string | null 
   // Se o cargo era só o nível, melhor mostrar como veio do que mostrar nada.
   return cleaned || title;
 }
+
+/**
+ * Coordenação e supervisão entram em "Colegas da área", mesmo quando são a gestão direta.
+ * Encarregado fica de fora de propósito, ainda que o cargo cite supervisão.
+ */
+export function isTeamLead(title: string | null | undefined): boolean {
+  if (!title) return false;
+  const key = title.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  if (key.includes("encarregad")) return false;
+  return /(?<![a-z])(coordenador|supervisor)a?(?![a-z])/.test(key);
+}

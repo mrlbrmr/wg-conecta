@@ -1,5 +1,25 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `fix/cadastro-perfil`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916120000_units_siglas.sql` | Troca as filiais gravadas como sigla pelo nome oficial: `RJ` → Nova Iguaçu/RJ, `SP` → São Paulo/SP, `SUM` → Sumaré/SP (em `employees` e `internal_jobs`). |
+
+Pode rodar antes ou depois do deploy. Conferência (só leitura), antes e depois — depois, as
+siglas não devem mais aparecer:
+
+```sql
+SELECT unit, count(*) FROM public.employees GROUP BY unit ORDER BY 2 DESC;
+```
+
+E, para ver se a regra de "Meu time" cobre os cargos reais de liderança:
+
+```sql
+SELECT DISTINCT job_title FROM public.employees
+ WHERE active AND job_title ~* '(coord|superv|encarreg)' ORDER BY 1;
+```
+
 ## Pendentes (PR `feat/sim`)
 
 | Arquivo | O que faz |
@@ -221,7 +241,8 @@ SELECT tablename, policyname FROM pg_policies WHERE policyname LIKE '%write\_aut
 inteiro. Ele é idempotente.
 
 **D) Conferência de `employees`** (só leitura). Depois do bloco C, `authenticated` deve ter
-`UPDATE` só nas colunas `bio`, `extension`, `email`, `photo_url` e `updated_at`. A lista abaixo
+`UPDATE` só nas colunas `bio`, `extension`, `email`, `photo_url` e `updated_at` (desde
+`20260911150000` nem isso: bio, ramal e foto são gravados pelo servidor). A lista abaixo
 deve voltar vazia:
 
 ```sql
