@@ -328,6 +328,8 @@ function HomePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {(links.data ?? []).map((link) => {
             const Icon = ICON_MAP[link.icon ?? ""] ?? Sparkles;
+            // Com conteúdo, o atalho abre a própria página (tutorial com texto e vídeo).
+            const hasContent = Boolean(link.content?.trim());
             const isInternal = link.url.startsWith("/");
             const content = (
               <div className="card-paper card-paper-hover p-5 h-full flex flex-col group">
@@ -346,6 +348,13 @@ function HomePage() {
                 </div>
               </div>
             );
+            if (hasContent) {
+              return (
+                <Link key={link.id} to="/atalhos/$id" params={{ id: link.id }} className="block">
+                  {content}
+                </Link>
+              );
+            }
             return isInternal ? (
               <Link key={link.id} to={link.url as "/"} className="block">
                 {content}
