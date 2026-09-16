@@ -122,13 +122,16 @@ function ChannelsAdminPage() {
 
   return (
     <div>
-      <Kicker>Gente &amp; Gestão</Kicker>
-      <h1 className="mt-2 text-[34px] font-black leading-none tracking-[-0.04em]">
-        {CHANNEL_META[canal].title}
-      </h1>
-      <p className="mt-2 max-w-[70ch] text-sm leading-[1.6] text-muted-foreground">
-        {INTRO[canal]}
-      </p>
+      {/* Mesmo cabeçalho das demais telas do painel (AdminCrud). */}
+      <header className="border-b-[1.5px] border-ink pb-5">
+        <Kicker>Gente &amp; Gestão</Kicker>
+        <h1 className="mt-3 text-[28px] font-black leading-[1.02] tracking-[-0.045em] sm:text-[34px] lg:text-[42px]">
+          {CHANNEL_META[canal].title}
+        </h1>
+        <p className="mt-3 max-w-[60ch] text-[15.5px] leading-[1.7] text-muted-foreground">
+          {INTRO[canal]}
+        </p>
+      </header>
 
       {CHANNELS.length > 1 && (
         <div className="mt-6 inline-flex gap-1 rounded-full border-[1.5px] border-ink bg-surface p-1">
