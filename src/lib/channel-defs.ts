@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEPARTMENTS, UNITS } from "@/lib/org";
+import { UNITS } from "@/lib/org";
 
 /**
  * Canais de escuta do portal — hoje o SIM (Sistema Interno de Melhorias); o Canal de Escuta
@@ -36,13 +36,6 @@ const optionalText = (max: number) => z.string().trim().max(max).optional().defa
 // ── SIM ───────────────────────────────────────────────────────────────
 
 export const SIM_KINDS = ["Interna", "Externa"] as const;
-/** Setor "fora da lista" do SIM. Os demais vêm da tabela `departments` (`simSectors`). */
-export const SIM_OTHER_SECTOR = "Outro";
-
-/** Opções de setor do SIM: os setores ativos e, por último, "Outro". */
-export function simSectors(departments: readonly string[] = DEPARTMENTS): string[] {
-  return [...departments.filter((d) => d !== SIM_OTHER_SECTOR), SIM_OTHER_SECTOR];
-}
 export const SIM_REASONS = [
   "Melhoria de processo",
   "Melhoria de estrutura",
@@ -57,8 +50,6 @@ export const SIM_REASONS = [
 export const simSchema = z.object({
   unit: z.enum(UNITS, { errorMap: () => ({ message: "Escolha o local de trabalho." }) }),
   kind: z.enum(SIM_KINDS, { errorMap: () => ({ message: "Escolha o tipo de melhoria." }) }),
-  // A lista muda pelo painel; o servidor confere se o setor existe (`submitToChannel`).
-  sector: z.string().trim().min(1, "Escolha o setor.").max(120, "Escolha o setor."),
   reason: z.enum(SIM_REASONS, { errorMap: () => ({ message: "Escolha o motivo." }) }),
   description: z
     .string()
@@ -76,7 +67,8 @@ const LABELS: Record<Channel, [key: string, label: string][]> = {
     ["contact", "Contato"],
     ["unit", "Local de trabalho"],
     ["kind", "Tipo de melhoria"],
-    ["sector", "Para qual setor"],
+    // Só nos envios antigos: o SIM deixou de perguntar o setor (vai sempre ao G&G).
+    ["sector", "Setor"],
     ["reason", "Motivo"],
     ["description", "Situação e possível solução"],
   ],

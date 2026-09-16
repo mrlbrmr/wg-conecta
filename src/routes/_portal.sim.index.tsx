@@ -15,8 +15,7 @@ import {
 } from "@/components/paper";
 import { SubmissionReceipt } from "@/components/channel/submission-receipt";
 import { useCurrentEmployee } from "@/hooks/use-current-employee";
-import { SIM_KINDS, SIM_REASONS, simSchema, simSectors } from "@/lib/channel-defs";
-import { useDepartments } from "@/lib/departments";
+import { SIM_KINDS, SIM_REASONS, simSchema } from "@/lib/channel-defs";
 import { submitToChannel } from "@/lib/channel.functions";
 import { mySubmissionsQuery } from "@/lib/channel-queries";
 import { CPF_LOGIN_DOMAIN } from "@/lib/cpf";
@@ -35,7 +34,6 @@ const EMPTY = {
   contact: "",
   unit: "" as Unit | "",
   kind: "" as (typeof SIM_KINDS)[number] | "",
-  sector: "",
   reason: "" as (typeof SIM_REASONS)[number] | "",
   description: "",
 };
@@ -46,7 +44,6 @@ function SimPage() {
   const submit = useServerFn(submitToChannel);
   const qc = useQueryClient();
   const me = useCurrentEmployee();
-  const sectors = simSectors(useDepartments());
   const [mode, setMode] = useState<Mode | "">("");
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -161,13 +158,6 @@ function SimPage() {
                     error={errors.kind}
                   />
                   <ChoiceChips
-                    label="Para qual setor?"
-                    options={sectors}
-                    value={form.sector}
-                    onChange={set("sector")}
-                    error={errors.sector}
-                  />
-                  <ChoiceChips
                     label="Motivo"
                     options={SIM_REASONS}
                     value={form.reason}
@@ -211,7 +201,7 @@ function SimPage() {
             </div>
             <ol className="mt-3.5 list-decimal pl-5 text-[13.5px] leading-[1.65]">
               <li>Você descreve o problema e, se tiver, uma solução.</li>
-              <li>O G&amp;G leva ao setor responsável.</li>
+              <li>Só o time de Gente &amp; Gestão lê e responde. Nenhum outro setor recebe o seu SIM.</li>
               <li>A resposta chega pelo portal — no seu Perfil ou pelo protocolo.</li>
             </ol>
           </PaperCard>
