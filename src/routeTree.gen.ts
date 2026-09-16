@@ -53,6 +53,7 @@ import { Route as PortalFormulariosEnviadoRouteImport } from './routes/_portal.f
 import { Route as PortalFormulariosSlugRouteImport } from './routes/_portal.formularios.$slug'
 import { Route as PortalComunicadosArquivoRouteImport } from './routes/_portal.comunicados.arquivo'
 import { Route as PortalComunicadosIdRouteImport } from './routes/_portal.comunicados.$id'
+import { Route as PortalAtalhosIdRouteImport } from './routes/_portal.atalhos.$id'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
@@ -289,6 +290,11 @@ const PortalComunicadosIdRoute = PortalComunicadosIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => PortalComunicadosRoute,
 } as any)
+const PortalAtalhosIdRoute = PortalAtalhosIdRouteImport.update({
+  id: '/atalhos/$id',
+  path: '/atalhos/$id',
+  getParentRoute: () => PortalRoute,
+} as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
     id: '/usuarios',
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/atalhos/$id': typeof PortalAtalhosIdRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
   '/formularios/$slug': typeof PortalFormulariosSlugRoute
@@ -402,6 +409,7 @@ export interface FileRoutesByTo {
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/atalhos/$id': typeof PortalAtalhosIdRoute
   '/comunicados/$id': typeof PortalComunicadosIdRoute
   '/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
   '/formularios/$slug': typeof PortalFormulariosSlugRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_portal/atalhos/$id': typeof PortalAtalhosIdRoute
   '/_portal/comunicados/$id': typeof PortalComunicadosIdRoute
   '/_portal/comunicados/arquivo': typeof PortalComunicadosArquivoRoute
   '/_portal/formularios/$slug': typeof PortalFormulariosSlugRoute
@@ -509,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
+    | '/atalhos/$id'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
     | '/formularios/$slug'
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
+    | '/atalhos/$id'
     | '/comunicados/$id'
     | '/comunicados/arquivo'
     | '/formularios/$slug'
@@ -608,6 +619,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/solicitacoes'
     | '/_authenticated/admin/usuarios'
+    | '/_portal/atalhos/$id'
     | '/_portal/comunicados/$id'
     | '/_portal/comunicados/arquivo'
     | '/_portal/formularios/$slug'
@@ -957,6 +969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalComunicadosIdRouteImport
       parentRoute: typeof PortalComunicadosRoute
     }
+    '/_portal/atalhos/$id': {
+      id: '/_portal/atalhos/$id'
+      path: '/atalhos/$id'
+      fullPath: '/atalhos/$id'
+      preLoaderRoute: typeof PortalAtalhosIdRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
       path: '/usuarios'
@@ -1131,6 +1150,7 @@ interface PortalRouteChildren {
   PortalPerfilRoute: typeof PortalPerfilRoute
   PortalVagasRoute: typeof PortalVagasRoute
   PortalIndexRoute: typeof PortalIndexRoute
+  PortalAtalhosIdRoute: typeof PortalAtalhosIdRoute
   PortalSimIdRoute: typeof PortalSimIdRoute
   PortalSolicitacoesIdRoute: typeof PortalSolicitacoesIdRoute
   PortalSimIndexRoute: typeof PortalSimIndexRoute
@@ -1149,6 +1169,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalPerfilRoute: PortalPerfilRoute,
   PortalVagasRoute: PortalVagasRoute,
   PortalIndexRoute: PortalIndexRoute,
+  PortalAtalhosIdRoute: PortalAtalhosIdRoute,
   PortalSimIdRoute: PortalSimIdRoute,
   PortalSolicitacoesIdRoute: PortalSolicitacoesIdRoute,
   PortalSimIndexRoute: PortalSimIndexRoute,

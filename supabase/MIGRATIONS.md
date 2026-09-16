@@ -1,5 +1,29 @@
 # Migrations pendentes — handoff do Portal do Colaborador
 
+## Pendentes (PR `feat/conteudo-formatado-video`)
+
+| Arquivo | O que faz |
+|---|---|
+| `20260916170000_quick_links_content.sql` | Cria `quick_links.content`, o conteúdo/tutorial dos atalhos da home ("Onde a gente vai agora"). Atalho só com conteúdo ganha o link `/atalhos/<id>` automaticamente (gatilho). |
+
+Rodar **antes do deploy**. Sem a coluna, o painel dá erro ao salvar um link rápido.
+
+Conferências (só leitura), uma por vez:
+
+```sql
+-- A coluna nova existe.
+SELECT column_name, data_type FROM information_schema.columns
+ WHERE table_schema = 'public' AND table_name = 'quick_links' AND column_name = 'content';
+```
+
+```sql
+-- O gatilho está ligado.
+SELECT tgname FROM pg_trigger
+ WHERE tgrelid = 'public.quick_links'::regclass AND tgname = 'quick_links_fill_url';
+```
+
+A migration não mexe em permissões: a tabela já existia, e as políticas continuam as mesmas.
+
 ## Pendentes (PR `feat/tela-setores`)
 
 | Arquivo | O que faz |

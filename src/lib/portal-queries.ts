@@ -57,6 +57,21 @@ export const quickLinksQuery = queryOptions({
     ),
 });
 
+export const quickLinkByIdQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["quick_links", id],
+    queryFn: async (): Promise<QuickLink | null> => {
+      const { data, error } = await supabase
+        .from("quick_links")
+        .select("*")
+        .eq("id", id)
+        .eq("active", true)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
 export const activeAnnouncementsQuery = queryOptions({
   queryKey: ["announcements", "active"],
   queryFn: async (): Promise<Announcement[]> => {

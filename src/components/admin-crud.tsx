@@ -8,6 +8,7 @@ import { fileUrl, uploadFile } from "@/lib/storage";
 import { ICON_MAP } from "@/lib/icon-map";
 import { Chip, FilterPills, InkButton, Kicker, PaperCard } from "@/components/paper";
 import { useAdminSearch } from "@/components/admin-search";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { useDepartments } from "@/lib/departments";
 import {
   AlertDialog,
@@ -506,6 +507,28 @@ function FieldInput({
     );
   }
 
+  if (field.type === "richtext") {
+    // Fora de <label>: a barra tem botões, e clicar no rótulo acionaria o primeiro deles.
+    return (
+      <div>
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          {field.label}
+          {field.required && " *"}
+        </span>
+        {field.help && (
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">{field.help}</span>
+        )}
+        <RichTextEditor
+          className="mt-2"
+          value={String(value ?? "")}
+          onChange={onChange}
+          placeholder={field.placeholder}
+          required={field.required}
+        />
+      </div>
+    );
+  }
+
   return (
     <label className="block">
       <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
@@ -516,9 +539,9 @@ function FieldInput({
         <span className="mt-0.5 block text-[11px] text-muted-foreground">{field.help}</span>
       )}
       <div className="mt-2">
-        {field.type === "textarea" || field.type === "richtext" ? (
+        {field.type === "textarea" ? (
           <textarea
-            rows={field.type === "richtext" ? 6 : 3}
+            rows={3}
             value={String(value ?? "")}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}

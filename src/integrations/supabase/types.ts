@@ -1366,6 +1366,7 @@ export type Database = {
         Row: {
           active: boolean
           category: string | null
+          content: string | null
           created_at: string
           description: string | null
           icon: string | null
@@ -1378,6 +1379,7 @@ export type Database = {
         Insert: {
           active?: boolean
           category?: string | null
+          content?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -1385,11 +1387,12 @@ export type Database = {
           order_index?: number
           title: string
           updated_at?: string
-          url: string
+          url?: string
         }
         Update: {
           active?: boolean
           category?: string | null
+          content?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null

@@ -6,6 +6,7 @@ import { Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { Chip, InkButton, Kicker, PaperCard } from "@/components/paper";
 import { UserAvatar } from "@/components/user-avatar";
+import { RichText } from "@/components/rich-text";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   activeAnnouncementsQuery,
@@ -83,11 +84,6 @@ function AnnouncementDetail() {
     );
   }
 
-  const paragraphs = (a.content ?? "")
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
   return (
     <div>
       <Link
@@ -132,15 +128,10 @@ function AnnouncementDetail() {
               />
             )}
 
-            {paragraphs.length > 0 && (
-              <div className="mt-6 flex max-w-[62ch] flex-col gap-4">
-                {paragraphs.map((p, i) => (
-                  <p key={i} className="text-[17px] leading-[1.75] text-pretty">
-                    {p}
-                  </p>
-                ))}
-              </div>
-            )}
+            <RichText
+              value={a.content}
+              className="mt-6 max-w-[62ch] gap-4 text-[17px] leading-[1.75]"
+            />
 
             {a.attachment_url && (
               <a
