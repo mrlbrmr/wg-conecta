@@ -14,6 +14,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { installStaleChunkRecovery } from "@/lib/stale-chunk-recovery";
 import { useAuthIsolation } from "@/lib/session";
 
+// Endereço público usado nas prévias de link (WhatsApp, Teams etc.) — precisa ser absoluto.
+const SITE_URL = "https://wgconecta.wgbaterias.com.br";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -78,7 +81,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Portal do Colaborador WG" },
       { property: "og:description", content: "Portal interno do Grupo WG / WG Baterias — benefícios, comunicados, documentos e mais em um só lugar." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "WG Conecta" },
+      { property: "og:locale", content: "pt_BR" },
+      { property: "og:url", content: `${SITE_URL}/` },
+      { property: "og:image", content: `${SITE_URL}/og-image.png` },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Portal do Colaborador WG — Grupo WG" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.png` },
       { name: "twitter:title", content: "Portal do Colaborador WG" },
       { name: "twitter:description", content: "Portal interno do Grupo WG / WG Baterias — benefícios, comunicados, documentos e mais em um só lugar." },
     ],
