@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { installStaleChunkRecovery } from "@/lib/stale-chunk-recovery";
 import { useAuthIsolation } from "@/lib/session";
+import { useRealtimeSync } from "@/lib/realtime-sync";
 
 // Endereço público usado nas prévias de link (WhatsApp, Teams etc.) — precisa ser absoluto.
 const SITE_URL = "https://wgconecta.wgbaterias.com.br";
@@ -122,6 +123,7 @@ function RootComponent() {
     installStaleChunkRecovery();
   }, []);
   useAuthIsolation(queryClient);
+  useRealtimeSync(queryClient);
 
   return (
     <QueryClientProvider client={queryClient}>
