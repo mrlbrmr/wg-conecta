@@ -45,7 +45,8 @@ export const openRequestsQuery = queryOptions({
 
 /**
  * Sino do painel: o que está esperando o G&G (ver `admin-notifications.functions.ts`).
- * Atualiza a cada minuto e quando a aba volta a ficar visível.
+ * Atualiza na hora pelo tempo real (`realtime-sync.ts`); o intervalo de 1 minuto
+ * fica só de reserva, caso a conexão caia.
  */
 export const adminNotificationsQuery = queryOptions({
   queryKey: ["admin-notifications"],
