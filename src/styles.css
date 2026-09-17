@@ -464,6 +464,31 @@
   background-size: var(--paper-dot-size) var(--paper-dot-size);
 }
 
+/* ── Sino do painel ────────────────────────────────────────────────── */
+/* Balança uma vez quando chega notificação nova. */
+@keyframes bell-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  15%,
+  45% {
+    transform: rotate(14deg);
+  }
+  30%,
+  60% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@utility animate-bell-ring {
+  animation: bell-ring 900ms ease-in-out;
+  transform-origin: 50% 10%;
+}
+
 /* ── Movimento reduzido ────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
@@ -472,7 +497,8 @@
   .animate-shimmer,
   .animate-bat-in,
   .animate-bat-dot,
-  .animate-bat-step {
+  .animate-bat-step,
+  .animate-bell-ring {
     animation: none;
   }
   .card-paper,

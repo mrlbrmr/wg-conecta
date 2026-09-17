@@ -1,12 +1,13 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useIsMutating, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EXTRA_KEYS, RESOURCES, SIDEBAR_EXTRA, findResource } from "@/lib/admin-resources";
-import { openRequestsQuery, pendingProfileRequestsQuery } from "@/lib/admin-queries";
+import { adminNotificationsQuery, badgeLabel } from "@/lib/admin-queries";
 import { WGLogo } from "@/components/wg-logo";
 import { AdminSearchContext } from "@/components/admin-search";
+import { NotificationBell } from "@/components/admin/notification-bell";
 import { cn } from "@/lib/utils";
 
 const COLLAPSED_KEY = "wg-admin-sidebar-collapsed";
@@ -21,7 +22,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   to?: string;
-  badge?: number;
+  badge?: string;
 };
 
 function AdminLayout() {
@@ -31,10 +32,20 @@ function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [term, setTerm] = useState("");
-  const pendingProfile = useQuery(pendingProfileRequestsQuery);
-  const openRequests = useQuery(openRequestsQuery);
-  // O badge conta as duas filas de /admin/solicitacoes.
-  const pendingTotal = (pendingProfile.data ?? 0) + (openRequests.data ?? 0);
+  const notifications = useQuery(adminNotificationsQuery);
+  const counts = notifications.data?.counts;
+  // Bolinhas da sidebar: as mesmas pendências do sino, por tela.
+  const badges: Record<string, number> = {
+    solicitacoes: (counts?.solicitacao ?? 0) + (counts?.cadastral ?? 0),
+    canais: (counts?.sim ?? 0) + (counts?.escuta ?? 0),
+  };
+
+  // Qualquer ação no painel (responder, concluir, aprovar) pode resolver uma pendência.
+  const qc = useQueryClient();
+  const mutating = useIsMutating();
+  useEffect(() => {
+    if (mutating === 0) qc.invalidateQueries({ queryKey: adminNotificationsQuery.queryKey });
+  }, [mutating, qc]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -82,7 +93,7 @@ function AdminLayout() {
         label: x.label,
         icon: x.icon,
         to: x.to,
-        badge: x.key === "solicitacoes" ? pendingTotal : undefined,
+        badge: badges[x.key] ? badgeLabel(badges[x.key]) : undefined,
       },
     ]);
   }
@@ -243,6 +254,7 @@ function AdminLayout() {
                     className="w-full bg-transparent px-2.5 py-2 text-[13.5px] outline-none"
                   />
                 </div>
+                <NotificationBell />
                 <Link
                   to="/"
                   className="hidden shrink-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink hover:text-primary sm:block"

@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getAdminNotifications } from "@/lib/admin-notifications.functions";
 
 /**
  * Contador de solicitações de atualização cadastral em aberto.
@@ -41,3 +42,20 @@ export const openRequestsQuery = queryOptions({
   staleTime: 30_000,
   refetchInterval: 60_000,
 });
+
+/**
+ * Sino do painel: o que está esperando o G&G (ver `admin-notifications.functions.ts`).
+ * Atualiza a cada minuto e quando a aba volta a ficar visível.
+ */
+export const adminNotificationsQuery = queryOptions({
+  queryKey: ["admin-notifications"],
+  queryFn: () => getAdminNotifications(),
+  staleTime: 20_000,
+  refetchInterval: 60_000,
+  refetchOnWindowFocus: true,
+});
+
+/** "9+" a partir de 10, para a bolinha não crescer. */
+export function badgeLabel(n: number): string {
+  return n > 9 ? "9+" : String(n);
+}
